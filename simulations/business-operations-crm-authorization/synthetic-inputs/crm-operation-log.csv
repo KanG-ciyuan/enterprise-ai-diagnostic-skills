@@ -1,0 +1,7 @@
+log_id,approval_id,customer_id,customer_name,before_owner,requested_owner,operation_type,operation_status,operator_role,operated_at,error_code,audit_note
+CRM-LOG-SYN-001,OA-SYN-001,CUST-001,星河制造,张敏,李浩,add_visit_authorization,success,CRM管理员,2026-08-18T10:35:00+08:00,,正常授权并保留操作日志
+CRM-LOG-SYN-002,OA-SYN-002,,新源物流,unknown,李浩,search_customer,blocked,CRM管理员,2026-08-18T10:45:00+08:00,CUSTOMER_NOT_FOUND,名称联系人和地址均无法匹配
+CRM-LOG-SYN-003,OA-SYN-003,CUST-006,启明医疗,赵凯,李浩,verify_owner,blocked,CRM管理员,2026-08-19T11:05:00+08:00,OWNER_MISMATCH,OA声明王强但CRM当前归属赵凯
+CRM-LOG-SYN-004,OA-SYN-004,CUST-011,离职交接名单-01,王强,陈璐,batch_owner_update,success,CRM管理员,2026-08-20T16:10:00+08:00,,批量第1条更新成功
+CRM-LOG-SYN-005,OA-SYN-004,CUST-012,离职交接名单-02,王强,陈璐,batch_owner_update,failed,CRM管理员,2026-08-20T16:11:00+08:00,CUSTOMER_LOCKED,大客户锁定无法编辑
+CRM-LOG-SYN-006,OA-SYN-005,CUST-007,北辰能源,赵凯,陈璐,owner_transfer,blocked,CRM管理员,2026-08-21T10:15:00+08:00,DISPUTE_OPEN,争议期禁止新增转让

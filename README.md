@@ -76,6 +76,8 @@
 
 当前案例还包含一份合成数据测试矩阵：`40-synthetic-test-matrix.json` 共 14 个场景，覆盖总控路由、客户编号缺失、重复客户、归属冲突、权限不足、批量上限、裁决版本和争议冻结等情况。
 
+`synthetic-inputs/`提供更接近实际上传入口的合成材料，包括Excel客户交接清单、OA审批导出、CRM操作日志、员工访谈文字和管理层会议纪要；这些材料同样属于E5模拟输入。
+
 管理层视角的演示报告位于 [`deliverables/management-diagnostic-report-v0.1/index.html`](deliverables/management-diagnostic-report-v0.1/index.html)。它是模拟成果展示，不是已获企业批准的正式诊断报告。
 
 ## 仓库结构

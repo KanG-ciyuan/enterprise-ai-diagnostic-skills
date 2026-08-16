@@ -1,0 +1,6 @@
+approval_id,requester_role,request_type,attachment_name,declared_original_owner,new_sales,new_department,authorization_type,approval_chain,current_status,submitted_at,completed_at,latest_comment
+OA-SYN-001,销售申请人,日常授权,,张敏,李浩,华东一部,协同拜访,直属主管>销售负责人>业务运营负责人,approved,2026-08-18T09:00:00+08:00,2026-08-18T10:20:00+08:00,同意授权
+OA-SYN-002,销售申请人,日常授权,,张敏,李浩,华东一部,临时授权,直属主管>销售负责人>业务运营负责人,rejected,2026-08-18T09:15:00+08:00,2026-08-18T10:40:00+08:00,客户编号缺失并且CRM无法匹配
+OA-SYN-003,销售申请人,日常授权,,王强,陈璐,华南二部,协同拜访,直属主管>销售负责人>业务运营负责人,returned_for_countersign,2026-08-19T08:50:00+08:00,,CRM实际归属人与申请填写不一致
+OA-SYN-004,销售申请人,批量交接,crm-customer-handover-list.xlsx,王强,陈璐,华南二部,离职交接,直属主管>销售负责人>业务运营负责人,approved,2026-08-20T09:10:00+08:00,2026-08-20T15:30:00+08:00,请CRM管理员按当前裁决版本执行
+OA-SYN-005,销售申请人,争议变更,crm-customer-handover-list.xlsx,赵凯,陈璐,华南二部,归属转让,直属主管>销售负责人>业务运营负责人,paused,2026-08-21T10:00:00+08:00,,归属争议未结案期间冻结新增转让

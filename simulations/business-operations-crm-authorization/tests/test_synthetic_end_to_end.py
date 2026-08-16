@@ -1,6 +1,8 @@
 import importlib.util
+import csv
 import json
 import unittest
+import zipfile
 from pathlib import Path
 
 
@@ -9,6 +11,7 @@ REPO_ROOT = ROOT.parents[1]
 MATRIX_PATH = ROOT / "40-synthetic-test-matrix.json"
 MASTER_PATH = ROOT / "39-owner-transfer-master-record-candidate-v0.2.json"
 ROUTER_PATH = REPO_ROOT / "enterprise-ai-diagnostic-orchestrator" / "scripts" / "orchestrate_event.py"
+INPUT_ROOT = ROOT / "synthetic-inputs"
 
 
 def load_router():
@@ -62,6 +65,43 @@ class SyntheticEndToEndTest(unittest.TestCase):
                 self.assertTrue(case["input_signal"])
                 self.assertTrue(case["expected_action"])
                 self.assertTrue(case["forbidden_action"])
+
+    def test_realistic_input_package_has_common_enterprise_file_types(self):
+        expected = {
+            "README.md",
+            "crm-customer-handover-list.xlsx",
+            "oa-approval-export.csv",
+            "crm-operation-log.csv",
+            "employee-interview-transcript.md",
+            "management-meeting-minutes.md",
+        }
+        self.assertTrue(expected.issubset({path.name for path in INPUT_ROOT.iterdir()}))
+
+    def test_uploaded_text_materials_remain_explicitly_e5(self):
+        for name in ("README.md", "employee-interview-transcript.md", "management-meeting-minutes.md"):
+            with self.subTest(name=name):
+                text = (INPUT_ROOT / name).read_text(encoding="utf-8")
+                self.assertIn("E5", text)
+                self.assertIn("模拟", text)
+
+    def test_csv_exports_cover_blocked_and_failed_business_records(self):
+        with (INPUT_ROOT / "oa-approval-export.csv").open(encoding="utf-8", newline="") as handle:
+            approvals = list(csv.DictReader(handle))
+        with (INPUT_ROOT / "crm-operation-log.csv").open(encoding="utf-8", newline="") as handle:
+            logs = list(csv.DictReader(handle))
+        self.assertIn("paused", {row["current_status"] for row in approvals})
+        self.assertIn("returned_for_countersign", {row["current_status"] for row in approvals})
+        self.assertIn("failed", {row["operation_status"] for row in logs})
+        self.assertIn("blocked", {row["operation_status"] for row in logs})
+
+    def test_xlsx_is_real_ooxml_with_two_expected_sheets(self):
+        workbook_path = INPUT_ROOT / "crm-customer-handover-list.xlsx"
+        self.assertTrue(zipfile.is_zipfile(workbook_path))
+        with zipfile.ZipFile(workbook_path) as archive:
+            self.assertIn("[Content_Types].xml", archive.namelist())
+            workbook_xml = archive.read("xl/workbook.xml").decode("utf-8")
+        self.assertIn("客户交接清单", workbook_xml)
+        self.assertIn("字段说明", workbook_xml)
 
 
 if __name__ == "__main__":

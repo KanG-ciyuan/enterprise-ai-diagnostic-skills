@@ -1,5 +1,11 @@
 # 企业 AI 流程诊断 Skills
 
+![Status](.github/badges/status.svg)
+![Core Skills](.github/badges/core-skills.svg)
+![Local Tests](.github/badges/local-tests.svg)
+![Owner](.github/badges/owner.svg)
+![Rights](.github/badges/rights.svg)
+
 一套由 **Kang Jiaxin** 整理和维护的企业工作流程诊断方法体系。
 
 它围绕一个具体业务流程，依次支持管理层访谈准备、员工工作摸排、企业材料分析、流程诊断、影子试点设计以及项目状态管理。目标不是让 AI 直接替企业作出高风险决定，而是把流程事实、证据缺口、岗位边界和下一步行动整理清楚。

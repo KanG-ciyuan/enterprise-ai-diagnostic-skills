@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="95" height="20" role="img" aria-label="core Skills: 5">
+  <title>core Skills: 5</title>
+  <clipPath id="clip"><rect width="95" height="20" rx="3"/></clipPath>
+  <g clip-path="url(#clip)">
+    <rect width="70" height="20" fill="#444"/>
+    <rect x="70" width="25" height="20" fill="#1677ff"/>
+  </g>
+  <g fill="#fff" font-family="Verdana,Arial,sans-serif" font-size="11" text-anchor="middle">
+    <text x="35" y="14">core Skills</text>
+    <text x="82.5" y="14">5</text>
+  </g>
+</svg>

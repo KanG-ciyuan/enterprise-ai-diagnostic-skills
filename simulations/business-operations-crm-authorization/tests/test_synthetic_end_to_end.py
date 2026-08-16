@@ -143,6 +143,41 @@ class SyntheticEndToEndTest(unittest.TestCase):
         self.assertNotIn("预计节省", report)
         self.assertNotIn("生产可用", report.replace("生产可用性", ""))
 
+    def test_shadow_pilot_workbook_is_real_xlsx_with_business_sheets(self):
+        workbook_path = REPO_ROOT / "outputs" / "crm-shadow-pilot-20260816" / "crm-shadow-pilot-result.xlsx"
+        self.assertTrue(zipfile.is_zipfile(workbook_path))
+        with zipfile.ZipFile(workbook_path) as archive:
+            names = set(archive.namelist())
+            self.assertIn("[Content_Types].xml", names)
+            self.assertNotIn("xl/vbaProject.bin", names)
+            self.assertFalse(any(name.startswith("xl/externalLinks/") for name in names))
+            workbook_xml = archive.read("xl/workbook.xml").decode("utf-8")
+        for sheet_name in (
+            "试点总览",
+            "逐行预检",
+            "人工确认队列",
+            "影子执行清单",
+            "逐行回执",
+            "回滚草稿",
+            "审计与规则",
+        ):
+            self.assertIn(sheet_name, workbook_xml)
+
+    def test_shadow_pilot_report_preserves_counts_and_production_boundary(self):
+        report = (ROOT / "45-synthetic-offline-shadow-pilot-run.md").read_text(encoding="utf-8")
+        self.assertIn("E5 AI模拟", report)
+        self.assertIn("试点结论 | **观察后继续**", report)
+        self.assertIn("| `shadow_reconciled` | 2 |", report)
+        self.assertIn("| `awaiting_result_evidence` | 4 |", report)
+        self.assertIn("| `awaiting_human_confirmation` | 4 |", report)
+        self.assertIn("| `validation_failed` | 1 |", report)
+        self.assertIn("| `stopped` | 1 |", report)
+        self.assertIn("6类有行级样本，2类只完成规则级检查", report)
+        self.assertIn("production_integration_status: blocked", report)
+        self.assertIn("production_read: false", report)
+        self.assertIn("production_write: false", report)
+        self.assertNotIn("8类全部通过", report.replace("不能把本轮写成“8类全部通过”", ""))
+
 
 if __name__ == "__main__":
     unittest.main()

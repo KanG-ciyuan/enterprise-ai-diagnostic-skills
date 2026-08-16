@@ -74,6 +74,8 @@
 
 该案例全部属于 **E5 模拟证据**，用于验证方法和路由，不代表任何真实企业的实际流程或经营结果。
 
+当前案例还包含一份合成数据测试矩阵：`40-synthetic-test-matrix.json` 共 14 个场景，覆盖总控路由、客户编号缺失、重复客户、归属冲突、权限不足、批量上限、裁决版本和争议冻结等情况。
+
 管理层视角的演示报告位于 [`deliverables/management-diagnostic-report-v0.1/index.html`](deliverables/management-diagnostic-report-v0.1/index.html)。它是模拟成果展示，不是已获企业批准的正式诊断报告。
 
 ## 仓库结构
@@ -104,6 +106,7 @@ python3 -m unittest discover -s enterprise-material-analysis/tests -v
 python3 -m unittest discover -s enterprise-ai-process-diagnosis/tests -v
 python3 -m unittest discover -s enterprise-ai-diagnostic-orchestrator/tests -v
 python3 -m unittest discover -s enterprise-ai-diagnostic-master-record/tests -v
+python3 -m unittest discover -s simulations/business-operations-crm-authorization/tests -v
 python3 scripts/validate_personal_skill_ownership.py
 ```
 

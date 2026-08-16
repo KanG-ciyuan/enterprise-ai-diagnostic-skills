@@ -103,6 +103,15 @@ class SyntheticEndToEndTest(unittest.TestCase):
         self.assertIn("客户交接清单", workbook_xml)
         self.assertIn("字段说明", workbook_xml)
 
+    def test_material_analysis_output_preserves_evidence_boundary(self):
+        report = (ROOT / "43-synthetic-inputs-material-evidence-pack.md").read_text(encoding="utf-8")
+        self.assertIn("E5 AI模拟", report)
+        self.assertIn("原子证据账本", report)
+        self.assertIn("最小补证请求", report)
+        self.assertIn("不得据此计算真实ROI", report)
+        self.assertNotIn("建议采用RPA", report)
+        self.assertNotIn("建议开发Agent", report)
+
 
 if __name__ == "__main__":
     unittest.main()

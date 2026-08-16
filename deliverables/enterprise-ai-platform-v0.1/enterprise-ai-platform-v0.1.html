@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>企业 AI 应用诊断与改造平台 | 产业合作项目介绍 v0.1</title>
+  <style>
+    :root {
+      --ink: #17232f;
+      --muted: #5f6d78;
+      --line: #d8e0e5;
+      --paper: #ffffff;
+      --wash: #f3f6f7;
+      --accent: #d66b3d;
+      --accent-soft: #f7e9e2;
+      --teal: #1c7778;
+      --teal-soft: #e5f1f0;
+      --navy: #173b52;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; }
+    html { background: #e8edef; color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+    body { margin: 0; }
+    .toolbar { position: sticky; top: 0; z-index: 5; display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px; background: rgba(232,237,239,.95); border-bottom: 1px solid var(--line); }
+    .toolbar button { border: 1px solid var(--navy); background: var(--navy); color: #fff; border-radius: 5px; padding: 9px 14px; font: inherit; cursor: pointer; }
+    .toolbar button.secondary { background: #fff; color: var(--navy); }
+    .page { width: 210mm; min-height: 297mm; margin: 22px auto; padding: 18mm 18mm 15mm; background: var(--paper); box-shadow: 0 8px 30px rgba(23,59,82,.1); position: relative; overflow: hidden; }
+    .page::before { content: ""; position: absolute; left: 0; top: 0; width: 7px; height: 100%; background: var(--accent); }
+    .page-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 18px; }
+    .page-number { color: var(--accent); font-weight: 700; font-size: 12px; letter-spacing: .08em; }
+    .kicker { color: var(--teal); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+    h1 { font-size: 35px; line-height: 1.16; margin: 22px 0 14px; letter-spacing: 0; }
+    h2 { font-size: 23px; line-height: 1.25; margin: 0 0 13px; letter-spacing: 0; }
+    h3 { font-size: 15px; margin: 0 0 7px; line-height: 1.4; }
+    p { margin: 0 0 10px; line-height: 1.65; font-size: 13px; }
+    li { line-height: 1.55; font-size: 12.5px; margin: 4px 0; }
+    .lead { font-size: 18px; line-height: 1.55; color: var(--navy); max-width: 690px; }
+    .stage { display: inline-block; padding: 5px 9px; color: var(--navy); background: var(--teal-soft); border-left: 3px solid var(--teal); font-size: 12px; font-weight: 700; }
+    .callout { padding: 13px 15px; background: var(--accent-soft); border-left: 4px solid var(--accent); margin: 15px 0; }
+    .callout strong { color: #843c22; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .section { margin-top: 18px; }
+    .label { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 5px; }
+    .plain-list { margin: 7px 0 0; padding-left: 18px; }
+    .problem-list li::marker { color: var(--accent); }
+    .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 15px 0; }
+    .flow-step { min-height: 66px; padding: 10px; background: var(--wash); border-top: 3px solid var(--teal); position: relative; }
+    .flow-step:not(:last-child)::after { content: ""; position: absolute; right: -9px; top: 27px; width: 10px; height: 1px; background: var(--teal); }
+    .flow-step:nth-child(n+5) { border-top-color: var(--accent); }
+    .flow-step b { display: block; font-size: 12px; margin-bottom: 4px; }
+    .flow-step span { display: block; color: var(--muted); font-size: 11px; line-height: 1.4; }
+    .contrast { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+    .contrast th, .contrast td { border-bottom: 1px solid var(--line); padding: 8px 9px; text-align: left; vertical-align: top; line-height: 1.45; }
+    .contrast th { color: var(--muted); font-weight: 700; background: var(--wash); }
+    .capability { min-height: 112px; padding: 12px; background: var(--wash); border-top: 3px solid var(--navy); }
+    .capability:nth-child(2n) { border-top-color: var(--teal); }
+    .capability:nth-child(3n) { border-top-color: var(--accent); }
+    .capability .num { color: var(--accent); font-weight: 800; font-size: 18px; float: right; }
+    .capability p { color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+    .timeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 12px 0 16px; }
+    .phase { padding: 12px; border-top: 4px solid var(--navy); border-right: 1px solid var(--line); background: var(--wash); min-height: 120px; }
+    .phase:nth-child(2) { border-top-color: var(--teal); }
+    .phase:nth-child(3) { border-top-color: var(--accent); border-right: 0; }
+    .phase strong { display: block; font-size: 14px; margin-bottom: 4px; }
+    .phase small { color: var(--muted); font-size: 11px; }
+    .phase p { margin-top: 10px; font-size: 11.5px; }
+    .metric-list { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 18px; padding-left: 18px; }
+    .metric-list li::marker { color: var(--teal); }
+    .model-row { display: grid; grid-template-columns: 1.15fr 1fr; gap: 10px; margin: 11px 0; }
+    .model { padding: 12px; border: 1px solid var(--line); border-left: 4px solid var(--teal); }
+    .model:nth-child(2) { border-left-color: var(--accent); }
+    .model p { color: var(--muted); font-size: 11.5px; margin: 0; }
+    .cooperation { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0 15px; }
+    .cooperation > div { padding: 12px; background: var(--navy); color: #fff; min-height: 96px; }
+    .cooperation > div:nth-child(2) { background: var(--teal); }
+    .cooperation > div:nth-child(3) { background: var(--accent); }
+    .cooperation b { display: block; font-size: 13px; margin-bottom: 7px; }
+    .cooperation p { font-size: 11px; line-height: 1.45; }
+    .footnote { position: absolute; bottom: 11mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; border-top: 1px solid var(--line); padding-top: 7px; }
+    .source-note { color: var(--muted); font-size: 10.5px; line-height: 1.5; }
+    main > .page:nth-child(3) h2 { margin-bottom: 9px; }
+    main > .page:nth-child(3) .section { margin-top: 12px; }
+    main > .page:nth-child(3) .capability { min-height: 98px; padding: 10px; }
+    main > .page:nth-child(3) .capability p { line-height: 1.35; }
+    main > .page:nth-child(3) .callout { margin-top: 10px; padding: 10px 12px; }
+    @media (max-width: 900px) { .toolbar { position: static; } .page { width: 100%; min-height: auto; margin: 0; padding: 28px 22px 60px; box-shadow: none; } .page::before { width: 4px; } .grid-2, .grid-3, .cooperation, .timeline, .model-row { grid-template-columns: 1fr; } .flow { grid-template-columns: 1fr 1fr; } .flow-step:not(:last-child)::after { display: none; } h1 { font-size: 30px; } }
+    @media print { @page { size: A4; margin: 0; } html { background: #fff; } .toolbar { display: none; } .page { margin: 0; box-shadow: none; page-break-after: always; } .page:last-of-type { page-break-after: auto; } }
+  </style>
+</head>
+<body>
+  <div class="toolbar"><button class="secondary" onclick="window.scrollTo({top:0,behavior:'smooth'})">回到顶部</button><button onclick="window.print()">打印 / 保存 PDF</button></div>
+
+  <main>
+    <section class="page">
+      <div class="page-header"><span class="kicker">企业 AI 应用诊断与改造平台</span><span class="page-number">01 / 项目概览</span></div>
+      <span class="stage">方法原型与核心诊断引擎验证阶段</span>
+      <h1>先还原真实工作，<br>再决定 AI 怎么改造。</h1>
+      <p class="lead">通过 Agent 规模化摸排员工工作与企业流程，结合制度、系统和业务证据，帮助企业识别真正值得 AI 改造的场景，并形成可执行、可验证的改造路线。</p>
+      <div class="callout"><strong>第一阶段切入：</strong>企业流程智能摸排。<br><strong>长期愿景：</strong>形成一套持续服务企业 AI 转型的能力底座。</div>
+      <div class="section grid-2">
+        <div><div class="label">Why now</div><h2>企业想用 AI，却缺少三个答案</h2><ol class="plain-list"><li>哪些流程真的存在问题；</li><li>哪些问题值得改造；</li><li>应该采用规则、工作流、RPA、AI 还是有限边界 Agent。</li></ol></div>
+        <div><div class="label">First customers</div><h2>从高频、跨角色流程开始</h2><p>首批目标客户为50至500人的成长型企业，常见特征是大量 Excel、微信、人工交接、重复录入和跨系统操作。</p><p>优先验证客服客诉、采购、销售运营、订单处理等流程。</p></div>
+      </div>
+      <div class="section"><div class="label">The starting point</div><p>传统逐人访谈成本高、周期长且容易遗漏；先选技术再寻找场景，又容易把伪需求包装成 AI 项目。本项目把<strong>需求证据化</strong>放在技术选型之前。</p></div>
+      <div class="footnote"><span>产业合作项目介绍 v0.1</span><span>当前以模拟案例和本地验证为主</span></div>
+    </section>
+
+    <section class="page">
+      <div class="page-header"><span class="kicker">企业问题与解决方案</span><span class="page-number">02 / 业务逻辑</span></div>
+      <h2>企业真正缺的，通常不是一个 Agent，而是对流程的共同理解。</h2>
+      <div class="grid-2 section">
+        <div><div class="label">企业面对的问题</div><ul class="plain-list problem-list"><li>管理层知道有重复劳动，却看不到具体发生在哪个节点。</li><li>SOP、岗位职责与员工实际操作可能并不一致。</li><li>不同岗位对同一流程的描述可能互相冲突。</li><li>缺少证据、技术条件和验收标准，项目容易停在演示阶段。</li></ul></div>
+        <div><div class="label">本项目的起点</div><p>不因企业提出“想上 Agent”就默认推荐 Agent。先还原触发、步骤、判断、异常和责任，再按节点选择合适技术。</p><div class="callout"><strong>基本原则</strong><br>先还原真实工作，建立证据，再决定是否改造以及怎样改造。</div></div>
+      </div>
+      <div class="section"><div class="label">从管理层授权到改造路线</div><div class="flow"><div class="flow-step"><b>01 设定范围</b><span>管理层确定目标、范围与授权</span></div><div class="flow-step"><b>02 补充背景</b><span>岗位职责、SOP、系统说明</span></div><div class="flow-step"><b>03 Agent 摸排</b><span>员工逐项还原一项具体工作</span></div><div class="flow-step"><b>04 流程卡确认</b><span>形成员工确认流程卡</span></div><div class="flow-step"><b>05 异常复核</b><span>识别模糊、冲突、缺证与高风险</span></div><div class="flow-step"><b>06 证据合并</b><span>交叉核对多岗位与业务材料</span></div><div class="flow-step"><b>07 节点诊断</b><span>判断业务价值与技术条件</span></div><div class="flow-step"><b>08 试点路线</b><span>输出小范围、可验证的下一步</span></div></div></div>
+      <div class="section"><div class="label">方法差异</div><table class="contrast"><thead><tr><th>常见做法</th><th>本项目的方法</th></tr></thead><tbody><tr><td>顾问逐个进行基础访谈</td><td>Agent完成规模化基础摸排，人处理异常</td></tr><tr><td>依靠个人经验整理纪要</td><td>使用统一流程卡、证据等级和诊断契约</td></tr><tr><td>先选技术，再找场景</td><td>先确认流程和需求，再判断技术路线</td></tr><tr><td>一次性交付报告</td><td>保留可更新、可追溯的企业诊断档案</td></tr></tbody></table></div>
+      <p class="source-note section">业务规则负责识别，AI负责理解、提取、解释和建议；高风险审批、资金、客户承诺及最终责任仍由人承担。</p>
+      <div class="footnote"><span>企业 AI 应用诊断与改造平台</span><span>02</span></div>
+    </section>
+
+    <section class="page">
+      <div class="page-header"><span class="kicker">产品流程与核心能力</span><span class="page-number">03 / MVP</span></div>
+      <h2>把一次性调研，变成可追溯、可持续更新的企业诊断档案。</h2>
+      <div class="grid-3 section">
+        <div class="capability"><span class="num">01</span><h3>企业项目初始化</h3><p>建立企业代号、项目范围、部门岗位、授权边界和目标，隔离不同企业、员工和版本材料。</p></div>
+        <div class="capability"><span class="num">02</span><h3>企业材料与背景处理</h3><p>处理SOP、岗位职责、会议纪要、录音转写、Word、PDF、Excel、截图等经授权材料。</p></div>
+        <div class="capability"><span class="num">03</span><h3>员工 Agent 摸排入口</h3><p>通过主问题和动态追问，还原触发、步骤、工具、判断、异常、耗时与返工。</p></div>
+        <div class="capability"><span class="num">04</span><h3>异常复核队列</h3><p>汇集模糊表达、跨岗位冲突、证据不足、责任争议和高风险问题。</p></div>
+        <div class="capability"><span class="num">05</span><h3>企业诊断工作台</h3><p>按流程节点判断规则、工作流、API、RPA、AI工作流、RAG、边界Agent与人工职责。</p></div>
+        <div class="capability"><span class="num">06</span><h3>管理层可视化报告</h3><p>输出调研覆盖图、当前流程、问题节点、机会矩阵、改造后流程和试点路线。</p></div>
+      </div>
+      <div class="section grid-2">
+        <div><div class="label">材料分析的角色</div><p>材料分析不是固定前置步骤，而是可在摸排前、中、后按需调用的公共能力。员工口述、会议纪要和制度材料分别保留来源，不把缺少材料解释为没有问题。</p></div>
+        <div><div class="label">数据与责任原则</div><p>平台计划保留员工原始提交、员工确认流程卡、诊断推导记录三层记录。修改产生新版本而不是覆盖历史版本，并记录来源、时间、上游编号和授权状态。</p></div>
+      </div>
+      <div class="callout section"><strong>边界声明：</strong>流程卡是员工确认后的陈述，不是不可质疑的企业事实。仍需多岗位交叉核对、样本或系统记录验证、主管确认和覆盖率检查。</div>
+      <div class="footnote"><span>企业 AI 应用诊断与改造平台</span><span>03</span></div>
+    </section>
+
+    <section class="page">
+      <div class="page-header"><span class="kicker">当前进展与六个月计划</span><span class="page-number">04 / 验证</span></div>
+      <h2>方法底座已经形成，下一步用真实企业验证产品化路径。</h2>
+      <div class="section"><div class="label">已形成的本地方法原型</div><div class="grid-2"><ul class="plain-list"><li>员工工作摸排与确认流程卡</li><li>企业材料分析与证据包</li><li>企业 AI 流程诊断与条件式技术方案</li></ul><ul class="plain-list"><li>管理层启动访谈与异常复核准备</li><li>企业诊断共享档案</li><li>版本与路由契约</li></ul></div></div>
+      <div class="callout section"><strong>证据边界：</strong>已使用制造业紧急采购、连锁零售客诉等模拟案例完成本地验证。当前尚不能宣称已经产生真实企业收益、达到生产可用、完成跨平台兼容或拥有付费客户。</div>
+      <div class="section"><div class="label">六个月推进计划</div><div class="timeline"><div class="phase"><strong>第 1 至 2 个月</strong><small>MVP 收敛</small><p>完善核心诊断体系，开发统一入口 MVP，建立基础权限与项目档案。</p></div><div class="phase"><strong>第 3 至 4 个月</strong><small>联合验证</small><p>引入1至3家企业，覆盖客服客诉、采购、销售运营、订单处理等高频流程。</p></div><div class="phase"><strong>第 5 至 6 个月</strong><small>产品迭代</small><p>根据真实使用改进交互、规则、报告和交付标准，形成初步付费方案。</p></div></div></div>
+      <div class="section"><div class="label">第一阶段成功指标</div><ul class="metric-list"><li>完成1至3家企业联合验证</li><li>每家至少覆盖2个部门、10名流程参与者</li><li>每家识别不少于3个有证据支撑的候选场景</li><li>每家至少1个场景进入试点设计</li><li>形成1个付费试点、采购意向或后续确认</li><li>首轮验证前不承诺固定ROI或节省比例</li></ul></div>
+      <div class="section"><div class="label">尚未开发</div><p>统一员工入口、企业账号权限、数据库、后台工作台和生产系统集成。</p></div>
+      <div class="footnote"><span>企业 AI 应用诊断与改造平台</span><span>04</span></div>
+    </section>
+
+    <section class="page">
+      <div class="page-header"><span class="kicker">商业模式与合作诉求</span><span class="page-number">05 / 合作</span></div>
+      <h2>从联合验证开始，把方法原型变成企业愿意使用和付费的产品。</h2>
+      <div class="section"><div class="label">初步商业模式</div><div class="model-row"><div class="model"><h3>平台订阅费</h3><p>企业获得项目入口、员工摸排、材料管理、诊断档案和管理层报告等持续能力。</p></div><div class="model"><h3>诊断项目额度</h3><p>按企业、部门、流程范围或诊断项目计费，用于消耗具体摸排和诊断任务。</p></div></div><div class="model"><h3>可选线上实施指导</h3><p>为需要协助的企业提供启动、异常复核、试点设计与验收指导。具体定价在联合验证后确定。</p></div></div>
+      <div class="section"><div class="label">当前合作诉求</div><div class="cooperation"><div><b>企业验证资源</b><p>提供1至3家符合目标画像的企业，开展真实流程摸排和产品验证。</p></div><div><b>启动资金</b><p>用于统一入口MVP、数据权限与安全、可视化报告、模型调用和试点交付。</p></div><div><b>产品与技术资源</b><p>共同推进平台工程化、企业系统集成与持续开发。</p></div></div></div>
+      <div class="section grid-2"><div><div class="label">项目发起</div><p>项目目前由发起人主导产品定位、企业需求分析、诊断方法和业务规则设计，并借助AI开发工具完成核心Skill方法原型、标准档案契约与跨行业模拟验证。</p></div><div><div class="label">合作路径</div><p>合作方可先以企业联合验证进入，在达到双方约定的产品、诊断和商业指标后，再讨论投资或更深层合作；也可直接以资金、客户资源和产品团队共同投入。</p></div></div>
+      <div class="callout section"><strong>共同验证的问题：</strong>员工是否愿意自主完成摸排；Agent能否减少基础访谈工时；多岗位证据能否发现隐藏问题；诊断结果能否转化为企业愿意实施和付费的小范围试点。</div>
+      <p class="source-note section">本文件是早期产业合作沟通稿，不是已验证商业数据的融资承诺书。项目尚处于方法原型与核心诊断引擎验证阶段。</p>
+      <div class="footnote"><span>企业 AI 应用诊断与改造平台</span><span>05</span></div>
+    </section>
+  </main>
+</body>
+</html>

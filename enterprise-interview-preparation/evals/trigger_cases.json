@@ -1,0 +1,42 @@
+{
+  "recommended_threshold": 0.34,
+  "description_required_concepts": ["enterprise", "interview", "prepare"],
+  "positive_concepts": {
+    "enterprise": ["enterprise", "企业", "行业", "部门", "岗位"],
+    "interview": ["interview", "访谈", "拜访", "调研", "问题清单"],
+    "prepare": ["prepare", "准备", "提纲", "对象名单", "追问路线"],
+    "evidence": ["evidence", "材料清单", "补证", "证据"],
+    "coverage": ["coverage", "角色", "覆盖", "谁要参加"]
+  },
+  "negative_patterns": [
+    "采访我",
+    "逐题问员工",
+    "生成员工流程卡",
+    "分析这些材料",
+    "总结录音",
+    "决定用RPA还是Agent",
+    "给出改造方案",
+    "直接开发",
+    "画成可视化"
+  ],
+  "should_trigger": [
+    {"text": "为下周拜访连锁零售企业准备访谈对象名单、问题清单和追问路线", "family": "enterprise_visit"},
+    {"text": "我们要调研财务报销流程，应该访谈哪些岗位并分别问什么", "family": "role_coverage"},
+    {"text": "根据制造业采购部门和访谈目标，生成分角色访谈提纲与材料清单", "family": "department_process"},
+    {"text": "客户一直说想上Agent，帮我准备不诱导的调研问题和现场不能承诺的事项", "family": "solution_bias"},
+    {"text": "只有3小时和4个名额，主管和员工说法冲突，帮我准备最小访谈组合和镜像问题", "family": "constrained_conflict"},
+    {"text": "Prepare stakeholder interviews for one enterprise workflow discovery, including follow-ups and evidence requests.", "family": "english"}
+  ],
+  "should_not_trigger": [
+    {"text": "我是门店客服，请逐题采访我并生成我的工作流程卡", "family": "live_employee_mapping"},
+    {"text": "分析这些会议纪要、SOP和Excel，整理证据冲突", "family": "material_analysis"},
+    {"text": "根据证据包判断应该用工作流、RPA还是Agent", "family": "process_diagnosis"},
+    {"text": "把已经确认的改造方案做成老板看的可视化", "family": "visualization"},
+    {"text": "直接开发一个员工访谈平台", "family": "implementation"}
+  ],
+  "near_neighbor": [
+    {"text": "我只有一份模糊的客户需求，想先确认调研范围", "family": "scope_clarification"},
+    {"text": "把完成的访谈问题发给这些员工并自动安排会议", "family": "external_action"},
+    {"text": "只需要一个通用的用户研究问题模板，不涉及企业流程", "family": "generic_user_research"}
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Enterprise Employee Workflow Card",
+  "type": "object",
+  "required": ["record_type", "schema_version", "record_id", "version", "project_id", "employee_id", "department", "role", "work_name", "steps", "evidence", "open_questions", "employee_confirmed", "created_at"],
+  "properties": {
+    "record_type": {"const": "workflow_card"},
+    "schema_version": {"const": "0.1"},
+    "record_id": {"type": "string", "minLength": 1},
+    "version": {"type": "integer", "minimum": 1},
+    "project_id": {"type": "string", "minLength": 1},
+    "employee_id": {"type": "string", "minLength": 1},
+    "department": {"type": "string"},
+    "role": {"type": "string"},
+    "work_name": {"type": "string", "minLength": 1},
+    "trigger": {"type": "string"},
+    "frequency": {"type": "string"},
+    "consumer": {"type": "string"},
+    "steps": {"type": "array"},
+    "systems": {"type": "array"},
+    "inputs": {"type": "array"},
+    "outputs": {"type": "array"},
+    "decision_points": {"type": "array"},
+    "exceptions": {"type": "array"},
+    "burden": {"type": "object"},
+    "evidence": {"type": "array"},
+    "open_questions": {"type": "array"},
+    "employee_confirmed": {"type": "boolean"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "confirmed_at": {"type": ["string", "null"], "format": "date-time"},
+    "upstream_records": {"type": "array"}
+  },
+  "additionalProperties": false
+}
+

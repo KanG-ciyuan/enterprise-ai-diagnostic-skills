@@ -1,0 +1,3 @@
+order_id,request_id,created_at,supplier_code,amount,approval_status,expected_arrival
+PO-SIM-001,REQ-SIM-019,2026-07-18 15:42,SUP-018,18600,approved,2026-07-19
+

@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Enterprise AI Diagnostic Master Record v0.2",
+  "type": "object",
+  "required": [
+    "record_type", "schema_version", "record_id", "version",
+    "enterprise_id", "project_id", "project_identity", "current_stage",
+    "research_coverage", "participant_tasks", "workflow_cards", "materials",
+    "conflicts_and_evidence_requests", "organizational_confirmations",
+    "stops_and_recoveries", "diagnoses_and_pilots", "output_views"
+  ],
+  "properties": {
+    "record_type": {"const": "enterprise_ai_diagnostic_master_record"},
+    "schema_version": {"const": "0.2"},
+    "record_id": {"type": "string", "minLength": 1},
+    "version": {"type": "integer", "minimum": 1},
+    "enterprise_id": {"type": "string", "minLength": 1},
+    "project_id": {"type": "string", "minLength": 1},
+    "project_identity": {
+      "type": "object",
+      "required": ["enterprise_display_name", "project_name", "project_owner_role", "created_at"],
+      "properties": {
+        "enterprise_display_name": {"type": "string"},
+        "project_name": {"type": "string", "minLength": 1},
+        "project_owner_role": {"type": "string", "minLength": 1},
+        "created_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    },
+    "current_stage": {
+      "type": "object",
+      "required": ["stage", "status", "owner_role", "updated_at"],
+      "properties": {
+        "stage": {"enum": ["interview_preparation", "workflow_mapping", "evidence_completion", "diagnosis", "pilot", "completed", "paused"]},
+        "status": {"enum": ["not_started", "active", "blocked", "review_required", "completed", "paused"]},
+        "owner_role": {"type": "string"},
+        "updated_at": {"type": "string", "format": "date-time"},
+        "stop_reason": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "research_coverage": {"type": "array", "items": {"$ref": "#/$defs/coverage"}},
+    "participant_tasks": {"type": "array", "items": {"$ref": "#/$defs/participantTask"}},
+    "workflow_cards": {"type": "array", "items": {"$ref": "#/$defs/indexedRecord"}},
+    "materials": {"type": "array", "items": {"$ref": "#/$defs/materialRecord"}},
+    "conflicts_and_evidence_requests": {"type": "array", "items": {"$ref": "#/$defs/conflictRecord"}},
+    "organizational_confirmations": {"type": "array", "items": {"$ref": "#/$defs/organizationalConfirmation"}},
+    "stops_and_recoveries": {"type": "array", "items": {"$ref": "#/$defs/stopRecord"}},
+    "diagnoses_and_pilots": {"type": "array", "items": {"$ref": "#/$defs/diagnosticRecord"}},
+    "output_views": {"type": "array", "items": {"$ref": "#/$defs/outputView"}}
+  },
+  "$defs": {
+    "authorizationStatus": {"enum": ["pending", "authorized", "restricted", "withdrawn", "not_required"]},
+    "lifecycleStatus": {"enum": ["draft", "current", "superseded", "invalid", "archived"]},
+    "evidenceLevel": {"enum": ["E1", "E2", "E3", "E4", "E5"]},
+    "indexedRecord": {
+      "type": "object",
+      "required": ["record_id", "record_type", "version", "lifecycle_status", "enterprise_id", "project_id", "authorization_status", "upstream_records", "supersedes", "change_reason", "storage_ref", "created_at", "created_by_role"],
+      "properties": {
+        "record_id": {"type": "string", "minLength": 1},
+        "record_type": {"type": "string", "minLength": 1},
+        "version": {"type": "integer", "minimum": 1},
+        "lifecycle_status": {"$ref": "#/$defs/lifecycleStatus"},
+        "enterprise_id": {"type": "string", "minLength": 1},
+        "project_id": {"type": "string", "minLength": 1},
+        "authorization_status": {"$ref": "#/$defs/authorizationStatus"},
+        "upstream_records": {"type": "array", "items": {"type": "string", "pattern": "^[^@]+@[1-9][0-9]*$"}},
+        "supersedes": {"type": ["string", "null"]},
+        "change_reason": {"type": "string"},
+        "storage_ref": {"type": "string", "minLength": 1},
+        "created_at": {"type": "string", "format": "date-time"},
+        "created_by_role": {"type": "string", "minLength": 1},
+        "participant_id": {"type": "string"},
+        "process_id": {"type": "string"},
+        "evidence_level": {"$ref": "#/$defs/evidenceLevel"},
+        "evidence_label": {"type": "string"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"evidence_level": {"const": "E5"}}, "required": ["evidence_level"]},
+          "then": {"required": ["evidence_label"], "properties": {"evidence_label": {"const": "AI假设，待验证"}}}
+        }
+      ],
+      "additionalProperties": true
+    },
+    "materialRecord": {
+      "allOf": [{"$ref": "#/$defs/indexedRecord"}],
+      "required": ["analysis_status"],
+      "properties": {
+        "analysis_status": {"enum": ["received", "pending_analysis", "analyzed", "unusable", "withdrawn"]},
+        "content_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      }
+    },
+    "diagnosticRecord": {
+      "allOf": [{"$ref": "#/$defs/indexedRecord"}],
+      "required": ["review_status"],
+      "properties": {
+        "review_status": {"enum": ["draft", "review_required", "approved", "rejected"]},
+        "outstanding_gaps": {"type": "array", "items": {"type": "string", "pattern": "^[^@]+@[1-9][0-9]*$"}}
+      }
+    },
+    "conflictRecord": {
+      "allOf": [{"$ref": "#/$defs/indexedRecord"}],
+      "properties": {
+        "resolved_by_confirmation_record": {"type": "string", "pattern": "^[^@]+@[1-9][0-9]*$"}
+      }
+    },
+    "organizationalConfirmation": {
+      "allOf": [{"$ref": "#/$defs/indexedRecord"}],
+      "required": ["decision_class", "source_evidence_level", "authority_basis", "applicable_scope", "effective_at"],
+      "properties": {
+        "decision_class": {"const": "organization_decision"},
+        "source_evidence_level": {"$ref": "#/$defs/evidenceLevel"},
+        "authority_basis": {"type": "string", "minLength": 1},
+        "applicable_scope": {"type": "string", "minLength": 1},
+        "effective_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "riskAcceptance": {
+      "type": "object",
+      "required": ["accepted_by_role", "alternative_evidence", "residual_risk", "continue_reason", "applicable_scope"],
+      "properties": {
+        "accepted_by_role": {"type": "string", "minLength": 1},
+        "alternative_evidence": {"type": "string", "minLength": 1},
+        "residual_risk": {"type": "string", "minLength": 1},
+        "continue_reason": {"type": "string", "minLength": 1},
+        "applicable_scope": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "participantTask": {
+      "type": "object",
+      "required": ["task_id", "participant_id", "department_id", "role", "process_id", "priority", "status", "updated_at", "updated_by_role", "status_reason"],
+      "properties": {
+        "task_id": {"type": "string", "minLength": 1},
+        "participant_id": {"type": "string", "minLength": 1},
+        "department_id": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1},
+        "process_id": {"type": "string", "minLength": 1},
+        "priority": {"enum": ["P0", "P1", "P2"]},
+        "status": {"enum": ["pending_assignment", "ready", "interviewing", "awaiting_material_analysis", "awaiting_employee_confirmation", "confirmed", "participant_declined", "unreachable", "paused_participant", "completed"]},
+        "current_workflow_card": {"type": "string", "pattern": "^[^@]+@[1-9][0-9]*$"},
+        "risk_acceptance": {"$ref": "#/$defs/riskAcceptance"},
+        "updated_at": {"type": "string", "format": "date-time"},
+        "updated_by_role": {"type": "string", "minLength": 1},
+        "status_reason": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {"if": {"properties": {"status": {"const": "completed"}}}, "then": {"required": ["current_workflow_card"]}}
+      ],
+      "additionalProperties": false
+    },
+    "stopRecord": {
+      "type": "object",
+      "required": ["stop_id", "status", "reason", "affected_records", "recovery_conditions", "created_at", "created_by_role"],
+      "properties": {
+        "stop_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["active", "recovered"]},
+        "reason": {"type": "string", "minLength": 1},
+        "affected_records": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^[^@]+@[1-9][0-9]*$"}},
+        "recovery_conditions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "created_at": {"type": "string", "format": "date-time"},
+        "created_by_role": {"type": "string", "minLength": 1},
+        "manual_recovery": {"type": "boolean"},
+        "recovered_at": {"type": "string", "format": "date-time"},
+        "recovered_by_role": {"type": "string", "minLength": 1},
+        "recovery_basis": {"type": "string", "minLength": 1},
+        "resume_stage": {"enum": ["interview_preparation", "workflow_mapping", "evidence_completion", "diagnosis", "pilot"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "recovered"}}},
+          "then": {
+            "required": ["manual_recovery", "recovered_at", "recovered_by_role", "recovery_basis", "resume_stage"],
+            "properties": {"manual_recovery": {"const": true}}
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["department_id", "role", "process_id", "priority", "planned_participants", "status"],
+      "properties": {
+        "department_id": {"type": "string"},
+        "role": {"type": "string"},
+        "process_id": {"type": "string"},
+        "priority": {"enum": ["P0", "P1", "P2"]},
+        "planned_participants": {"type": "integer", "minimum": 0},
+        "status": {"enum": ["not_planned", "not_scheduled", "not_submitted", "declined", "received_pending_analysis", "analyzed", "unusable"]},
+        "gap": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "outputView": {
+      "type": "object",
+      "required": ["view_id", "audience_role", "publication_status", "source_records", "allowed_sections", "excluded_sections", "metadata_policy"],
+      "properties": {
+        "view_id": {"type": "string", "minLength": 1},
+        "audience_role": {"enum": ["employee", "enterprise_leader", "enterprise_it", "transformation_practitioner"]},
+        "publication_status": {"enum": ["draft", "review_required", "approved", "published", "withdrawn"]},
+        "source_records": {"type": "array", "items": {"type": "string"}},
+        "allowed_sections": {"type": "array", "items": {"type": "string"}},
+        "excluded_sections": {"type": "array", "items": {"type": "string"}},
+        "metadata_policy": {"const": "preserve_source_metadata"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

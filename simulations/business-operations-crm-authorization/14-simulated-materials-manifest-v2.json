@@ -1,0 +1,52 @@
+{
+  "manifest_type": "enterprise_material_analysis_input",
+  "simulation_only": true,
+  "enterprise_id": "ENT-SIM-BIZOPS",
+  "project_id": "PRJ-SIM-CRM-AUTH-001",
+  "process_id": "PROC-CRM-AUTH",
+  "sources": [
+    {
+      "source_id": "MAT-OA-SAMPLES-001",
+      "path": "12-simulated-oa-approval-samples.csv",
+      "source_role": "模拟流程工作台导出",
+      "evidence_level": "E5",
+      "source_nature": "synthetic_system_record"
+    },
+    {
+      "source_id": "MAT-CRM-LOGS-001",
+      "path": "13-simulated-crm-authorization-log.csv",
+      "source_role": "模拟CRM操作日志",
+      "evidence_level": "E5",
+      "source_nature": "synthetic_system_log"
+    },
+    {
+      "source_id": "MAT-BIZOPS-CARD-001",
+      "path": "01-employee-confirmed-workflow-card.md",
+      "source_role": "业务运营",
+      "evidence_level": "E3",
+      "source_nature": "employee_confirmed_account"
+    },
+    {
+      "source_id": "MAT-SYN-SALES-001",
+      "path": "07-synthetic-sales-applicant-sample.md",
+      "source_role": "AI模拟销售申请人",
+      "evidence_level": "E5",
+      "source_nature": "synthetic_hypothesis"
+    }
+  ],
+  "analysis_questions": [
+    "审批字段是否足以支持业务运营完成授权",
+    "申请声明的原归属销售与CRM当前归属是否一致",
+    "重复客户和缺失客户如何影响授权完成率",
+    "批量清单是否存在部分完成和遗漏风险",
+    "日志能否支持操作人、时间和变更前后记录追溯"
+  ],
+  "prohibited_conclusions": [
+    "所有CSV均为模拟记录，不得升级为E1真实系统证据",
+    "不得把E3和E5合并升级为E2",
+    "不得据此计算真实效率收益或ROI",
+    "不得据此断言生产CRM不存在批量能力或接口",
+    "不得据此开放诊断门"
+  ],
+  "diagnosis_gate_allowed": false
+}

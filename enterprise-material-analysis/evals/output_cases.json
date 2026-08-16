@@ -1,0 +1,22 @@
+{
+  "cases": [
+    {
+      "id": "urgent_procurement_multi_material",
+      "prompt": "分析这组紧急采购材料，输出证据包，不要给技术方案。",
+      "input_files": ["evals/fixtures/urgent-procurement/materials/*"],
+      "assertions": [
+        "inventories every supplied material including unreadable status",
+        "uses stable material and claim IDs with source locators",
+        "keeps one ERP record at E1 sample scope",
+        "keeps employee statements and estimates at E3",
+        "keeps SOP rules at E4 and does not claim actual compliance",
+        "detects OA versus chat entry timing conflict",
+        "detects purchase-to-warehouse handoff conflict",
+        "does not treat copied meeting notes as independent corroboration",
+        "requests minimum bounded evidence with likely owner and reason",
+        "does not recommend AI, Agent, RPA, workflow, products, or ROI"
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,111 @@
+{
+  "schema_version": "2.0.0-kang-personal",
+  "generated_at": "2026-08-14",
+  "package": {
+    "name": "enterprise-interview-preparation",
+    "version": "0.2.0",
+    "owner": "Kang Jiaxin",
+    "maturity_tier": "production-candidate",
+    "lifecycle_stage": null,
+    "upstream_inspiration": null,
+    "upstream_sync": {}
+  },
+  "intent": {
+    "description": "Prepare a role-specific interview plan before an enterprise AI application or digital-transformation discovery visit. Use when a transformation practitioner needs to decide whom to interview across an industry, department, role, or bounded process and produce interview objectives, open main questions, adaptive follow-up triggers, minimum evidence requests, coverage gaps, facilitation notes, and client-safe no-promise boundaries. Do not use to conduct the live employee interview, map one employee's workflow, analyze collected transcripts or files, diagnose the transformation route, recommend AI/RPA/Agent technology, estimate ROI, or implement systems.\n",
+    "job_to_be_done": "Prepare a role-specific interview plan before an enterprise AI application or digital-transformation discovery visit. Use when a transformation practitioner needs to decide whom to interview across an industry, department, role, or bounded process and produce interview objectives, open main questions, adaptive follow-up triggers, minimum evidence requests, coverage gaps, facilitation notes, and client-safe no-promise boundaries. Do not use to conduct the live employee interview, map one employee's workflow, analyze collected transcripts or files, diagnose the transformation route, recommend AI/RPA/Agent technology, estimate ROI, or implement systems.\n",
+    "target_users": [
+      "Kang personal operator"
+    ],
+    "inputs": [],
+    "outputs": [],
+    "exclusions": [],
+    "kang_defaults": {}
+  },
+  "triggers": {
+    "should_trigger": [
+      "为下周拜访连锁零售企业准备访谈对象名单、问题清单和追问路线",
+      "我们要调研财务报销流程，应该访谈哪些岗位并分别问什么",
+      "根据制造业采购部门和访谈目标，生成分角色访谈提纲与材料清单",
+      "客户一直说想上Agent，帮我准备不诱导的调研问题和现场不能承诺的事项",
+      "只有3小时和4个名额，主管和员工说法冲突，帮我准备最小访谈组合和镜像问题",
+      "Prepare stakeholder interviews for one enterprise workflow discovery, including follow-ups and evidence requests."
+    ],
+    "should_not_trigger": [
+      "我是门店客服，请逐题采访我并生成我的工作流程卡",
+      "分析这些会议纪要、SOP和Excel，整理证据冲突",
+      "根据证据包判断应该用工作流、RPA还是Agent",
+      "把已经确认的改造方案做成老板看的可视化",
+      "直接开发一个员工访谈平台"
+    ],
+    "near_neighbor": [
+      "我只有一份模糊的客户需求，想先确认调研范围",
+      "把完成的访谈问题发给这些员工并自动安排会议",
+      "只需要一个通用的用户研究问题模板，不涉及企业流程"
+    ]
+  },
+  "workflow": {
+    "router_rules": [],
+    "compact_workflow": [],
+    "gate_ladder": [],
+    "output_contract": [
+      "scope, discovery goals, known facts, assumptions and exclusions;",
+      "planning constraints, recommended coverage and minimum viable interview combination;",
+      "role coverage matrix and interview priority;",
+      "expected cross-role disagreement hypotheses with mirrored questions;",
+      "role-specific interview guides with objective, main questions, follow-up triggers and rationale;",
+      "minimum evidence request grouped by enterprise owner;",
+      "facilitation and consent notes;",
+      "client-safe no-promise list;",
+      "coverage gaps, stop conditions and next handoff;",
+      "`enterprise_interview_plan` JSON/YAML block with enterprise/project/process identifiers when available."
+    ]
+  },
+  "resources": {
+    "references": [
+      "references/interview-design-method.md"
+    ],
+    "scripts": [],
+    "evals": [
+      "evals/output_cases.json",
+      "evals/trigger_cases.json"
+    ],
+    "reports": [
+      "reports/creation-handoff.md",
+      "reports/runtime-case-constrained-customer-service.md",
+      "reports/runtime-case-manufacturing-procurement.md",
+      "reports/runtime-case-retail-complaint.md",
+      "reports/skill-ir.json",
+      "reports/trigger-eval.json"
+    ]
+  },
+  "portability": {
+    "canonical_format": "agent-skills",
+    "adapter_targets": [
+      "openai"
+    ],
+    "activation": {
+      "mode": "manual-or-description"
+    },
+    "execution": {
+      "context": "inline"
+    },
+    "trust": {
+      "source_tier": "personal-local",
+      "generated_claims": "planning-assumptions-only"
+    },
+    "permissions": {
+      "network": "none required by the skill",
+      "file_read": "only user-authorized background context",
+      "file_write": "only when the user requests an exportable interview plan",
+      "external_actions": "forbidden"
+    },
+    "degradation": {}
+  },
+  "gates": {},
+  "evidence_boundary": {
+    "generated_reports_are_evidence": true,
+    "planned_work_is_evidence": false,
+    "missing_external_or_human_evidence_label": "missing evidence",
+    "public_claim_policy": "claim only what local validation, install proof, human review, or provider-backed evidence actually supports"
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "schema_version": "2.0.0-kang-personal",
+  "generated_at": "2026-08-14",
+  "package": {
+    "name": "enterprise-ai-diagnostic-orchestrator",
+    "version": "0.1.0",
+    "owner": "Kang Jiaxin",
+    "maturity_tier": "production-candidate",
+    "lifecycle_stage": null,
+    "upstream_inspiration": null,
+    "upstream_sync": {}
+  },
+  "intent": {
+    "description": "Coordinate one enterprise AI flow-diagnosis event from a master record, interview plan, workflow-card handoff, material evidence handoff, or diagnosis handoff. Use when an enterprise project owner or platform operator needs to continue a multi-stage flow diagnosis, decide which bounded professional Skill or responsible role handles the current event, preserve enterprise scope, authorization, evidence, versions and human gates, and produce the next scheduling proposal. Typical routing events include an employee file upload during workflow mapping and an owner-confirmed interview plan that needs a coverage proposal without invented participant tasks（员工摸排中的附件上传或“上传了Excel”；管理层访谈计划已确认后生成覆盖建议，但不虚构员工任务）. Do not use for a single employee interview, standalone material analysis, standalone process diagnosis, generic project management, software implementation, database development, or free-form multi-agent orchestration.\n",
+    "job_to_be_done": "Coordinate one enterprise AI flow-diagnosis event from a master record, interview plan, workflow-card handoff, material evidence handoff, or diagnosis handoff. Use when an enterprise project owner or platform operator needs to continue a multi-stage flow diagnosis, decide which bounded professional Skill or responsible role handles the current event, preserve enterprise scope, authorization, evidence, versions and human gates, and produce the next scheduling proposal. Typical routing events include an employee file upload during workflow mapping and an owner-confirmed interview plan that needs a coverage proposal without invented participant tasks（员工摸排中的附件上传或“上传了Excel”；管理层访谈计划已确认后生成覆盖建议，但不虚构员工任务）. Do not use for a single employee interview, standalone material analysis, standalone process diagnosis, generic project management, software implementation, database development, or free-form multi-agent orchestration.\n",
+    "target_users": [
+      "Kang personal operator"
+    ],
+    "inputs": [],
+    "outputs": [],
+    "exclusions": [],
+    "kang_defaults": {}
+  },
+  "triggers": {
+    "should_trigger": [
+      "使用企业AI流程诊断总控，根据总档案继续处理当前事件",
+      "员工已经确认流程卡，请结合企业总档案判断下一步由谁处理",
+      "员工摸排时上传了Excel，请路由到合适能力并返回原任务",
+      "材料授权撤回了，请暂停这次流程诊断并说明恢复条件",
+      "Coordinate this enterprise process diagnosis from the current event and master record.",
+      "管理层访谈计划已确认，请生成覆盖建议但不要虚构员工任务"
+    ],
+    "should_not_trigger": [
+      "只为管理层生成一份访谈问题清单",
+      "请逐题采访这个员工并生成他的流程卡",
+      "只分析这些PDF和Excel并形成证据包",
+      "根据证据包判断用工作流、RPA还是Agent",
+      "直接开发统一入口、数据库和任务队列",
+      "帮我管理这个普通软件项目的里程碑",
+      "总结一下这份会议纪要"
+    ],
+    "near_neighbor": [
+      "设计一套通用的多Agent编排框架",
+      "把已经确认的诊断结果做成可视化报告",
+      "帮我分析整个公司的AI成熟度",
+      "检查一份登记提案的JSON结构是否正确"
+    ]
+  },
+  "workflow": {
+    "router_rules": [],
+    "compact_workflow": [],
+    "gate_ladder": [],
+    "output_contract": []
+  },
+  "resources": {
+    "references": [
+      "references/external-task-package.md",
+      "references/interview-plan-adapter.md",
+      "references/routing-method.md"
+    ],
+    "scripts": [
+      "scripts/orchestrate_event.py",
+      "scripts/validate_orchestrator_output.py"
+    ],
+    "evals": [
+      "evals/trigger_cases.json"
+    ],
+    "reports": [
+      "reports/creation-handoff.md",
+      "reports/prior-art-research.md",
+      "reports/runtime-case-retail-complaint.md",
+      "reports/trigger-eval.json"
+    ]
+  },
+  "portability": {
+    "canonical_format": "agent-skills",
+    "adapter_targets": [
+      "openai"
+    ],
+    "activation": {
+      "mode": "manual-or-description"
+    },
+    "execution": {
+      "context": "inline"
+    },
+    "trust": {
+      "source_tier": "personal-local",
+      "generated_claims": "scheduling-proposal-only"
+    },
+    "permissions": {
+      "network": "none required by the skill",
+      "file_read": "only authorized master record, events and referenced artifacts",
+      "file_write": "only when the user requests an exportable scheduling proposal",
+      "external_actions": "forbidden"
+    },
+    "degradation": {
+      "openai": "local deterministic routing tests only; cross-Agent runtime pending"
+    }
+  },
+  "gates": {},
+  "evidence_boundary": {
+    "generated_reports_are_evidence": true,
+    "planned_work_is_evidence": false,
+    "missing_external_or_human_evidence_label": "missing evidence",
+    "public_claim_policy": "claim only what local validation, install proof, human review, or provider-backed evidence actually supports"
+  }
+}

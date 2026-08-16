@@ -1,0 +1,85 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_scheduling_proposal",
+  "contract_version": "0.1",
+  "event_id": "EVENT-PLAN-001",
+  "decision": "wait_external",
+  "target": "enterprise_project_owner",
+  "reason_codes": [
+    "CONFIRMED_PLAN_MAPPED",
+    "PARTICIPANT_IDENTITY_REQUIRED"
+  ],
+  "human_summary": "已把负责人确认的岗位范围转换为覆盖建议；只有获得真实员工身份和授权后才能创建员工任务。",
+  "context_package": {
+    "enterprise_id": "ENT-SIM-RTL",
+    "project_id": "PRJ-SIM-RTL-V02",
+    "event_type": "interview_plan_confirmed",
+    "actor_role": "enterprise_project_owner",
+    "payload": {
+      "owner_confirmed": true,
+      "participant_roles": [
+        {
+          "department_id": "DEPT-STORE",
+          "role": "门店客服",
+          "process_id": "PROC-COMPLAINT",
+          "priority": "P0",
+          "planned_participants": 6
+        },
+        {
+          "department_id": "DEPT-STORE",
+          "role": "店长",
+          "process_id": "PROC-COMPLAINT",
+          "priority": "P0",
+          "planned_participants": 3
+        },
+        {
+          "department_id": "DEPT-FINANCE",
+          "role": "退款审核",
+          "process_id": "PROC-REFUND",
+          "priority": "P1",
+          "planned_participants": 2
+        }
+      ],
+      "participants": []
+    }
+  },
+  "human_task": null,
+  "proposed_state_change": {
+    "research_coverage_proposals": [
+      {
+        "department_id": "DEPT-STORE",
+        "role": "门店客服",
+        "process_id": "PROC-COMPLAINT",
+        "priority": "P0",
+        "planned_participants": 6,
+        "status": "not_scheduled",
+        "gap": ""
+      },
+      {
+        "department_id": "DEPT-STORE",
+        "role": "店长",
+        "process_id": "PROC-COMPLAINT",
+        "priority": "P0",
+        "planned_participants": 3,
+        "status": "not_scheduled",
+        "gap": ""
+      },
+      {
+        "department_id": "DEPT-FINANCE",
+        "role": "退款审核",
+        "process_id": "PROC-REFUND",
+        "priority": "P1",
+        "planned_participants": 2,
+        "status": "not_scheduled",
+        "gap": ""
+      }
+    ],
+    "participant_task_proposals": [],
+    "missing_registration_fields": [],
+    "automatic_write": false
+  },
+  "next_expected_events": [
+    "participant_identities_supplied"
+  ],
+  "write_authority": "scheduling_proposal",
+  "created_at": "2026-08-14T09:40:00+08:00"
+}

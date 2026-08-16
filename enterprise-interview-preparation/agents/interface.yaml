@@ -1,0 +1,25 @@
+interface:
+  display_name: "企业访谈准备"
+  short_description: "按流程、角色和时间限制生成访谈计划、追问与待验证分歧"
+  default_prompt: "Use $enterprise-interview-preparation to prepare a role-specific interview plan for one bounded enterprise process. Respect time, participant, and access constraints; preserve conflicting claims as hypotheses; include mirrored questions, adaptive follow-ups, minimum evidence, and no-promise boundaries. Do not conduct the live employee interview or recommend technology."
+  examples:
+    - "为下周拜访连锁零售企业准备分角色访谈提纲。"
+    - "调研财务报销流程应该访谈谁、分别问什么、索取什么材料？"
+    - "客户想上Agent，请先设计不诱导的企业流程调研问题。"
+    - "只有3小时和4个访谈名额，请给出最小组合并标记跨角色分歧。"
+compatibility:
+  canonical_format: "agent-skills"
+  adapter_targets:
+    - "openai"
+  activation:
+    mode: "manual-or-description"
+  execution:
+    context: "inline"
+  trust:
+    source_tier: "personal-local"
+    generated_claims: "planning-assumptions-only"
+  permissions:
+    network: "none required by the skill"
+    file_read: "only user-authorized background context"
+    file_write: "only when the user requests an exportable interview plan"
+    external_actions: "forbidden"

@@ -1,0 +1,16 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_orchestrator_event",
+  "contract_version": "0.1",
+  "event_id": "EVENT-STOP-001",
+  "event_type": "authorization_withdrawn",
+  "enterprise_id": "ENT-SIM-RTL",
+  "project_id": "PRJ-SIM-RTL-V02",
+  "actor_role": "enterprise_project_owner",
+  "authorization_status": "withdrawn",
+  "source_status": "known",
+  "payload": {
+    "affected_record": "MAT-TICKET-001@1",
+    "withdrawal_scope": "停止该工单样本继续支持新结论"
+  },
+  "created_at": "2026-08-14T13:10:00+08:00"
+}

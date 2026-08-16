@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Enterprise AI Diagnostic Orchestrator Event v0.1",
+  "type": "object",
+  "required": [
+    "contract_type", "contract_version", "event_id", "event_type",
+    "enterprise_id", "project_id", "actor_role", "authorization_status",
+    "source_status", "payload", "created_at"
+  ],
+  "properties": {
+    "contract_type": {"const": "enterprise_ai_diagnostic_orchestrator_event"},
+    "contract_version": {"const": "0.1"},
+    "event_id": {"type": "string", "minLength": 1},
+    "event_type": {
+      "enum": [
+        "management_problem_submitted", "interview_plan_submitted", "interview_plan_confirmed",
+        "participant_task_started", "file_uploaded", "workflow_card_confirmed",
+        "material_analysis_completed", "material_analysis_blocked", "diagnosis_gate_ready",
+        "process_diagnosis_completed", "process_diagnosis_blocked", "h1_required", "h2_required",
+        "authorization_withdrawn", "manual_recovery_confirmed"
+      ]
+    },
+    "enterprise_id": {"type": "string", "minLength": 1},
+    "project_id": {"type": "string", "minLength": 1},
+    "actor_role": {"type": "string", "minLength": 1},
+    "authorization_status": {"enum": ["pending", "authorized", "restricted", "withdrawn", "not_required"]},
+    "source_status": {"enum": ["known", "unknown", "unreadable"]},
+    "payload": {"type": "object"},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}
+

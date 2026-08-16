@@ -1,0 +1,106 @@
+{
+  "schema_version": "2.0.0-kang-personal",
+  "generated_at": "2026-08-12",
+  "package": {
+    "name": "enterprise-material-analysis",
+    "version": "0.1.0",
+    "owner": "Kang Jiaxin",
+    "maturity_tier": "production-candidate",
+    "lifecycle_stage": null,
+    "upstream_inspiration": null,
+    "upstream_sync": {}
+  },
+  "intent": {
+    "description": "Analyze and verify authorized enterprise process materials through evidence analysis that finds policy-versus-practice gaps, source conflicts, and missing proof, then produces a traceable evidence ledger, claim-to-source map, contradiction register, coverage gaps, and minimum evidence request for a later enterprise AI application diagnosis. Use when an implementation practitioner has workflow cards, meeting notes, transcripts, SOPs, spreadsheets, screenshots, forms, PDFs, system records, logs, or samples and needs to analyze or find what the materials can prove, distinguish actual operation, employee statements, intended policy, and model inference. Do not use to interview employees, ask questions one by one, generate an employee workflow card, produce ordinary summaries, perform legal or compliance audits, select technology, recommend transformation, claim ROI, or implement systems.\n",
+    "job_to_be_done": "Analyze and verify authorized enterprise process materials through evidence analysis that finds policy-versus-practice gaps, source conflicts, and missing proof, then produces a traceable evidence ledger, claim-to-source map, contradiction register, coverage gaps, and minimum evidence request for a later enterprise AI application diagnosis. Use when an implementation practitioner has workflow cards, meeting notes, transcripts, SOPs, spreadsheets, screenshots, forms, PDFs, system records, logs, or samples and needs to analyze or find what the materials can prove, distinguish actual operation, employee statements, intended policy, and model inference. Do not use to interview employees, ask questions one by one, generate an employee workflow card, produce ordinary summaries, perform legal or compliance audits, select technology, recommend transformation, claim ROI, or implement systems.\n",
+    "target_users": [
+      "Kang personal operator"
+    ],
+    "inputs": [],
+    "outputs": [],
+    "exclusions": [],
+    "kang_defaults": {}
+  },
+  "triggers": {
+    "should_trigger": [
+      "分析这些流程卡、会议纪要和ERP样本，整理证据与冲突",
+      "找出这份SOP和员工实际说法之间需要补证的地方",
+      "把录音转写、Excel和截图整理成改造方可用的证据包",
+      "核验多份岗位流程卡的交接说法，给出最小材料清单",
+      "Build a source-located evidence ledger from these business process materials."
+    ],
+    "should_not_trigger": [
+      "请逐题采访这个采购员工并生成流程卡",
+      "根据这些材料决定使用n8n、RPA还是Agent",
+      "只总结一下会议纪要",
+      "审查这份合同有没有法律风险",
+      "直接开发一个企业材料上传系统"
+    ],
+    "near_neighbor": [
+      "为下周的员工访谈生成问题清单",
+      "把已经确定的改造路线画成可视化",
+      "分析这些材料并给企业老板最终改造方案"
+    ]
+  },
+  "workflow": {
+    "router_rules": [],
+    "compact_workflow": [],
+    "gate_ladder": [],
+    "output_contract": []
+  },
+  "resources": {
+    "references": [
+      "references/analysis-method.md",
+      "references/evidence-model.md"
+    ],
+    "scripts": [],
+    "evals": [
+      "evals/fixtures/urgent-procurement/actual-evidence-pack.md",
+      "evals/fixtures/urgent-procurement/expected-findings.md",
+      "evals/fixtures/urgent-procurement/materials/MAT-001-procurement-card.md",
+      "evals/fixtures/urgent-procurement/materials/MAT-002-meeting-transcript.md",
+      "evals/fixtures/urgent-procurement/materials/MAT-003-erp-sample.csv",
+      "evals/fixtures/urgent-procurement/materials/MAT-004-procurement-sop.md",
+      "evals/fixtures/urgent-procurement/materials/MAT-005-warehouse-note.md",
+      "evals/fixtures/urgent-procurement/materials/MAT-006-damaged-screenshot.txt",
+      "evals/output_cases.json",
+      "evals/trigger_cases.json"
+    ],
+    "reports": [
+      "reports/creation-handoff.md",
+      "reports/output-evidence.json",
+      "reports/runtime-case-urgent-procurement.md",
+      "reports/trigger-eval.json"
+    ]
+  },
+  "portability": {
+    "canonical_format": "agent-skills",
+    "adapter_targets": [
+      "openai"
+    ],
+    "activation": {
+      "mode": "manual-or-description"
+    },
+    "execution": {
+      "context": "inline"
+    },
+    "trust": {
+      "source_tier": "personal-local",
+      "generated_claims": "source-located-and-evidence-labelled"
+    },
+    "permissions": {
+      "network": "none required by the skill",
+      "file_read": "only user-authorized in-scope materials",
+      "file_write": "only when the user requests an exportable evidence pack",
+      "external_actions": "forbidden"
+    },
+    "degradation": {}
+  },
+  "gates": {},
+  "evidence_boundary": {
+    "generated_reports_are_evidence": true,
+    "planned_work_is_evidence": false,
+    "missing_external_or_human_evidence_label": "missing evidence",
+    "public_claim_policy": "claim only what local validation, install proof, human review, or provider-backed evidence actually supports"
+  }
+}

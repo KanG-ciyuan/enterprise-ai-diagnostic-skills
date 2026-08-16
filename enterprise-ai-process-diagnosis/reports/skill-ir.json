@@ -1,0 +1,122 @@
+{
+  "schema_version": "2.0.0-kang-personal",
+  "generated_at": "2026-08-12",
+  "package": {
+    "name": "enterprise-ai-process-diagnosis",
+    "version": "0.2.0",
+    "owner": "Kang Jiaxin",
+    "maturity_tier": "production-candidate",
+    "lifecycle_stage": null,
+    "upstream_inspiration": null,
+    "upstream_sync": {}
+  },
+  "intent": {
+    "description": "Diagnose one concrete enterprise AI or digital-transformation process from an evidence pack, workflow card, interview synthesis, or bounded process materials. Use when an AI implementation practitioner must verify demand reality, preserve evidence conflicts, choose the minimum sufficient combination of process redesign, rules, API, workflow, RPA, AI workflow, RAG, bounded Agent, and human work, determine whether implementation is developable, conditional, or blocked, and produce an internal diagnosis plus a client-facing 3-7 day shadow pilot. Do not use to merely organize raw materials, interview an employee, audit an entire enterprise, directly implement a settled solution, or recommend tools without process evidence and system conditions.\n",
+    "job_to_be_done": "Diagnose one concrete enterprise AI or digital-transformation process from an evidence pack, workflow card, interview synthesis, or bounded process materials. Use when an AI implementation practitioner must verify demand reality, preserve evidence conflicts, choose the minimum sufficient combination of process redesign, rules, API, workflow, RPA, AI workflow, RAG, bounded Agent, and human work, determine whether implementation is developable, conditional, or blocked, and produce an internal diagnosis plus a client-facing 3-7 day shadow pilot. Do not use to merely organize raw materials, interview an employee, audit an entire enterprise, directly implement a settled solution, or recommend tools without process evidence and system conditions.\n",
+    "target_users": [
+      "Kang personal operator"
+    ],
+    "inputs": [],
+    "outputs": [],
+    "exclusions": [],
+    "kang_defaults": {}
+  },
+  "triggers": {
+    "should_trigger": [
+      "用这个企业材料证据包诊断紧急采购流程，并保留禁止结论",
+      "帮我诊断客户这个企业AI业务流程是不是真实需求",
+      "分析流程卡和会议证据，判断该用工作流、RPA还是Agent",
+      "先核对OA和ERP系统接口条件，再给出有条件的技术路线",
+      "这个流程是否可开发？请区分离线试点和生产集成",
+      "为这个具体流程设计3至7天影子模式试点",
+      "Diagnose this enterprise AI process from the evidence pack and propose a conditional technical plan."
+    ],
+    "should_not_trigger": [
+      "只整理这些原始材料并形成证据包，不做诊断",
+      "访谈这名员工并确认他的日常工作流程卡",
+      "帮我做整家企业的数字化转型战略规划",
+      "方案已经确定，直接开发这个系统",
+      "不看业务流程，只推荐几个热门Agent工具",
+      "把这份会议纪要总结一下"
+    ],
+    "near_neighbor": [
+      "只整理多份材料的事实、冲突和证据定位",
+      "评估公司整体AI成熟度，但先不分析具体流程",
+      "比较n8n和Dify的产品功能与价格",
+      "把已经确定的自动化方案拆成开发任务"
+    ]
+  },
+  "workflow": {
+    "router_rules": [],
+    "compact_workflow": [],
+    "gate_ladder": [],
+    "output_contract": [
+      "Primary business conclusion, confidence, and technical maturity",
+      "Restated business problem and current process",
+      "Evidence ledger, contradictions, and prohibited conclusions",
+      "Demand reality assessment",
+      "Responsibility allocation and rejected routes",
+      "System/interface discovery card with evidence status",
+      "Conditional technical plan and per-component `可开发/有条件/阻塞` state",
+      "Risks, permission boundary, maintenance responsibility, and internal deal advice",
+      "Missing evidence grouped by responsible enterprise role",
+      "3-7 day shadow pilot with actual build/test activities and pass/observe/stop criteria",
+      "Confirmed need and current findings",
+      "Recommended route in plain business language",
+      "Confirmed prerequisites and conditions still requiring client verification",
+      "3-7 day shadow pilot, acceptance measures, and client participants",
+      "Responsibilities, exclusions, risks, and next decision gate"
+    ]
+  },
+  "resources": {
+    "references": [
+      "references/conditional-technical-design.md",
+      "references/diagnosis-framework.md",
+      "references/evidence-and-safety.md",
+      "references/system-interface-discovery.md"
+    ],
+    "scripts": [],
+    "evals": [
+      "evals/fixtures/urgent-procurement/actual-diagnosis.md",
+      "evals/trigger_cases.json"
+    ],
+    "reports": [
+      "reports/creation-handoff.md",
+      "reports/local-release-check.json",
+      "reports/output-evidence.json",
+      "reports/skill-ir.json",
+      "reports/trigger-eval.json"
+    ]
+  },
+  "portability": {
+    "canonical_format": "agent-skills",
+    "adapter_targets": [
+      "openai"
+    ],
+    "activation": {
+      "mode": "manual-or-description"
+    },
+    "execution": {
+      "context": "inline"
+    },
+    "trust": {
+      "source_tier": "personal-local",
+      "generated_claims": "evidence-and-condition-bound"
+    },
+    "permissions": {
+      "network": "none required by the skill",
+      "file_write": "none unless the user separately requests an artifact",
+      "external_actions": "forbidden during diagnosis and shadow-pilot design"
+    },
+    "degradation": {
+      "openai": "validated locally with simulated evidence-pack case; provider runtime pending"
+    }
+  },
+  "gates": {},
+  "evidence_boundary": {
+    "generated_reports_are_evidence": true,
+    "planned_work_is_evidence": false,
+    "missing_external_or_human_evidence_label": "missing evidence",
+    "public_claim_policy": "claim only what local validation, install proof, human review, or provider-backed evidence actually supports"
+  }
+}

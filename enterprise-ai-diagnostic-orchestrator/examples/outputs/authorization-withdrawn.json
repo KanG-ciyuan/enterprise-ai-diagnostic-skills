@@ -1,0 +1,45 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_scheduling_proposal",
+  "contract_version": "0.1",
+  "event_id": "EVENT-STOP-001",
+  "decision": "pause",
+  "target": "enterprise_project_owner",
+  "reason_codes": [
+    "AUTHORIZATION_WITHDRAWN",
+    "S0"
+  ],
+  "human_summary": "材料或参与授权已经撤回，相关派生必须暂停。",
+  "context_package": {
+    "enterprise_id": "ENT-SIM-RTL",
+    "project_id": "PRJ-SIM-RTL-V02",
+    "event_type": "authorization_withdrawn",
+    "actor_role": "enterprise_project_owner",
+    "payload": {
+      "affected_record": "MAT-TICKET-001@1",
+      "withdrawal_scope": "停止该工单样本继续支持新结论"
+    }
+  },
+  "human_task": {
+    "task_type": "S0_recovery",
+    "responsible_role": "enterprise_project_owner",
+    "question": "请确认撤回范围和受影响记录。",
+    "reason": "材料或参与授权已经撤回，相关派生必须暂停。",
+    "required_evidence": "有权角色提供书面确认和受影响记录范围",
+    "affected_decision": "是否允许当前流程诊断继续派生记录",
+    "recovery_conditions": [
+      "授权方重新书面确认或明确终止",
+      "复核所有下游引用",
+      "项目负责人手动恢复"
+    ],
+    "expected_return_event": "manual_recovery_confirmed"
+  },
+  "proposed_state_change": {
+    "suggested_stage": "paused",
+    "automatic_write": false
+  },
+  "next_expected_events": [
+    "manual_recovery_confirmed"
+  ],
+  "write_authority": "scheduling_proposal",
+  "created_at": "2026-08-14T13:10:00+08:00"
+}

@@ -1,0 +1,192 @@
+{
+  "ok": true,
+  "threshold": 0.34,
+  "description_concepts": [
+    "employee",
+    "evidence",
+    "interview",
+    "mapping",
+    "workflow"
+  ],
+  "missing_description_concepts": [],
+  "summary": {
+    "total": 13,
+    "passed": 13,
+    "false_positive": 0,
+    "false_negative": 0,
+    "pass_rate": 1.0
+  },
+  "failures": [],
+  "results": {
+    "should_trigger": [
+      {
+        "prompt": "使用企业工作摸排Skill，帮我梳理一项日常工作",
+        "family": "explicit_employee_mapping",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "employee",
+          "mapping"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "我是销售运营，请通过提问还原我每周整理销售复盘报告的工作流程",
+        "family": "role_and_job",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.6,
+        "matched_concepts": [
+          "interview",
+          "mapping",
+          "workflow"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "我每天有一项重复工作很耗时，帮我摸排并生成流程卡",
+        "family": "natural_mapping",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "mapping",
+          "workflow"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "根据我的回答和这份SOP梳理我的具体工作，但先不要给改造建议",
+        "family": "mapping_with_evidence",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "mapping",
+          "workflow"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "Interview me about one recurring employee workflow and create a confirmation card.",
+        "family": "english",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.6,
+        "matched_concepts": [
+          "employee",
+          "interview",
+          "workflow"
+        ],
+        "negative_pattern": null
+      }
+    ],
+    "should_not_trigger": [
+      {
+        "prompt": "帮我对整个部门做AI数字化改造方案",
+        "family": "department_transformation",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": "整个部门"
+      },
+      {
+        "prompt": "分析多份员工流程卡并决定用RPA还是Agent",
+        "family": "consultant_diagnosis",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.6,
+        "matched_concepts": [
+          "employee",
+          "mapping",
+          "workflow"
+        ],
+        "negative_pattern": "分析多份员工流程卡"
+      },
+      {
+        "prompt": "需求已经确认，直接开发员工摸排网站",
+        "family": "implementation",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "employee",
+          "mapping"
+        ],
+        "negative_pattern": "直接开发"
+      },
+      {
+        "prompt": "只总结一下这份会议纪要",
+        "family": "summary",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "evidence"
+        ],
+        "negative_pattern": "只总结"
+      },
+      {
+        "prompt": "对比影刀、n8n和Dify哪个更好",
+        "family": "tool_comparison",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      }
+    ],
+    "near_neighbor": [
+      {
+        "prompt": "帮主管生成访问员工的问题清单和追问路线",
+        "family": "interview_preparation",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "employee",
+          "interview"
+        ],
+        "negative_pattern": "帮主管生成访问员工"
+      },
+      {
+        "prompt": "把这个已经确认的流程画成一张图",
+        "family": "visualization_only",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "workflow"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "我想随便聊聊工作压力，不需要梳理具体流程",
+        "family": "general_chat",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "mapping",
+          "workflow"
+        ],
+        "negative_pattern": "不需要梳理具体流程"
+      }
+    ]
+  }
+}

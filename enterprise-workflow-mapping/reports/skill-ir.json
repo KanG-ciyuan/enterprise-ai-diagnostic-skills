@@ -1,0 +1,132 @@
+{
+  "schema_version": "2.0.0-kang-personal",
+  "generated_at": "2026-08-12",
+  "package": {
+    "name": "enterprise-workflow-mapping",
+    "version": "0.1.0",
+    "owner": "Kang Jiaxin",
+    "maturity_tier": "scaffold",
+    "lifecycle_stage": null,
+    "upstream_inspiration": null,
+    "upstream_sync": {}
+  },
+  "intent": {
+    "description": "Map one concrete recurring employee workflow through an adaptive interview and optional supporting materials. Use when an enterprise employee wants to梳理、摸排、还原一项日常工作或重复工作，说明实际步骤、系统、材料、判断、异常、耗时与交接，并生成供本人确认的工作流程卡。Do not use for department-wide audits, consultant diagnosis, AI transformation plans, technology selection, implementation, or ordinary meeting summaries.",
+    "job_to_be_done": "Map one concrete recurring employee workflow through an adaptive interview and optional supporting materials. Use when an enterprise employee wants to梳理、摸排、还原一项日常工作或重复工作，说明实际步骤、系统、材料、判断、异常、耗时与交接，并生成供本人确认的工作流程卡。Do not use for department-wide audits, consultant diagnosis, AI transformation plans, technology selection, implementation, or ordinary meeting summaries.",
+    "target_users": [
+      "ordinary enterprise employee mapping one recurring job"
+    ],
+    "inputs": [
+      "employee answers",
+      "optional transcript or meeting notes",
+      "optional SOP, Word, PDF, Excel, CSV, Markdown, form, screenshot, email or chat excerpt"
+    ],
+    "outputs": [
+      "employee-corrected workflow draft",
+      "employee-confirmed workflow card",
+      "compact Mermaid workflow",
+      "portable Markdown or JSON handoff when requested"
+    ],
+    "exclusions": [
+      "department-wide audit",
+      "consultant diagnosis",
+      "technology selection or transformation recommendation",
+      "implementation and external actions",
+      "ordinary summary without workflow mapping intent"
+    ],
+    "kang_defaults": {}
+  },
+  "triggers": {
+    "should_trigger": [
+      "使用企业工作摸排Skill，帮我梳理一项日常工作",
+      "我是销售运营，请通过提问还原我每周整理销售复盘报告的工作流程",
+      "我每天有一项重复工作很耗时，帮我摸排并生成流程卡",
+      "根据我的回答和这份SOP梳理我的具体工作，但先不要给改造建议",
+      "Interview me about one recurring employee workflow and create a confirmation card."
+    ],
+    "should_not_trigger": [
+      "帮我对整个部门做AI数字化改造方案",
+      "分析多份员工流程卡并决定用RPA还是Agent",
+      "需求已经确认，直接开发员工摸排网站",
+      "只总结一下这份会议纪要",
+      "对比影刀、n8n和Dify哪个更好"
+    ],
+    "near_neighbor": [
+      "帮主管生成访问员工的问题清单和追问路线",
+      "把这个已经确认的流程画成一张图",
+      "我想随便聊聊工作压力，不需要梳理具体流程"
+    ]
+  },
+  "workflow": {
+    "router_rules": [
+      "one employee and one concrete recurring job per run",
+      "one question per turn",
+      "employee-facing output contains no transformation recommendation"
+    ],
+    "compact_workflow": [
+      "select one job",
+      "reconstruct the normal path",
+      "trace systems and information",
+      "capture decisions and exceptions",
+      "label burden and evidence",
+      "correct and confirm the workflow card"
+    ],
+    "gate_ladder": [],
+    "output_contract": [
+      "compact workflow diagram",
+      "step table with actor, inputs, actions, systems, outputs, decisions, exceptions and evidence",
+      "burden estimates with evidence status",
+      "open questions and explicit employee confirmation"
+    ]
+  },
+  "resources": {
+    "references": [
+      "references/evidence-integrity.md",
+      "references/interview-method.md",
+      "references/workflow-card-schema.md"
+    ],
+    "scripts": [],
+    "evals": [
+      "evals/fixtures/sales-operations/employee-background.md",
+      "evals/fixtures/sales-operations/expected-workflow-card.md",
+      "evals/fixtures/sales-operations/sample-evidence.md",
+      "evals/output_cases.json",
+      "evals/trigger_cases.json"
+    ],
+    "reports": [
+      "reports/creation-handoff.md",
+      "reports/output-evidence.json",
+      "reports/runtime-case-sales-operations.md",
+      "reports/trigger-eval.json"
+    ]
+  },
+  "portability": {
+    "canonical_format": "agent-skills",
+    "adapter_targets": [
+      "openai"
+    ],
+    "activation": {
+      "mode": "manual-or-description"
+    },
+    "execution": {
+      "context": "inline"
+    },
+    "trust": {
+      "source_tier": "personal-local",
+      "generated_claims": "employee-confirmed-and-evidence-labelled"
+    },
+    "permissions": {
+      "network": "none required by the skill",
+      "file_write": "only when the user requests an exportable card",
+      "external_actions": "forbidden"
+    },
+    "degradation": {}
+  },
+  "gates": {},
+  "evidence_boundary": {
+    "generated_reports_are_evidence": true,
+    "planned_work_is_evidence": false,
+    "missing_external_or_human_evidence_label": "missing evidence",
+    "public_claim_policy": "claim only what local validation, install proof, human review, or provider-backed evidence actually supports"
+  }
+}

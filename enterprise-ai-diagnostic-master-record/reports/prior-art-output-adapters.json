@@ -1,0 +1,54 @@
+{
+  "ok": false,
+  "complete": false,
+  "researched_at": "2026-08-14",
+  "queries": [
+    "agent skill output contract schema handoff",
+    "multi agent workflow state evidence audit trail",
+    "enterprise workflow evidence pack agent"
+  ],
+  "metric_semantics": {
+    "skills_sh_installs": "ecosystem install telemetry; not ratings or correctness",
+    "skillsmp_repo_stars": "GitHub repository stars; not installs, ratings, or skill-specific quality",
+    "cross_catalog_score": "not calculated; metrics remain separate"
+  },
+  "query_runs": [
+    {
+      "query": "agent skill output contract schema handoff",
+      "skills_sh": "error",
+      "skillsmp": "error",
+      "skills_sh_error": "Command '['npx', '--yes', 'skills', 'find', 'agent skill output contract schema handoff']' timed out after 30.0 seconds",
+      "skillsmp_error": "SkillsMP request failed: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "query": "multi agent workflow state evidence audit trail",
+      "skills_sh": "error",
+      "skillsmp": "error",
+      "skills_sh_error": "Command '['npx', '--yes', 'skills', 'find', 'multi agent workflow state evidence audit trail']' timed out after 30.0 seconds",
+      "skillsmp_error": "SkillsMP request failed: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "query": "enterprise workflow evidence pack agent",
+      "skills_sh": "error",
+      "skillsmp": "error",
+      "skills_sh_error": "Command '['npx', '--yes', 'skills', 'find', 'enterprise workflow evidence pack agent']' timed out after 30.0 seconds",
+      "skillsmp_error": "SkillsMP request failed: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    }
+  ],
+  "candidate_family_count": 0,
+  "candidates": [],
+  "missing_evidence": [
+    "skills.sh `agent skill output contract schema handoff`: Command '['npx', '--yes', 'skills', 'find', 'agent skill output contract schema handoff']' timed out after 30.0 seconds",
+    "SkillsMP `agent skill output contract schema handoff`: SkillsMP request failed: <urlopen error [Errno 8] nodename nor servname provided, or not known>",
+    "skills.sh `multi agent workflow state evidence audit trail`: Command '['npx', '--yes', 'skills', 'find', 'multi agent workflow state evidence audit trail']' timed out after 30.0 seconds",
+    "SkillsMP `multi agent workflow state evidence audit trail`: SkillsMP request failed: <urlopen error [Errno 8] nodename nor servname provided, or not known>",
+    "skills.sh `enterprise workflow evidence pack agent`: Command '['npx', '--yes', 'skills', 'find', 'enterprise workflow evidence pack agent']' timed out after 30.0 seconds",
+    "SkillsMP `enterprise workflow evidence pack agent`: SkillsMP request failed: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+  ],
+  "next_steps": [
+    "shortlist by job relevance and role coverage, not combined popularity",
+    "open canonical GitHub source and inspect SKILL.md before adoption",
+    "verify license, maintenance, permissions, security, duplication, and rating evidence",
+    "write keep/adapt/reject/invent synthesis before authoring"
+  ]
+}

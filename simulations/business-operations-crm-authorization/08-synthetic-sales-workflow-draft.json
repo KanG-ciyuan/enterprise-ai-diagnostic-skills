@@ -1,0 +1,65 @@
+{
+  "record_type": "synthetic_workflow_hypothesis",
+  "record_id": "SYN-SALES-APPLICANT-001",
+  "version": 1,
+  "lifecycle_status": "draft_hypothesis",
+  "source_role": "AI simulated sales applicant",
+  "evidence_level": "E5",
+  "evidence_label": "AI假设，待验证",
+  "employee_confirmed": false,
+  "workflow": [
+    {
+      "step": 1,
+      "action": "从聊天记录、个人台账或交接Excel整理需要授权的客户名称",
+      "system_or_material": "聊天记录或Excel",
+      "status": "simulated_hypothesis"
+    },
+    {
+      "step": 2,
+      "action": "根据个人记忆、交接信息或Excel填写原归属销售并发起授权流程",
+      "system_or_material": "内部流程工作台",
+      "status": "simulated_hypothesis"
+    },
+    {
+      "step": 3,
+      "action": "等待原归属销售和业务运营处理；按驳回原因补建客户或调整加签人",
+      "system_or_material": "内部流程工作台",
+      "status": "simulated_hypothesis"
+    },
+    {
+      "step": 4,
+      "action": "收到流程完成通知后认为授权已完成，紧急客户可能单独抽查访问权限",
+      "system_or_material": "流程通知和客户系统",
+      "status": "simulated_hypothesis"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "SYN-CLAIM-001",
+      "claim": "销售提交的批量名单可能只有客户名称，不一定包含稳定客户标识",
+      "evidence_level": "E5"
+    },
+    {
+      "claim_id": "SYN-CLAIM-002",
+      "claim": "销售可能根据个人台账或记忆填写原归属销售",
+      "evidence_level": "E5"
+    },
+    {
+      "claim_id": "SYN-CLAIM-003",
+      "claim": "销售可能把流程完成通知视为整批客户均已授权，而不逐项验收",
+      "evidence_level": "E5"
+    }
+  ],
+  "open_questions": [
+    "申请表是否强制填写稳定客户标识",
+    "批量Excel是否有统一模板和必填列",
+    "销售是否逐项验收授权结果",
+    "原归属销售填写错误的实际频率和原因",
+    "驳回后的返工时间和重新提交率"
+  ],
+  "prohibited_uses": [
+    "不得标记销售员工已确认",
+    "不得关闭销售申请人P0覆盖缺口",
+    "不得单独支持诊断或技术路线"
+  ]
+}

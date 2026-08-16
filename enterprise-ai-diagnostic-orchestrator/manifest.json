@@ -1,0 +1,25 @@
+{
+  "name": "enterprise-ai-diagnostic-orchestrator",
+  "version": "0.1.0",
+  "owner": "Kang Jiaxin",
+  "updated_at": "2026-08-14",
+  "status": "personal-experiment",
+  "maturity_tier": "production-candidate",
+  "target_platforms": ["codex"],
+  "publication": "local-only",
+  "upstream_skills": [
+    "enterprise-interview-preparation",
+    "enterprise-workflow-mapping",
+    "enterprise-material-analysis",
+    "enterprise-ai-process-diagnosis"
+  ],
+  "release_gates": [
+    "prior-art review",
+    "package validation",
+    "trigger boundary evaluation",
+    "deterministic route tests",
+    "retail complaint end-to-end simulation",
+    "human review before public publication"
+  ],
+  "upstream_inspiration": null
+}

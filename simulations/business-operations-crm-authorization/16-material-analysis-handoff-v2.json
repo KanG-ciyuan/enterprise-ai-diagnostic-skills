@@ -1,0 +1,123 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_skill_handoff",
+  "contract_version": "0.2",
+  "handoff_id": "HANDOFF-MATERIAL-CRM-AUTH-V2-001",
+  "producer_skill": "enterprise-material-analysis",
+  "event_type": "material_analysis_completed",
+  "handoff_status": "ready_for_registration",
+  "write_authority": "registration_proposal",
+  "routing_context": {
+    "enterprise_id": "ENT-SIM-BIZOPS",
+    "project_id": "PRJ-SIM-CRM-AUTH-001",
+    "process_id": "PROC-CRM-AUTH",
+    "participant_id": "PART-BIZOPS-001",
+    "department_id": "DEPT-BIZOPS",
+    "role": "业务运营",
+    "task_id": "TASK-BIZOPS-001"
+  },
+  "records_to_register": [
+    {
+      "collection": "materials",
+      "record": {
+        "record_id": "MAT-OA-SAMPLES-001",
+        "record_type": "synthetic_oa_approval_export",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-BIZOPS",
+        "project_id": "PRJ-SIM-CRM-AUTH-001",
+        "authorization_status": "not_required",
+        "analysis_status": "analyzed",
+        "content_hash": "454deb03c14780f7b5bad63ab3c17f421e14249f9b2865ef921ec24628d778dc",
+        "evidence_level": "E5",
+        "evidence_label": "AI假设，待验证",
+        "upstream_records": [],
+        "supersedes": null,
+        "change_reason": "模拟OA审批样本，用于分支测试",
+        "storage_ref": "simulations/business-operations-crm-authorization/12-simulated-oa-approval-samples.csv",
+        "created_at": "2026-08-15T19:15:16+08:00",
+        "created_by_role": "simulation_agent"
+      }
+    },
+    {
+      "collection": "materials",
+      "record": {
+        "record_id": "MAT-CRM-LOGS-001",
+        "record_type": "synthetic_crm_authorization_log",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-BIZOPS",
+        "project_id": "PRJ-SIM-CRM-AUTH-001",
+        "authorization_status": "not_required",
+        "analysis_status": "analyzed",
+        "content_hash": "b85de6f7ca67687cc58a0f553ea06034c799cb2cadb3faf81fb9101aeffc3884",
+        "evidence_level": "E5",
+        "evidence_label": "AI假设，待验证",
+        "upstream_records": [],
+        "supersedes": null,
+        "change_reason": "模拟CRM授权日志，用于成功、阻断和处理中分支测试",
+        "storage_ref": "simulations/business-operations-crm-authorization/13-simulated-crm-authorization-log.csv",
+        "created_at": "2026-08-15T19:15:16+08:00",
+        "created_by_role": "simulation_agent"
+      }
+    },
+    {
+      "collection": "conflicts_and_evidence_requests",
+      "record": {
+        "record_id": "EVIDENCE-CRM-AUTH-V2-001",
+        "record_type": "enterprise_material_evidence_pack",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-BIZOPS",
+        "project_id": "PRJ-SIM-CRM-AUTH-001",
+        "authorization_status": "not_required",
+        "evidence_level": "E5",
+        "evidence_label": "AI假设，待验证",
+        "upstream_records": [
+          "CARD-BIZOPS-CRM-AUTH-001@1",
+          "MAT-OA-SAMPLES-001@1",
+          "MAT-CRM-LOGS-001@1",
+          "MAT-SYN-SALES-001@1"
+        ],
+        "supersedes": null,
+        "change_reason": "模拟表格与流程卡的E3/E5边界分析",
+        "storage_ref": "simulations/business-operations-crm-authorization/15-material-evidence-pack-v2.md",
+        "created_at": "2026-08-15T19:15:16+08:00",
+        "created_by_role": "material_analysis_agent",
+        "diagnosis_gate_allowed": false,
+        "prohibited_conclusions": [
+          "不得把模拟CSV当成真实系统日志",
+          "不得把E3与E5合并升级为E2",
+          "不得据此计算真实效率、遗漏率或ROI",
+          "不得据此断言系统不存在批量能力或接口",
+          "不得据此推荐技术路线或开放诊断门"
+        ]
+      }
+    }
+  ],
+  "participant_task_updates": [],
+  "unresolved_items": [
+    {
+      "item_id": "OPEN-V2-REAL-SALES-001",
+      "kind": "evidence_gap",
+      "blocking": true,
+      "source_records": [
+        "MAT-OA-SAMPLES-001@1",
+        "MAT-CRM-LOGS-001@1"
+      ],
+      "summary": "新增CSV均为E5模拟材料，真实销售P0和真实系统E1证据仍缺失",
+      "suggested_exception_level": "H1"
+    },
+    {
+      "item_id": "OPEN-V2-CRM-CAPABILITY-001",
+      "kind": "evidence_gap",
+      "blocking": true,
+      "source_records": [
+        "MAT-CRM-LOGS-001@1"
+      ],
+      "summary": "模拟日志不能证明生产CRM的批量、接口、权限和日志能力",
+      "suggested_exception_level": "H1"
+    }
+  ],
+  "missing_registration_fields": [],
+  "created_at": "2026-08-15T19:15:16+08:00"
+}

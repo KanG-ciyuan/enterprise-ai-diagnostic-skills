@@ -1,0 +1,19 @@
+{
+  "name": "enterprise-material-analysis",
+  "version": "0.1.0",
+  "owner": "Kang Jiaxin",
+  "updated_at": "2026-08-12",
+  "status": "personal-experiment",
+  "maturity_tier": "production-candidate",
+  "target_platforms": ["codex"],
+  "publication": "local-only",
+  "release_gates": [
+    "package validation",
+    "trigger boundary evaluation",
+    "output contract tests",
+    "one simulated multi-material case",
+    "provider-backed runtime or explicit missing evidence",
+    "human review before public publication"
+  ]
+}
+

@@ -1,0 +1,13 @@
+approval_id,request_type,batch_id,customer_name,customer_id,original_owner_declared,new_sales,new_sales_department,authorization_type,extra_countersign,approval_status,approved_at
+OA-001,routine,,星河制造,CUST-001,张敏,李浩,华东一部,协同拜访,否,approved,2026-08-11T09:02:00+08:00
+OA-002,routine,,远航科技,CUST-002,王强,陈璐,华南二部,协同拜访,否,approved,2026-08-11T09:15:00+08:00
+OA-003,routine,,新源物流,,张敏,李浩,华东一部,临时授权,否,approved,2026-08-11T10:04:00+08:00
+OA-004,routine,,华南科技,CUST-004A,王强,陈璐,华南二部,协同拜访,否,approved,2026-08-11T10:20:00+08:00
+OA-005,routine,,华南科技,CUST-004B,王强,陈璐,华南二部,协同拜访,否,approved,2026-08-11T10:22:00+08:00
+OA-006,routine,,启明医疗,CUST-006,王强,李浩,华东一部,离职交接,是,approved,2026-08-11T11:08:00+08:00
+OA-007,routine,,北辰能源,CUST-007,赵凯,陈璐,华南二部,协同拜访,否,approved,2026-08-11T11:31:00+08:00
+OA-008,routine,,蓝海零售,CUST-008,张敏,李浩,华东一部,协同拜访,否,approved,2026-08-11T13:05:00+08:00
+OA-009,routine,,安泰化工,CUST-009,赵凯,陈璐,华南二部,临时授权,否,approved,2026-08-11T14:17:00+08:00
+OA-010,routine,,嘉禾食品,CUST-010,张敏,李浩,华东一部,协同拜访,否,approved,2026-08-11T15:42:00+08:00
+OA-011,bulk,BATCH-2026-08-12-A,离职交接名单-01,CUST-011,王强,陈璐,华南二部,离职交接,是,approved,2026-08-12T09:30:00+08:00
+OA-012,bulk,BATCH-2026-08-12-A,离职交接名单-02,CUST-012,王强,陈璐,华南二部,离职交接,是,approved,2026-08-12T09:30:00+08:00

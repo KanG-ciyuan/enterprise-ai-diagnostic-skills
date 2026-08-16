@@ -1,0 +1,27 @@
+interface:
+  display_name: "企业AI流程诊断总控"
+  short_description: "根据总档案与当前事件决定下一步、责任人和恢复条件"
+  default_prompt: "Use $enterprise-ai-diagnostic-orchestrator to continue one enterprise flow diagnosis from its master record and one current event. Preserve enterprise scope, authorization, evidence labels and versions; choose at most one primary Skill or one responsible role; return a human explanation plus a scheduling proposal without writing the master record."
+  examples:
+    - "继续处理这次流程诊断，告诉我下一步由谁做。"
+    - "员工确认了流程卡，请结合总档案判断是否可以继续。"
+    - "员工上传了附件，请路由处理并返回原摸排任务。"
+compatibility:
+  canonical_format: "agent-skills"
+  adapter_targets:
+    - "openai"
+  activation:
+    mode: "manual-or-description"
+  execution:
+    context: "inline"
+  trust:
+    source_tier: "personal-local"
+    generated_claims: "scheduling-proposal-only"
+  permissions:
+    network: "none required by the skill"
+    file_read: "only authorized master record, events and referenced artifacts"
+    file_write: "only when the user requests an exportable scheduling proposal"
+    external_actions: "forbidden"
+  degradation:
+    openai: "local deterministic routing tests only; cross-Agent runtime pending"
+

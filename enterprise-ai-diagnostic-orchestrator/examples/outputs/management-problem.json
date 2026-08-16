@@ -1,0 +1,28 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_scheduling_proposal",
+  "contract_version": "0.1",
+  "event_id": "EVENT-MGMT-001",
+  "decision": "invoke_skill",
+  "target": "enterprise-interview-preparation",
+  "reason_codes": [
+    "MANAGEMENT_SCOPE_DISCOVERY"
+  ],
+  "human_summary": "当前事件应由enterprise-interview-preparation处理；一次只调用一个主要Skill。",
+  "context_package": {
+    "enterprise_id": "ENT-SIM-RTL",
+    "project_id": "PRJ-SIM-RTL-V02",
+    "event_type": "management_problem_submitted",
+    "actor_role": "enterprise_project_owner",
+    "payload": {
+      "problem_statement": "微信、电话和现场客诉分散，管理层无法确认是否全部登记，也不清楚超时后由谁接管。",
+      "requested_outcome": "先识别应优先诊断的业务流程和岗位范围"
+    }
+  },
+  "human_task": null,
+  "proposed_state_change": {},
+  "next_expected_events": [
+    "interview_plan_submitted"
+  ],
+  "write_authority": "scheduling_proposal",
+  "created_at": "2026-08-14T09:05:00+08:00"
+}

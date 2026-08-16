@@ -1,0 +1,171 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_skill_handoff",
+  "contract_version": "0.2",
+  "handoff_id": "HANDOFF-MATERIAL-CRM-AUTH-001",
+  "producer_skill": "enterprise-material-analysis",
+  "event_type": "material_analysis_completed",
+  "handoff_status": "ready_for_registration",
+  "write_authority": "registration_proposal",
+  "routing_context": {
+    "enterprise_id": "ENT-SIM-BIZOPS",
+    "project_id": "PRJ-SIM-CRM-AUTH-001",
+    "process_id": "PROC-CRM-AUTH",
+    "participant_id": "PART-BIZOPS-001",
+    "department_id": "DEPT-BIZOPS",
+    "role": "业务运营",
+    "task_id": "TASK-BIZOPS-001"
+  },
+  "records_to_register": [
+    {
+      "collection": "materials",
+      "record": {
+        "record_id": "MAT-BIZOPS-CARD-001",
+        "record_type": "workflow_card_analysis_input",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-BIZOPS",
+        "project_id": "PRJ-SIM-CRM-AUTH-001",
+        "authorization_status": "authorized",
+        "analysis_status": "analyzed",
+        "content_hash": "2875befa5614afe0d971392481fead0ba30159e32817ac034005c03591fceb33",
+        "evidence_level": "E3",
+        "upstream_records": [
+          "CARD-BIZOPS-CRM-AUTH-001@1"
+        ],
+        "supersedes": null,
+        "change_reason": "员工确认流程卡作为材料分析输入",
+        "storage_ref": "simulations/business-operations-crm-authorization/01-employee-confirmed-workflow-card.md",
+        "created_at": "2026-08-15T19:15:16+08:00",
+        "created_by_role": "material_analysis_agent"
+      }
+    },
+    {
+      "collection": "materials",
+      "record": {
+        "record_id": "MAT-SYN-SALES-001",
+        "record_type": "synthetic_role_hypothesis",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-BIZOPS",
+        "project_id": "PRJ-SIM-CRM-AUTH-001",
+        "authorization_status": "not_required",
+        "analysis_status": "analyzed",
+        "content_hash": "93bdfeddbd9d4d9acfde26c4e4c6acef42b206aabf6acebb93a8c1a770f950bb",
+        "evidence_level": "E5",
+        "evidence_label": "AI假设，待验证",
+        "upstream_records": [],
+        "supersedes": null,
+        "change_reason": "AI模拟销售申请人样本，仅用于生成待验证问题",
+        "storage_ref": "simulations/business-operations-crm-authorization/07-synthetic-sales-applicant-sample.md",
+        "created_at": "2026-08-15T19:15:16+08:00",
+        "created_by_role": "simulation_agent"
+      }
+    },
+    {
+      "collection": "conflicts_and_evidence_requests",
+      "record": {
+        "record_id": "X-HANDOFF-CRM-AUTH-001",
+        "record_type": "conflict_hypothesis",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-BIZOPS",
+        "project_id": "PRJ-SIM-CRM-AUTH-001",
+        "authorization_status": "not_required",
+        "evidence_level": "E5",
+        "evidence_label": "AI假设，待验证",
+        "upstream_records": [
+          "MAT-BIZOPS-CARD-001@1",
+          "MAT-SYN-SALES-001@1"
+        ],
+        "supersedes": null,
+        "change_reason": "待验证业务运营完成记录与销售验收是否一致",
+        "storage_ref": "simulations/business-operations-crm-authorization/10-material-evidence-pack.md",
+        "created_at": "2026-08-15T19:15:16+08:00",
+        "created_by_role": "material_analysis_agent",
+        "resolved_by_confirmation_record": null
+      }
+    },
+    {
+      "collection": "conflicts_and_evidence_requests",
+      "record": {
+        "record_id": "REQ-SALES-REAL-001",
+        "record_type": "evidence_request",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-BIZOPS",
+        "project_id": "PRJ-SIM-CRM-AUTH-001",
+        "authorization_status": "not_required",
+        "evidence_level": "E5",
+        "evidence_label": "AI假设，待验证",
+        "upstream_records": [
+          "CARD-BIZOPS-CRM-AUTH-001@1",
+          "MAT-SYN-SALES-001@1"
+        ],
+        "supersedes": null,
+        "change_reason": "请求真实销售员工验证申请输入与结果验收路径",
+        "storage_ref": "simulations/business-operations-crm-authorization/10-material-evidence-pack.md",
+        "created_at": "2026-08-15T19:15:16+08:00",
+        "created_by_role": "material_analysis_agent"
+      }
+    },
+    {
+      "collection": "conflicts_and_evidence_requests",
+      "record": {
+        "record_id": "EVIDENCE-CRM-AUTH-001",
+        "record_type": "enterprise_material_evidence_pack",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-BIZOPS",
+        "project_id": "PRJ-SIM-CRM-AUTH-001",
+        "authorization_status": "authorized",
+        "evidence_level": "E3",
+        "upstream_records": [
+          "CARD-BIZOPS-CRM-AUTH-001@1",
+          "MAT-BIZOPS-CARD-001@1",
+          "MAT-SYN-SALES-001@1",
+          "X-HANDOFF-CRM-AUTH-001@1",
+          "REQ-SALES-REAL-001@1"
+        ],
+        "supersedes": null,
+        "change_reason": "整理业务运营E3陈述、销售E5模拟与最小补证请求",
+        "storage_ref": "simulations/business-operations-crm-authorization/10-material-evidence-pack.md",
+        "created_at": "2026-08-15T19:15:16+08:00",
+        "created_by_role": "material_analysis_agent",
+        "diagnosis_gate_allowed": false,
+        "prohibited_conclusions": [
+          "不得把AI模拟样本写成销售员工陈述",
+          "不得把E3和E5合并升级为E2",
+          "不得断言系统不存在批量能力或接口",
+          "不得开放诊断门",
+          "不得推荐技术路线或承诺收益"
+        ]
+      }
+    }
+  ],
+  "participant_task_updates": [],
+  "unresolved_items": [
+    {
+      "item_id": "OPEN-SALES-P0-001",
+      "kind": "evidence_gap",
+      "blocking": true,
+      "source_records": [
+        "CARD-BIZOPS-CRM-AUTH-001@1",
+        "MAT-SYN-SALES-001@1"
+      ],
+      "summary": "真实销售申请人尚未完成员工摸排，AI模拟样本不能替代P0角色覆盖",
+      "suggested_exception_level": "H1"
+    },
+    {
+      "item_id": "OPEN-CRM-CAPABILITY-001",
+      "kind": "evidence_gap",
+      "blocking": true,
+      "source_records": [
+        "CARD-BIZOPS-CRM-AUTH-001@1"
+      ],
+      "summary": "CRM批量能力、接口、权限、日志和失败路径尚未由系统管理员或材料核验",
+      "suggested_exception_level": "H1"
+    }
+  ],
+  "missing_registration_fields": [],
+  "created_at": "2026-08-15T19:15:16+08:00"
+}

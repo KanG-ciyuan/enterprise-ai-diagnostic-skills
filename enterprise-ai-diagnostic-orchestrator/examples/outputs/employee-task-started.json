@@ -1,0 +1,33 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_scheduling_proposal",
+  "contract_version": "0.1",
+  "event_id": "EVENT-TASK-001",
+  "decision": "invoke_skill",
+  "target": "enterprise-workflow-mapping",
+  "reason_codes": [
+    "EMPLOYEE_MAPPING_TASK_READY"
+  ],
+  "human_summary": "当前事件应由enterprise-workflow-mapping处理；一次只调用一个主要Skill。",
+  "context_package": {
+    "enterprise_id": "ENT-SIM-RTL",
+    "project_id": "PRJ-SIM-RTL-V02",
+    "event_type": "participant_task_started",
+    "actor_role": "employee",
+    "payload": {
+      "task_id": "TASK-CSR-001",
+      "participant_id": "PART-CSR-001",
+      "department_id": "DEPT-STORE",
+      "role": "门店客服",
+      "process_id": "PROC-COMPLAINT",
+      "employee_visible_context_only": true
+    }
+  },
+  "human_task": null,
+  "proposed_state_change": {},
+  "next_expected_events": [
+    "workflow_card_confirmed",
+    "file_uploaded"
+  ],
+  "write_authority": "scheduling_proposal",
+  "created_at": "2026-08-14T10:00:00+08:00"
+}

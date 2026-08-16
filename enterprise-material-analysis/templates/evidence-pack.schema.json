@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Enterprise Material Evidence Pack",
+  "type": "object",
+  "required": ["record_type", "schema_version", "analysis_id", "version", "project_id", "process_name", "materials", "claims", "conflicts", "coverage", "evidence_requests", "prohibited_conclusions", "created_at"],
+  "properties": {
+    "record_type": {"const": "enterprise_material_evidence_pack"},
+    "schema_version": {"const": "0.1"},
+    "analysis_id": {"type": "string", "minLength": 1},
+    "version": {"type": "integer", "minimum": 1},
+    "project_id": {"type": "string", "minLength": 1},
+    "process_name": {"type": "string", "minLength": 1},
+    "scope": {"type": "object"},
+    "materials": {"type": "array"},
+    "claims": {"type": "array"},
+    "conflicts": {"type": "array"},
+    "coverage": {"type": "object"},
+    "evidence_requests": {"type": "array"},
+    "prohibited_conclusions": {"type": "array"},
+    "upstream_records": {"type": "array"},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}
+

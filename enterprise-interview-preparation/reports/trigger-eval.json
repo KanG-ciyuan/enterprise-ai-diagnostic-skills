@@ -1,0 +1,203 @@
+{
+  "ok": true,
+  "threshold": 0.34,
+  "description_concepts": [
+    "coverage",
+    "enterprise",
+    "evidence",
+    "interview",
+    "prepare"
+  ],
+  "missing_description_concepts": [],
+  "summary": {
+    "total": 14,
+    "passed": 14,
+    "false_positive": 0,
+    "false_negative": 0,
+    "pass_rate": 1.0
+  },
+  "failures": [],
+  "results": {
+    "should_trigger": [
+      {
+        "prompt": "为下周拜访连锁零售企业准备访谈对象名单、问题清单和追问路线",
+        "family": "enterprise_visit",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.6,
+        "matched_concepts": [
+          "enterprise",
+          "interview",
+          "prepare"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "我们要调研财务报销流程，应该访谈哪些岗位并分别问什么",
+        "family": "role_coverage",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "enterprise",
+          "interview"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "根据制造业采购部门和访谈目标，生成分角色访谈提纲与材料清单",
+        "family": "department_process",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 1.0,
+        "matched_concepts": [
+          "coverage",
+          "enterprise",
+          "evidence",
+          "interview",
+          "prepare"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "客户一直说想上Agent，帮我准备不诱导的调研问题和现场不能承诺的事项",
+        "family": "solution_bias",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "interview",
+          "prepare"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "只有3小时和4个名额，主管和员工说法冲突，帮我准备最小访谈组合和镜像问题",
+        "family": "constrained_conflict",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "interview",
+          "prepare"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "Prepare stakeholder interviews for one enterprise workflow discovery, including follow-ups and evidence requests.",
+        "family": "english",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.6,
+        "matched_concepts": [
+          "enterprise",
+          "evidence",
+          "prepare"
+        ],
+        "negative_pattern": null
+      }
+    ],
+    "should_not_trigger": [
+      {
+        "prompt": "我是门店客服，请逐题采访我并生成我的工作流程卡",
+        "family": "live_employee_mapping",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": "采访我"
+      },
+      {
+        "prompt": "分析这些会议纪要、SOP和Excel，整理证据冲突",
+        "family": "material_analysis",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "evidence"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "根据证据包判断应该用工作流、RPA还是Agent",
+        "family": "process_diagnosis",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "evidence"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "把已经确认的改造方案做成老板看的可视化",
+        "family": "visualization",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "直接开发一个员工访谈平台",
+        "family": "implementation",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "interview"
+        ],
+        "negative_pattern": "直接开发"
+      }
+    ],
+    "near_neighbor": [
+      {
+        "prompt": "我只有一份模糊的客户需求，想先确认调研范围",
+        "family": "scope_clarification",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "interview"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "把完成的访谈问题发给这些员工并自动安排会议",
+        "family": "external_action",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "interview"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "只需要一个通用的用户研究问题模板，不涉及企业流程",
+        "family": "generic_user_research",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "enterprise"
+        ],
+        "negative_pattern": null
+      }
+    ]
+  }
+}

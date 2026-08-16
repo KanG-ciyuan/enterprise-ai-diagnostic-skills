@@ -1,0 +1,42 @@
+{
+  "recommended_threshold": 0.34,
+  "description_required_concepts": ["employee", "workflow", "mapping"],
+  "positive_concepts": {
+    "employee": ["employee", "员工", "岗位", "我的工作", "日常工作"],
+    "workflow": ["workflow", "流程", "工作流程", "具体工作", "重复工作"],
+    "mapping": ["mapping", "梳理", "摸排", "还原", "流程卡"],
+    "interview": ["interview", "提问", "追问", "问答"],
+    "evidence": ["evidence", "材料", "截图", "excel", "sop", "纪要"]
+  },
+  "negative_patterns": [
+    "整个部门",
+    "全公司",
+    "改造方案",
+    "技术路线",
+    "分析多份员工流程卡",
+    "帮主管生成访问员工",
+    "不需要梳理具体流程",
+    "直接开发",
+    "只总结",
+    "工具对比"
+  ],
+  "should_trigger": [
+    {"text": "使用企业工作摸排Skill，帮我梳理一项日常工作", "family": "explicit_employee_mapping"},
+    {"text": "我是销售运营，请通过提问还原我每周整理销售复盘报告的工作流程", "family": "role_and_job"},
+    {"text": "我每天有一项重复工作很耗时，帮我摸排并生成流程卡", "family": "natural_mapping"},
+    {"text": "根据我的回答和这份SOP梳理我的具体工作，但先不要给改造建议", "family": "mapping_with_evidence"},
+    {"text": "Interview me about one recurring employee workflow and create a confirmation card.", "family": "english"}
+  ],
+  "should_not_trigger": [
+    {"text": "帮我对整个部门做AI数字化改造方案", "family": "department_transformation"},
+    {"text": "分析多份员工流程卡并决定用RPA还是Agent", "family": "consultant_diagnosis"},
+    {"text": "需求已经确认，直接开发员工摸排网站", "family": "implementation"},
+    {"text": "只总结一下这份会议纪要", "family": "summary"},
+    {"text": "对比影刀、n8n和Dify哪个更好", "family": "tool_comparison"}
+  ],
+  "near_neighbor": [
+    {"text": "帮主管生成访问员工的问题清单和追问路线", "family": "interview_preparation"},
+    {"text": "把这个已经确认的流程画成一张图", "family": "visualization_only"},
+    {"text": "我想随便聊聊工作压力，不需要梳理具体流程", "family": "general_chat"}
+  ]
+}

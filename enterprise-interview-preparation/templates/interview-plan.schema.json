@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Enterprise Interview Plan",
+  "type": "object",
+  "required": [
+    "record_type", "schema_version", "record_id", "version",
+    "enterprise_id", "project_id", "process_id", "scope",
+    "discovery_decisions", "planning_constraints", "participant_roles",
+    "conflict_hypotheses", "evidence_requests", "coverage_gaps",
+    "prohibited_promises", "upstream_records", "created_at"
+  ],
+  "properties": {
+    "record_type": {"const": "enterprise_interview_plan"},
+    "schema_version": {"const": "0.2"},
+    "record_id": {"type": "string", "minLength": 1},
+    "version": {"type": "integer", "minimum": 1},
+    "enterprise_id": {"type": ["string", "null"]},
+    "project_id": {"type": ["string", "null"]},
+    "process_id": {"type": ["string", "null"]},
+    "scope": {"type": "string", "minLength": 1},
+    "discovery_decisions": {"type": "array", "items": {"type": "string"}},
+    "planning_constraints": {
+      "type": "object",
+      "required": [
+        "total_time_minutes", "max_participants", "session_duration_minutes",
+        "access_constraints", "status"
+      ],
+      "properties": {
+        "total_time_minutes": {"type": ["integer", "null"], "minimum": 1},
+        "max_participants": {"type": ["integer", "null"], "minimum": 1},
+        "session_duration_minutes": {"type": ["integer", "null"], "minimum": 1},
+        "access_constraints": {"type": "array", "items": {"type": "string"}},
+        "status": {"enum": ["confirmed", "assumed", "unknown"]}
+      },
+      "additionalProperties": false
+    },
+    "participant_roles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["role", "priority", "reason", "decision_impact"],
+        "properties": {
+          "role": {"type": "string"},
+          "priority": {"enum": ["P0", "P1", "P2"]},
+          "reason": {"type": "string"},
+          "decision_impact": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence_requests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["evidence", "owner_role", "minimum_scope", "decision_impact", "fallback"],
+        "properties": {
+          "evidence": {"type": "string"},
+          "owner_role": {"type": "string"},
+          "minimum_scope": {"type": "string"},
+          "decision_impact": {"type": "string"},
+          "fallback": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "conflict_hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "topic", "roles", "claims", "mirrored_questions",
+          "verification_evidence", "status"
+        ],
+        "properties": {
+          "topic": {"type": "string", "minLength": 1},
+          "roles": {"type": "array", "minItems": 2, "items": {"type": "string"}},
+          "claims": {"type": "array", "minItems": 2, "items": {"type": "string"}},
+          "mirrored_questions": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "verification_evidence": {"type": "array", "items": {"type": "string"}},
+          "status": {"const": "hypothesis"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "coverage_gaps": {"type": "array", "items": {"type": "string"}},
+    "prohibited_promises": {"type": "array", "items": {"type": "string"}},
+    "upstream_records": {"type": "array", "items": {"type": "string"}},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,92 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_skill_handoff",
+  "contract_version": "0.2",
+  "handoff_id": "HANDOFF-MATERIAL-001",
+  "producer_skill": "enterprise-material-analysis",
+  "event_type": "material_analysis_completed",
+  "handoff_status": "ready_for_registration",
+  "write_authority": "registration_proposal",
+  "routing_context": {
+    "enterprise_id": "ENT-SIM-RTL",
+    "project_id": "PRJ-SIM-RTL-V02",
+    "process_id": "PROC-COMPLAINT",
+    "participant_id": null,
+    "department_id": null,
+    "role": null,
+    "task_id": null
+  },
+  "records_to_register": [
+    {
+      "collection": "materials",
+      "record": {
+        "record_id": "MAT-TICKET-002",
+        "record_type": "ticket_sample",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-RTL",
+        "project_id": "PRJ-SIM-RTL-V02",
+        "authorization_status": "restricted",
+        "analysis_status": "analyzed",
+        "content_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "evidence_level": "E1",
+        "upstream_records": [],
+        "supersedes": null,
+        "change_reason": "新增脱敏工单样本",
+        "storage_ref": "artifacts/materials/MAT-TICKET-002.xlsx",
+        "created_at": "2026-08-14T16:10:00+08:00",
+        "created_by_role": "material_analysis_agent"
+      }
+    },
+    {
+      "collection": "conflicts_and_evidence_requests",
+      "record": {
+        "record_id": "X-H2-002",
+        "record_type": "evidence_conflict",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-RTL",
+        "project_id": "PRJ-SIM-RTL-V02",
+        "authorization_status": "not_required",
+        "evidence_level": "E2",
+        "upstream_records": ["CARD-CSR-001@2", "MAT-TICKET-002@1"],
+        "supersedes": null,
+        "change_reason": "识别到接管责任口径冲突",
+        "storage_ref": "artifacts/evidence-packs/EVIDENCE-002.md",
+        "created_at": "2026-08-14T16:12:00+08:00",
+        "created_by_role": "material_analysis_agent"
+      }
+    },
+    {
+      "collection": "conflicts_and_evidence_requests",
+      "record": {
+        "record_id": "EVIDENCE-002",
+        "record_type": "enterprise_material_evidence_pack",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-RTL",
+        "project_id": "PRJ-SIM-RTL-V02",
+        "authorization_status": "authorized",
+        "evidence_level": "E2",
+        "upstream_records": ["CARD-CSR-001@2", "MAT-TICKET-002@1", "X-H2-002@1"],
+        "supersedes": null,
+        "change_reason": "形成新的材料证据包",
+        "storage_ref": "artifacts/evidence-packs/EVIDENCE-002.md",
+        "created_at": "2026-08-14T16:15:00+08:00",
+        "created_by_role": "material_analysis_agent"
+      }
+    }
+  ],
+  "participant_task_updates": [],
+  "unresolved_items": [
+    {
+      "item_id": "X-H2-002",
+      "kind": "conflict",
+      "blocking": true,
+      "source_records": ["CARD-CSR-001@2", "MAT-TICKET-002@1"],
+      "summary": "客服与店长对超时客诉接管责任的口径不一致",
+      "suggested_exception_level": "H2"
+    }
+  ],
+  "missing_registration_fields": [],
+  "created_at": "2026-08-14T16:15:00+08:00"
+}

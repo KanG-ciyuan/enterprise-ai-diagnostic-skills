@@ -1,0 +1,24 @@
+interface:
+  display_name: "企业工作摸排"
+  short_description: "通过逐题访谈梳理一项具体工作，并生成员工确认的流程卡"
+  default_prompt: "Use $enterprise-workflow-mapping to help me map one concrete recurring job. Ask one question at a time, separate statements from supporting evidence, let me correct the result, and create a workflow confirmation card without transformation recommendations."
+  examples:
+    - "帮我摸排一项日常工作。"
+    - "我是销售运营，请梳理我每周制作复盘报告的工作流程。"
+    - "根据我的回答和这份SOP生成工作流程确认卡。"
+compatibility:
+  canonical_format: "agent-skills"
+  adapter_targets:
+    - "openai"
+  activation:
+    mode: "manual-or-description"
+  execution:
+    context: "inline"
+  trust:
+    source_tier: "personal-local"
+    generated_claims: "employee-confirmed-and-evidence-labelled"
+  permissions:
+    network: "none required by the skill"
+    file_write: "only when the user requests an exportable card"
+    external_actions: "forbidden"
+

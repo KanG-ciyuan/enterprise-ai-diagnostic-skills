@@ -1,0 +1,61 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_skill_handoff",
+  "contract_version": "0.2",
+  "handoff_id": "HANDOFF-WORKFLOW-001",
+  "producer_skill": "enterprise-workflow-mapping",
+  "event_type": "workflow_card_confirmed",
+  "handoff_status": "ready_for_registration",
+  "write_authority": "registration_proposal",
+  "routing_context": {
+    "enterprise_id": "ENT-SIM-RTL",
+    "project_id": "PRJ-SIM-RTL-V02",
+    "process_id": "PROC-COMPLAINT",
+    "participant_id": "PART-CSR-001",
+    "department_id": "DEPT-STORE",
+    "role": "门店客服",
+    "task_id": "TASK-CSR-001"
+  },
+  "records_to_register": [
+    {
+      "collection": "workflow_cards",
+      "record": {
+        "record_id": "CARD-CSR-001",
+        "record_type": "workflow_card",
+        "version": 2,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-RTL",
+        "project_id": "PRJ-SIM-RTL-V02",
+        "participant_id": "PART-CSR-001",
+        "process_id": "PROC-COMPLAINT",
+        "authorization_status": "authorized",
+        "upstream_records": [],
+        "supersedes": "CARD-CSR-001@1",
+        "change_reason": "员工更正并确认新的流程卡版本",
+        "storage_ref": "artifacts/workflow-cards/CARD-CSR-001-v2.md",
+        "created_at": "2026-08-14T16:00:00+08:00",
+        "created_by_role": "employee_workflow_agent",
+        "employee_confirmed": true,
+        "confirmed_at": "2026-08-14T15:58:00+08:00"
+      }
+    }
+  ],
+  "participant_task_updates": [
+    {
+      "task_id": "TASK-CSR-001",
+      "status": "confirmed",
+      "current_workflow_card": "CARD-CSR-001@2",
+      "status_reason": "员工明确确认当前流程卡版本"
+    }
+  ],
+  "unresolved_items": [
+    {
+      "item_id": "OPEN-CSR-001",
+      "kind": "open_question",
+      "blocking": false,
+      "source_records": ["CARD-CSR-001@2"],
+      "summary": "微信客诉晚补录比例仍为员工估计值"
+    }
+  ],
+  "missing_registration_fields": [],
+  "created_at": "2026-08-14T16:00:00+08:00"
+}

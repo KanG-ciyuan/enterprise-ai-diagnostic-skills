@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="客户归属交接流程E5模拟诊断管理报告">
+    <title>客户归属交接流程诊断</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="report-data.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="report-header">
+      <div class="header-inner">
+        <div>
+          <h1>客户归属交接流程诊断</h1>
+          <p class="header-summary">聚焦流程断点、责任边界与离线验证路径。</p>
+        </div>
+        <button class="print-button screen-only" type="button" data-print>打印报告</button>
+      </div>
+    </header>
+
+    <div class="report-layout">
+      <nav class="page-nav screen-only" aria-label="报告目录">
+        <p>报告目录</p>
+        <a href="#summary">管理结论</a>
+        <a href="#current-flow">当前流程与断点</a>
+        <a href="#risks">风险优先级</a>
+        <a href="#responsibility">岗位责任边界</a>
+        <a href="#target-flow">推荐改造路线</a>
+        <a href="#pilot">5天离线影子试点</a>
+        <a href="#evidence-gaps">证据缺口</a>
+      </nav>
+
+      <main id="report">
+        <section id="summary" class="report-section summary-section" aria-labelledby="summary-title">
+          <div class="section-heading">
+            <p class="section-number">01</p>
+            <div>
+              <h2 id="summary-title">管理结论</h2>
+              <p>当前结论用于决定下一步验证，不是生产实施批准。</p>
+            </div>
+          </div>
+          <div class="summary-grid">
+            <article class="summary-item summary-item--neutral">
+              <p class="summary-label">业务结论</p>
+              <h3>补充真实调研后再判断</h3>
+              <p>目前主要依据为角色模拟材料，仍需真实岗位与系统证据。</p>
+            </article>
+            <article class="summary-item summary-item--good">
+              <p class="summary-label">当前可做</p>
+              <h3>5天离线影子验证</h3>
+              <p>只验证名单、规则、版本和结果回执，不触碰生产数据。</p>
+            </article>
+            <article class="summary-item summary-item--conditional">
+              <p class="summary-label">证据边界</p>
+              <h3>E5模拟诊断</h3>
+              <p>不能作为真实企业需求、收益或技术可行性的证明。</p>
+            </article>
+            <article class="summary-item summary-item--blocked">
+              <p class="summary-label">生产边界</p>
+              <h3>不连接或修改生产CRM</h3>
+              <p>接口、权限、字段、批量上限和真实异常均未确认。</p>
+            </article>
+          </div>
+        </section>
+
+        <div class="flow-view-control screen-only" role="tablist" aria-label="流程视角">
+          <button type="button" role="tab" aria-selected="true" aria-controls="current-flow" data-flow-target="current-flow">当前流程</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="target-flow" data-flow-target="target-flow">推荐路线</button>
+        </div>
+
+        <section id="current-flow" class="report-section" aria-labelledby="current-flow-title" data-flow-panel>
+          <div class="section-heading">
+            <p class="section-number">02</p>
+            <div>
+              <h2 id="current-flow-title">当前流程与断点</h2>
+              <p>真正的问题不是单个审批节点慢，而是各环节对“完成”的定义不同。</p>
+            </div>
+          </div>
+          <ol class="process-track process-track--current">
+            <li><span>1</span><strong>销售提交</strong><small>OA或Excel</small></li>
+            <li><span>2</span><strong>业务审批</strong><small>主管与销售负责人</small></li>
+            <li><span>3</span><strong>运营核对</strong><small>归属与争议</small></li>
+            <li><span>4</span><strong>CRM执行</strong><small>管理员操作</small></li>
+            <li><span>5</span><strong>业务验收</strong><small>申请人与运营</small></li>
+          </ol>
+          <div class="breakpoint-list" aria-label="核心流程断点">
+            <p><span class="status-mark status-mark--blocked"></span>OA审批完成不等于CRM变更完成</p>
+            <p><span class="status-mark status-mark--conditional"></span>裁决清单与原附件可能版本冲突</p>
+            <p><span class="status-mark status-mark--blocked"></span>CRM没有逐客户执行回执</p>
+          </div>
+        </section>
+
+        <section id="risks" class="report-section" aria-labelledby="risks-title">
+          <div class="section-heading">
+            <p class="section-number">03</p>
+            <div>
+              <h2 id="risks-title">风险优先级</h2>
+              <p>先控制可能造成错配、误执行和无法追溯的风险。</p>
+            </div>
+          </div>
+          <div class="risk-groups">
+            <details class="risk-group risk-group--blocked" open>
+              <summary><span>阻塞</span><strong>执行依据和结果无法形成可靠闭环</strong></summary>
+              <ul>
+                <li>OA原附件与裁决清单并存，可能误用旧版本。</li>
+                <li>CRM批量处理缺少逐客户成功、失败和遗漏回执。</li>
+                <li>业务审批、数据核验、系统执行和验收没有独立状态。</li>
+              </ul>
+            </details>
+            <details class="risk-group risk-group--conditional">
+              <summary><span>有条件</span><strong>依赖真实字段、权限和系统能力</strong></summary>
+              <ul>
+                <li>锁定、跨事业部权限和批量上限可能造成部分完成。</li>
+                <li>CRM日志不关联OA单号，也不支持一键回滚。</li>
+              </ul>
+            </details>
+            <details class="risk-group risk-group--good">
+              <summary><span>可验证</span><strong>可先在离线环境验证名单和版本规则</strong></summary>
+              <ul>
+                <li>检查客户编号、必填字段、重复客户和文件版本。</li>
+                <li>生成逐行问题清单、结果回执和人工回滚清单。</li>
+              </ul>
+            </details>
+          </div>
+        </section>
+
+        <section id="responsibility" class="report-section" aria-labelledby="responsibility-title">
+          <div class="section-heading">
+            <p class="section-number">04</p>
+            <div>
+              <h2 id="responsibility-title">岗位责任边界</h2>
+              <p>业务规则负责识别，AI负责解释与建议，有权角色保留裁决权。</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>责任主体</th><th>必须承担的责任</th><th>AI边界</th></tr></thead>
+              <tbody>
+                <tr><th>销售申请人</th><td>确认客户名单真实性与完整性</td><td>不可替代</td></tr>
+                <tr><th>销售负责人</th><td>批准交接事项与人员安排</td><td>不可替代</td></tr>
+                <tr><th>业务运营负责人</th><td>裁决归属争议并确认唯一有效版本</td><td>不可替代</td></tr>
+                <tr><th>CRM管理员</th><td>确认权限、锁定和执行异常</td><td>不可替代</td></tr>
+                <tr><th>确定性规则/工作流</th><td>检查必填、重复、编号、版本和状态</td><td>可以自动执行</td></tr>
+                <tr><th>AI辅助</th><td>生成异常摘要、风险线索和补证建议</td><td>只辅助，不做裁决</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="target-flow" class="report-section" aria-labelledby="target-flow-title" data-flow-panel>
+          <div class="section-heading">
+            <p class="section-number">05</p>
+            <div>
+              <h2 id="target-flow-title">推荐改造路线</h2>
+              <p>这不是技术开发清单，而是管理层可以批准、调整或否决的目标业务流程。</p>
+            </div>
+          </div>
+          <div class="route-list">
+            <article class="route-step"><p class="step-index">01</p><div><h3>名单预检</h3><dl><div><dt>谁来做</dt><dd>销售申请人、确定性规则</dd></div><div><dt>做什么</dt><dd>检查编号、必填字段、重复项和版本</dd></div><div><dt>产出什么</dt><dd>逐行问题清单和标准名单</dd></div><div><dt>暂停条件</dt><dd>文件不可读、关键字段缺失或编号无法取得</dd></div></dl></div></article>
+            <article class="route-step"><p class="step-index">02</p><div><h3>客户主数据核对</h3><dl><div><dt>谁来做</dt><dd>CRM管理员、确定性规则</dd></div><div><dt>做什么</dt><dd>核对客户、当前归属、锁定和权限</dd></div><div><dt>产出什么</dt><dd>核对结果和人工确认队列</dd></div><div><dt>暂停条件</dt><dd>缺少字段字典、脱敏导出或稳定编号</dd></div></dl></div></article>
+            <article class="route-step"><p class="step-index">03</p><div><h3>人工审批与争议裁决</h3><dl><div><dt>谁来做</dt><dd>销售负责人、业务运营负责人</dd></div><div><dt>做什么</dt><dd>审批交接事项并裁决归属争议</dd></div><div><dt>产出什么</dt><dd>有权角色确认的裁决记录</dd></div><div><dt>暂停条件</dt><dd>责任、高价值客户或跨事业部事项未确认</dd></div></dl></div></article>
+            <article class="route-step"><p class="step-index">04</p><div><h3>唯一有效版本</h3><dl><div><dt>谁来做</dt><dd>业务运营负责人、确定性工作流</dd></div><div><dt>做什么</dt><dd>锁定执行清单并标记旧版本失效</dd></div><div><dt>产出什么</dt><dd>带版本号和内容哈希的有效清单</dd></div><div><dt>暂停条件</dt><dd>新旧清单优先级不明或授权撤回</dd></div></dl></div></article>
+            <article class="route-step"><p class="step-index">05</p><div><h3>CRM执行适配</h3><dl><div><dt>谁来做</dt><dd>CRM管理员</dd></div><div><dt>做什么</dt><dd>按有效清单模拟批量或逐条执行</dd></div><div><dt>产出什么</dt><dd>逐客户执行记录</dd></div><div><dt>暂停条件</dt><dd>无测试环境、无权限或要求直接写生产CRM</dd></div></dl></div></article>
+            <article class="route-step"><p class="step-index">06</p><div><h3>逐客户结果回执</h3><dl><div><dt>谁来做</dt><dd>确定性工作流、CRM管理员</dd></div><div><dt>做什么</dt><dd>记录成功、失败、跳过和人工确认</dd></div><div><dt>产出什么</dt><dd>逐行回执和人工处理队列</dd></div><div><dt>暂停条件</dt><dd>执行结果不可读取或部分失败无法定位</dd></div></dl></div></article>
+            <article class="route-step"><p class="step-index">07</p><div><h3>人工验收与审计</h3><dl><div><dt>谁来做</dt><dd>销售申请人、业务运营负责人</dd></div><div><dt>做什么</dt><dd>核对执行前后结果并完成签字留痕</dd></div><div><dt>产出什么</dt><dd>验收记录、审计链和回滚清单</dd></div><div><dt>暂停条件</dt><dd>存在未闭环失败、证据缺失或无法追溯</dd></div></dl></div></article>
+          </div>
+        </section>
+
+        <section id="pilot" class="report-section" aria-labelledby="pilot-title">
+          <div class="section-heading">
+            <p class="section-number">06</p>
+            <div>
+              <h2 id="pilot-title">5天离线影子试点</h2>
+              <p>使用脱敏样本在生产系统旁边验证，不执行任何真实CRM写入。</p>
+            </div>
+          </div>
+          <ol class="pilot-timeline">
+            <li><span>第1天</span><h3>固化样本与字段</h3><dl><div><dt>谁来做</dt><dd>业务运营负责人、CRM管理员</dd></div><div><dt>做什么</dt><dd>整理字段、状态及正常和异常样本</dd></div><div><dt>产出什么</dt><dd>样本集、字段字典和基线流程</dd></div><div><dt>暂停条件</dt><dd>无脱敏样本或字段口径无人确认</dd></div></dl></li>
+            <li><span>第2天</span><h3>验证名单预检</h3><dl><div><dt>谁来做</dt><dd>流程改造方、业务运营负责人</dd></div><div><dt>做什么</dt><dd>验证必填、编号、重复、版本和格式</dd></div><div><dt>产出什么</dt><dd>逐行问题清单</dd></div><div><dt>暂停条件</dt><dd>客户编号无法稳定取得或规则不统一</dd></div></dl></li>
+            <li><span>第3天</span><h3>模拟主数据核对</h3><dl><div><dt>谁来做</dt><dd>CRM管理员、流程改造方</dd></div><div><dt>做什么</dt><dd>用脱敏导出核对归属、锁定和权限</dd></div><div><dt>产出什么</dt><dd>核对结果和人工确认队列</dd></div><div><dt>暂停条件</dt><dd>缺少字段字典或脱敏CRM导出</dd></div></dl></li>
+            <li><span>第4天</span><h3>验证回执与回滚</h3><dl><div><dt>谁来做</dt><dd>流程改造方、业务运营负责人</dd></div><div><dt>做什么</dt><dd>生成有效清单、逐行回执和回滚清单</dd></div><div><dt>产出什么</dt><dd>离线验证结果包</dd></div><div><dt>暂停条件</dt><dd>旧版本仍可进入执行或回执不能覆盖每一行</dd></div></dl></li>
+            <li><span>第5天</span><h3>复盘并作出决定</h3><dl><div><dt>谁来做</dt><dd>企业负责人、业务运营负责人</dd></div><div><dt>做什么</dt><dd>复盘正常和异常场景并决定继续或暂停</dd></div><div><dt>产出什么</dt><dd>试点报告和继续/暂停决定</dd></div><div><dt>暂停条件</dt><dd>责任规则未确认或无法证明结果可追溯</dd></div></dl></li>
+          </ol>
+        </section>
+
+        <section id="evidence-gaps" class="report-section" aria-labelledby="evidence-gaps-title">
+          <div class="section-heading">
+            <p class="section-number">07</p>
+            <div>
+              <h2 id="evidence-gaps-title">证据缺口</h2>
+              <p>只有补齐以下真实材料，才能重新判断是否进入正式诊断或生产开发。</p>
+            </div>
+          </div>
+          <div class="evidence-list">
+            <details open><summary><strong>销售申请人</strong><span>待补真实材料</span></summary><p>真实OA字段、Excel模板和一次退回案例。</p></details>
+            <details><summary><strong>销售负责人</strong><span>待补真实材料</span></summary><p>审批责任边界和重点客户规则。</p></details>
+            <details><summary><strong>业务运营负责人</strong><span>E3口述 + 待补材料</span></summary><p>争议裁决规则、有效版本和验收口径。</p></details>
+            <details><summary><strong>CRM管理员</strong><span>待补真实材料</span></summary><p>导入模板、数量上限、权限、锁定、错误反馈和日志字段。</p></details>
+            <details><summary><strong>IT或系统负责人</strong><span>待补真实材料</span></summary><p>OA与CRM接口、可读写权限、测试环境和安全要求。</p></details>
+          </div>
+          <aside class="evidence-note">
+            <strong>证据说明</strong>
+            <p>E3仅代表员工本人陈述；E5代表模拟角色、AI假设或模拟诊断。E5不得作为事实或管理承诺。</p>
+          </aside>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      <p>本报告用于本地方法验证。正式结论需以授权材料、真实岗位确认和系统证据为准。</p>
+    </footer>
+  </body>
+</html>

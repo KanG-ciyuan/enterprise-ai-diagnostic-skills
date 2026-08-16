@@ -1,0 +1,49 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_scheduling_proposal",
+  "contract_version": "0.1",
+  "event_id": "EVENT-SIM-OWNER-TRANSFER-MATERIAL-BLOCKED-001",
+  "decision": "wait_external",
+  "target": "enterprise_project_owner",
+  "reason_codes": [
+    "MATERIAL_EVIDENCE_REQUIRED"
+  ],
+  "human_summary": "当前材料不足以继续分析，等待企业项目负责人补充最小授权材料。",
+  "context_package": {
+    "enterprise_id": "ENT-SIM-BIZOPS",
+    "project_id": "PRJ-SIM-CRM-AUTH-001",
+    "event_type": "material_analysis_blocked",
+    "actor_role": "enterprise_project_owner",
+    "payload": {
+      "process_id": "PROC-CRM-OWNER-TRANSFER",
+      "analysis_ref": "MAT-ANALYSIS-SIM-CRM-OWNER-TRANSFER-001@1",
+      "reason": "only_simulated_materials_available",
+      "missing_evidence": [
+        "authorized_desensitized_oa_sample",
+        "authorized_desensitized_excel_sample",
+        "authorized_desensitized_crm_log",
+        "real_employee_confirmation"
+      ],
+      "master_record_process_registration": "missing"
+    }
+  },
+  "human_task": {
+    "task_type": "external_participation",
+    "responsible_role": "enterprise_project_owner",
+    "question": "请提供材料分析记录中列出的最小授权、脱敏且可读取的材料。",
+    "reason": "材料分析已阻断，不能用模拟、未知来源或不可读材料替代真实证据。",
+    "required_evidence": "authorized_desensitized_oa_sample、authorized_desensitized_excel_sample、authorized_desensitized_crm_log、real_employee_confirmation",
+    "affected_decision": "是否可以重新执行材料分析并评估诊断门",
+    "recovery_conditions": [
+      "材料来源和授权状态可确认",
+      "材料可读取且属于当前流程",
+      "以file_uploaded事件重新进入总控"
+    ],
+    "expected_return_event": "file_uploaded"
+  },
+  "proposed_state_change": {},
+  "next_expected_events": [
+    "file_uploaded"
+  ],
+  "write_authority": "scheduling_proposal",
+  "created_at": "2026-08-16T16:00:00+08:00"
+}

@@ -1,0 +1,43 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_scheduling_proposal",
+  "contract_version": "0.1",
+  "event_id": "EVENT-SIM-CRM-AUTH-PREMATURE-DIAG-001",
+  "decision": "request_human",
+  "target": "enterprise_project_owner",
+  "reason_codes": [
+    "DIAGNOSIS_GATE_NOT_CONFIRMED",
+    "H2"
+  ],
+  "human_summary": "总档案尚未进入诊断阶段，不能调用流程诊断Skill。",
+  "context_package": {
+    "enterprise_id": "ENT-SIM-BIZOPS",
+    "project_id": "PRJ-SIM-CRM-AUTH-001",
+    "event_type": "diagnosis_gate_ready",
+    "actor_role": "enterprise_project_owner",
+    "payload": {
+      "process_id": "PROC-CRM-AUTH",
+      "evidence_pack_ref": "EVIDENCE-SIM-CRM-AUTH-001@1",
+      "p0_coverage_checked": false,
+      "residual_risk_recorded": false,
+      "simulation_only": true
+    }
+  },
+  "human_task": {
+    "task_type": "H2",
+    "responsible_role": "enterprise_project_owner",
+    "question": "请确认P0覆盖、授权、关键冲突和残余风险是否满足进入诊断的条件。",
+    "reason": "事件声称诊断门已就绪，但总档案阶段不一致。",
+    "required_evidence": "更新后的总档案阶段和覆盖门依据",
+    "affected_decision": "是否允许进入正式流程诊断",
+    "recovery_conditions": [
+      "总档案阶段由有权角色更新为diagnosis"
+    ],
+    "expected_return_event": "diagnosis_gate_ready"
+  },
+  "proposed_state_change": {},
+  "next_expected_events": [
+    "diagnosis_gate_ready"
+  ],
+  "write_authority": "scheduling_proposal",
+  "created_at": "2026-08-15T20:00:00+08:00"
+}

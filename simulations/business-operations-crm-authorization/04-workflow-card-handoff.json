@@ -1,0 +1,75 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_skill_handoff",
+  "contract_version": "0.2",
+  "handoff_id": "HANDOFF-BIZOPS-CRM-AUTH-001",
+  "producer_skill": "enterprise-workflow-mapping",
+  "event_type": "workflow_card_confirmed",
+  "handoff_status": "ready_for_registration",
+  "write_authority": "registration_proposal",
+  "routing_context": {
+    "enterprise_id": "ENT-SIM-BIZOPS",
+    "project_id": "PRJ-SIM-CRM-AUTH-001",
+    "process_id": "PROC-CRM-AUTH",
+    "participant_id": "PART-BIZOPS-001",
+    "department_id": "DEPT-BIZOPS",
+    "role": "业务运营",
+    "task_id": "TASK-BIZOPS-001"
+  },
+  "records_to_register": [
+    {
+      "collection": "workflow_cards",
+      "record": {
+        "record_id": "CARD-BIZOPS-CRM-AUTH-001",
+        "record_type": "workflow_card",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-BIZOPS",
+        "project_id": "PRJ-SIM-CRM-AUTH-001",
+        "participant_id": "PART-BIZOPS-001",
+        "process_id": "PROC-CRM-AUTH",
+        "authorization_status": "authorized",
+        "evidence_level": "E3",
+        "upstream_records": [],
+        "supersedes": null,
+        "change_reason": "员工本人检查并明确确认流程卡v1",
+        "storage_ref": "simulations/business-operations-crm-authorization/01-employee-confirmed-workflow-card.md",
+        "created_at": "2026-08-15T19:15:16+08:00",
+        "created_by_role": "employee_workflow_agent",
+        "employee_confirmed": true,
+        "confirmed_at": "2026-08-15T19:15:16+08:00"
+      }
+    }
+  ],
+  "participant_task_updates": [
+    {
+      "task_id": "TASK-BIZOPS-001",
+      "status": "confirmed",
+      "current_workflow_card": "CARD-BIZOPS-CRM-AUTH-001@1",
+      "status_reason": "员工本人已明确确认当前流程卡版本"
+    }
+  ],
+  "unresolved_items": [
+    {
+      "item_id": "GAP-BIZOPS-VOLUME-001",
+      "kind": "evidence_gap",
+      "blocking": false,
+      "source_records": [
+        "CARD-BIZOPS-CRM-AUTH-001@1"
+      ],
+      "summary": "日常数量、单客户耗时、批量规模和异常比例仍为员工估计，尚未用系统日志核验",
+      "suggested_exception_level": "H1"
+    },
+    {
+      "item_id": "GAP-BIZOPS-GOVERNANCE-001",
+      "kind": "evidence_gap",
+      "blocking": false,
+      "source_records": [
+        "CARD-BIZOPS-CRM-AUTH-001@1"
+      ],
+      "summary": "客户合并与删除的正式制度、复核要求和审计规则尚未提供材料",
+      "suggested_exception_level": "H1"
+    }
+  ],
+  "missing_registration_fields": [],
+  "created_at": "2026-08-15T19:15:16+08:00"
+}

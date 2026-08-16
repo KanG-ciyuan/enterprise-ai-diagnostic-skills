@@ -1,0 +1,37 @@
+{
+  "recommended_threshold": 0.34,
+  "description_required_concepts": ["enterprise", "process", "orchestration"],
+  "positive_concepts": {
+    "enterprise": ["enterprise", "企业", "企业ai", "企业应用"],
+    "process": ["flow diagnosis", "process", "流程诊断", "业务流程", "总档案"],
+    "orchestration": ["orchestrate", "coordinate", "总控", "调度", "路由", "继续处理", "下一步"],
+    "event": ["event", "事件", "员工确认", "附件上传", "上传了excel", "授权撤回", "当前状态", "访谈计划已确认"],
+    "handoff": ["handoff", "登记提案", "交接", "任务包", "责任人", "覆盖建议"]
+  },
+  "negative_patterns": [
+    "只生成访谈清单", "逐题采访", "只分析材料", "只做流程诊断", "直接开发", "数据库开发", "普通项目管理", "总结一下", "翻译"
+  ],
+  "should_trigger": [
+    {"text": "使用企业AI流程诊断总控，根据总档案继续处理当前事件", "family": "explicit_orchestrator"},
+    {"text": "员工已经确认流程卡，请结合企业总档案判断下一步由谁处理", "family": "confirmed_card"},
+    {"text": "员工摸排时上传了Excel，请路由到合适能力并返回原任务", "family": "mid_session_file"},
+    {"text": "材料授权撤回了，请暂停这次流程诊断并说明恢复条件", "family": "authorization_stop"},
+    {"text": "Coordinate this enterprise process diagnosis from the current event and master record.", "family": "english"},
+    {"text": "管理层访谈计划已确认，请生成覆盖建议但不要虚构员工任务", "family": "confirmed_plan"}
+  ],
+  "should_not_trigger": [
+    {"text": "只为管理层生成一份访谈问题清单", "family": "interview_preparation"},
+    {"text": "请逐题采访这个员工并生成他的流程卡", "family": "workflow_mapping"},
+    {"text": "只分析这些PDF和Excel并形成证据包", "family": "material_analysis"},
+    {"text": "根据证据包判断用工作流、RPA还是Agent", "family": "process_diagnosis"},
+    {"text": "直接开发统一入口、数据库和任务队列", "family": "software_implementation"},
+    {"text": "帮我管理这个普通软件项目的里程碑", "family": "generic_project_management"},
+    {"text": "总结一下这份会议纪要", "family": "summary"}
+  ],
+  "near_neighbor": [
+    {"text": "设计一套通用的多Agent编排框架", "family": "generic_agent_orchestration"},
+    {"text": "把已经确认的诊断结果做成可视化报告", "family": "visual_delivery"},
+    {"text": "帮我分析整个公司的AI成熟度", "family": "enterprise_maturity"},
+    {"text": "检查一份登记提案的JSON结构是否正确", "family": "handoff_validation_only"}
+  ]
+}

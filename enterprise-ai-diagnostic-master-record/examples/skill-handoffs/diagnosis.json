@@ -1,0 +1,54 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_skill_handoff",
+  "contract_version": "0.2",
+  "handoff_id": "HANDOFF-DIAGNOSIS-001",
+  "producer_skill": "enterprise-ai-process-diagnosis",
+  "event_type": "process_diagnosis_completed",
+  "handoff_status": "ready_for_registration",
+  "write_authority": "registration_proposal",
+  "routing_context": {
+    "enterprise_id": "ENT-SIM-RTL",
+    "project_id": "PRJ-SIM-RTL-V02",
+    "process_id": "PROC-COMPLAINT",
+    "participant_id": null,
+    "department_id": null,
+    "role": null,
+    "task_id": null
+  },
+  "records_to_register": [
+    {
+      "collection": "diagnoses_and_pilots",
+      "record": {
+        "record_id": "DIAG-002",
+        "record_type": "process_diagnosis",
+        "version": 1,
+        "lifecycle_status": "current",
+        "enterprise_id": "ENT-SIM-RTL",
+        "project_id": "PRJ-SIM-RTL-V02",
+        "authorization_status": "authorized",
+        "review_status": "review_required",
+        "evidence_level": "E2",
+        "outstanding_gaps": ["X-H2-002@1"],
+        "upstream_records": ["EVIDENCE-002@1"],
+        "supersedes": null,
+        "change_reason": "根据新证据包生成待人工审核的诊断草稿",
+        "storage_ref": "artifacts/diagnoses/DIAG-002.md",
+        "created_at": "2026-08-14T16:30:00+08:00",
+        "created_by_role": "process_diagnosis_agent"
+      }
+    }
+  ],
+  "participant_task_updates": [],
+  "unresolved_items": [
+    {
+      "item_id": "X-H2-002",
+      "kind": "conflict",
+      "blocking": false,
+      "source_records": ["X-H2-002@1", "EVIDENCE-002@1"],
+      "summary": "诊断草稿保留接管责任冲突，等待有权管理角色确认",
+      "suggested_exception_level": "H2"
+    }
+  ],
+  "missing_registration_fields": [],
+  "created_at": "2026-08-14T16:30:00+08:00"
+}

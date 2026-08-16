@@ -1,0 +1,17 @@
+{
+  "name": "enterprise-interview-preparation",
+  "version": "0.2.0",
+  "owner": "Kang Jiaxin",
+  "updated_at": "2026-08-14",
+  "status": "personal-experiment",
+  "maturity_tier": "production-candidate",
+  "target_platforms": ["codex"],
+  "publication": "local-only",
+  "release_gates": [
+    "prior-art research",
+    "package validation",
+    "trigger boundary evaluation",
+    "three simulated output cases including constrained conflicting inputs",
+    "human review before public publication"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "cases": [
+    {
+      "id": "employee_sales_review",
+      "prompt": "我是销售运营，请帮我梳理每周制作销售复盘报告的工作。",
+      "assertions": [
+        "asks exactly one question per turn",
+        "maps one concrete job",
+        "uses no more than 15 main questions",
+        "follows up on vague actions and judgment",
+        "captures one normal path and one exception",
+        "labels unsupported employee statements as E3",
+        "asks the employee to correct the draft",
+        "includes a compact flowchart in the confirmed card",
+        "does not recommend AI, RPA, workflow, RAG, or Agent",
+        "does not claim cost savings or ROI"
+      ]
+    },
+    {
+      "id": "difficult_procurement_employee",
+      "prompt": "我是采购专员，紧急采购基本都在系统里处理，帮我梳理一下。",
+      "assertions": [
+        "asks exactly one question per turn",
+        "uses neutral non-blaming language when the employee is defensive",
+        "decomposes vague statements such as all in the system and depends on the situation",
+        "discovers unofficial tracking only through evidence-oriented follow-up",
+        "does not label a personal spreadsheet as an official company system",
+        "separates E1 sample fields, E3 employee estimates, and E4 policy",
+        "preserves contradictions and cross-role questions",
+        "lets the employee correct the draft before confirmation",
+        "does not recommend transformation technology or claim ROI"
+      ]
+    }
+  ]
+}

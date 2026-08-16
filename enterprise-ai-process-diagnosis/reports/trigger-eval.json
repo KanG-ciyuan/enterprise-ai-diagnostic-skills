@@ -1,0 +1,242 @@
+{
+  "ok": true,
+  "threshold": 0.34,
+  "description_concepts": [
+    "diagnosis",
+    "domain",
+    "pilot",
+    "process",
+    "route"
+  ],
+  "missing_description_concepts": [],
+  "summary": {
+    "total": 17,
+    "passed": 17,
+    "false_positive": 0,
+    "false_negative": 0,
+    "pass_rate": 1.0
+  },
+  "failures": [],
+  "results": {
+    "should_trigger": [
+      {
+        "prompt": "用这个企业材料证据包诊断紧急采购流程，并保留禁止结论",
+        "family": "evidence_handoff",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.6,
+        "matched_concepts": [
+          "diagnosis",
+          "domain",
+          "process"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "帮我诊断客户这个企业AI业务流程是不是真实需求",
+        "family": "demand_reality",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.6,
+        "matched_concepts": [
+          "diagnosis",
+          "domain",
+          "process"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "分析流程卡和会议证据，判断该用工作流、RPA还是Agent",
+        "family": "route",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.6,
+        "matched_concepts": [
+          "diagnosis",
+          "process",
+          "route"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "先核对OA和ERP系统接口条件，再给出有条件的技术路线",
+        "family": "system_feasibility",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "domain",
+          "route"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "这个流程是否可开发？请区分离线试点和生产集成",
+        "family": "developability",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "pilot",
+          "process"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "为这个具体流程设计3至7天影子模式试点",
+        "family": "pilot",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "pilot",
+          "process"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "Diagnose this enterprise AI process from the evidence pack and propose a conditional technical plan.",
+        "family": "english",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.6,
+        "matched_concepts": [
+          "diagnosis",
+          "domain",
+          "process"
+        ],
+        "negative_pattern": null
+      }
+    ],
+    "should_not_trigger": [
+      {
+        "prompt": "只整理这些原始材料并形成证据包，不做诊断",
+        "family": "material_analysis",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "diagnosis",
+          "process"
+        ],
+        "negative_pattern": "只整理"
+      },
+      {
+        "prompt": "访谈这名员工并确认他的日常工作流程卡",
+        "family": "workflow_mapping",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "process",
+          "route"
+        ],
+        "negative_pattern": "访谈这名员工"
+      },
+      {
+        "prompt": "帮我做整家企业的数字化转型战略规划",
+        "family": "enterprise_strategy",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "domain"
+        ],
+        "negative_pattern": "整家企业"
+      },
+      {
+        "prompt": "方案已经确定，直接开发这个系统",
+        "family": "implementation",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "domain"
+        ],
+        "negative_pattern": "直接开发"
+      },
+      {
+        "prompt": "不看业务流程，只推荐几个热门Agent工具",
+        "family": "tool_list",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "process"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "把这份会议纪要总结一下",
+        "family": "summary",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "process"
+        ],
+        "negative_pattern": "总结一下"
+      }
+    ],
+    "near_neighbor": [
+      {
+        "prompt": "只整理多份材料的事实、冲突和证据定位",
+        "family": "evidence_only",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": "只整理"
+      },
+      {
+        "prompt": "评估公司整体AI成熟度，但先不分析具体流程",
+        "family": "maturity_audit",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "diagnosis",
+          "process"
+        ],
+        "negative_pattern": "公司整体ai成熟度"
+      },
+      {
+        "prompt": "比较n8n和Dify的产品功能与价格",
+        "family": "product_comparison",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "把已经确定的自动化方案拆成开发任务",
+        "family": "delivery_plan",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "domain"
+        ],
+        "negative_pattern": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "ok": true,
+  "threshold": 0.34,
+  "description_concepts": [
+    "enterprise",
+    "event",
+    "handoff",
+    "orchestration",
+    "process"
+  ],
+  "missing_description_concepts": [],
+  "summary": {
+    "total": 17,
+    "passed": 17,
+    "false_positive": 0,
+    "false_negative": 0,
+    "pass_rate": 1.0
+  },
+  "failures": [],
+  "results": {
+    "should_trigger": [
+      {
+        "prompt": "使用企业AI流程诊断总控，根据总档案继续处理当前事件",
+        "family": "explicit_orchestrator",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.8,
+        "matched_concepts": [
+          "enterprise",
+          "event",
+          "orchestration",
+          "process"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "员工已经确认流程卡，请结合企业总档案判断下一步由谁处理",
+        "family": "confirmed_card",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.6,
+        "matched_concepts": [
+          "enterprise",
+          "orchestration",
+          "process"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "员工摸排时上传了Excel，请路由到合适能力并返回原任务",
+        "family": "mid_session_file",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "event",
+          "orchestration"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "材料授权撤回了，请暂停这次流程诊断并说明恢复条件",
+        "family": "authorization_stop",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "event",
+          "process"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "Coordinate this enterprise process diagnosis from the current event and master record.",
+        "family": "english",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.8,
+        "matched_concepts": [
+          "enterprise",
+          "event",
+          "orchestration",
+          "process"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "管理层访谈计划已确认，请生成覆盖建议但不要虚构员工任务",
+        "family": "confirmed_plan",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.4,
+        "matched_concepts": [
+          "event",
+          "handoff"
+        ],
+        "negative_pattern": null
+      }
+    ],
+    "should_not_trigger": [
+      {
+        "prompt": "只为管理层生成一份访谈问题清单",
+        "family": "interview_preparation",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "请逐题采访这个员工并生成他的流程卡",
+        "family": "workflow_mapping",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": "逐题采访"
+      },
+      {
+        "prompt": "只分析这些PDF和Excel并形成证据包",
+        "family": "material_analysis",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "根据证据包判断用工作流、RPA还是Agent",
+        "family": "process_diagnosis",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "直接开发统一入口、数据库和任务队列",
+        "family": "software_implementation",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": "直接开发"
+      },
+      {
+        "prompt": "帮我管理这个普通软件项目的里程碑",
+        "family": "generic_project_management",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "总结一下这份会议纪要",
+        "family": "summary",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": "总结一下"
+      }
+    ],
+    "near_neighbor": [
+      {
+        "prompt": "设计一套通用的多Agent编排框架",
+        "family": "generic_agent_orchestration",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "把已经确认的诊断结果做成可视化报告",
+        "family": "visual_delivery",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "帮我分析整个公司的AI成熟度",
+        "family": "enterprise_maturity",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "检查一份登记提案的JSON结构是否正确",
+        "family": "handoff_validation_only",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.2,
+        "matched_concepts": [
+          "handoff"
+        ],
+        "negative_pattern": null
+      }
+    ]
+  }
+}

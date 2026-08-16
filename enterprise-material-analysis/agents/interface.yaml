@@ -1,0 +1,25 @@
+interface:
+  display_name: "企业材料分析"
+  short_description: "把流程材料整理成可追溯证据、冲突和最小补证清单"
+  default_prompt: "Use $enterprise-material-analysis to analyze only the authorized process materials I provide. Build a source-located evidence ledger, preserve contradictions and evidence levels, and produce a minimum evidence request without technology recommendations."
+  examples:
+    - "分析这些流程卡、会议纪要和ERP样本。"
+    - "找出SOP与员工实际说法的冲突。"
+    - "整理一份改造方可以继续诊断的证据包。"
+compatibility:
+  canonical_format: "agent-skills"
+  adapter_targets:
+    - "openai"
+  activation:
+    mode: "manual-or-description"
+  execution:
+    context: "inline"
+  trust:
+    source_tier: "personal-local"
+    generated_claims: "source-located-and-evidence-labelled"
+  permissions:
+    network: "none required by the skill"
+    file_read: "only user-authorized in-scope materials"
+    file_write: "only when the user requests an exportable evidence pack"
+    external_actions: "forbidden"
+

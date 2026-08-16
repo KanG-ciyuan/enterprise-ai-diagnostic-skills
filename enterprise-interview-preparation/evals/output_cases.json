@@ -1,0 +1,42 @@
+{
+  "cases": [
+    {
+      "id": "manufacturing_procurement",
+      "prompt": "为一家制造企业的紧急采购流程准备访谈，已知采购说ERP里都有，管理层希望直接上Agent。",
+      "assertions": [
+        "includes role coverage for process owner, actual executor, upstream requester, warehouse or receiving, finance or approver, and ERP/data owner",
+        "uses recent concrete events and adaptive follow-up for claims such as ERP has everything",
+        "binds each critical question to a decision and minimum evidence request",
+        "contains no technology recommendation and no assumed ERP API",
+        "includes client-safe no-promise boundaries",
+        "outputs an enterprise_interview_plan handoff"
+      ]
+    },
+    {
+      "id": "retail_complaint",
+      "prompt": "为连锁零售门店客诉退款与补偿流程准备分角色访谈提纲，覆盖门店、区域、总部和系统条件。",
+      "assertions": [
+        "includes role coverage for frontline employee, store manager, regional owner, quality or customer service, finance, and system owner",
+        "uses adaptive follow-up for vague authority, handoff, high-risk escalation, and closure statements",
+        "requests minimum evidence for registration, compensation approval, high-risk timestamps, closure definitions, and interfaces",
+        "contains no technology recommendation and no autonomous compensation Agent promise",
+        "separates employee workflow mapping from interview preparation",
+        "outputs an enterprise_interview_plan handoff"
+      ]
+    },
+    {
+      "id": "constrained_conflicting_scope",
+      "prompt": "客户说要一次调研完整个客服部门，但只有3小时、最多访谈4人。客服主管说所有客诉都进系统，一线员工说很多先在微信群处理。请准备访谈方案。",
+      "assertions": [
+        "includes role coverage tied to distinct decision lenses rather than every available title",
+        "respects time and participant constraints and gives a minimum viable interview combination",
+        "proposes scope reduction instead of pretending the whole department can be covered",
+        "records cross-role conflict hypotheses without selecting a winner",
+        "uses mirrored questions and adaptive follow-up for system versus offline handling",
+        "binds critical questions to minimum evidence",
+        "contains no technology recommendation",
+        "outputs an enterprise_interview_plan handoff"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1228 @@
+{
+  "ok": true,
+  "complete": true,
+  "researched_at": "2026-08-14",
+  "queries": [
+    "agent skill output contract schema handoff",
+    "enterprise workflow evidence pack agent"
+  ],
+  "metric_semantics": {
+    "skills_sh_installs": "ecosystem install telemetry; not ratings or correctness",
+    "skillsmp_repo_stars": "GitHub repository stars; not installs, ratings, or skill-specific quality",
+    "cross_catalog_score": "not calculated; metrics remain separate"
+  },
+  "query_runs": [
+    {
+      "query": "agent skill output contract schema handoff",
+      "skills_sh": "ok",
+      "skillsmp": "ok",
+      "skills_sh_candidates": 16,
+      "skillsmp_candidates": 10
+    },
+    {
+      "query": "enterprise workflow evidence pack agent",
+      "skills_sh": "ok",
+      "skillsmp": "ok",
+      "skills_sh_candidates": 20,
+      "skillsmp_candidates": 6
+    }
+  ],
+  "candidate_family_count": 51,
+  "candidates": [
+    {
+      "family_key": "apify/agent-skills:apify-generate-output-schema",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "apify/agent-skills",
+        "skill_name": "apify-generate-output-schema",
+        "family_key": "apify/agent-skills:apify-generate-output-schema",
+        "skills_sh_installs": 7100,
+        "skills_sh_installs_display": "7.1K",
+        "skills_sh_url": "https://skills.sh/apify/agent-skills/apify-generate-output-schema"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "affaan-m/ecc:enterprise-agent-ops",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "affaan-m/ecc",
+        "skill_name": "enterprise-agent-ops",
+        "family_key": "affaan-m/ecc:enterprise-agent-ops",
+        "skills_sh_installs": 7000,
+        "skills_sh_installs_display": "7K",
+        "skills_sh_url": "https://skills.sh/affaan-m/ecc/enterprise-agent-ops"
+      },
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "enterprise-agent-ops",
+        "author": "affaan-m",
+        "description": "Operate long-lived agent workloads with observability, security boundaries, and lifecycle management. Use when running long-lived agent workloads that need observability, security boundaries, or lifecycle control.",
+        "content_language": "en",
+        "github_url": "https://github.com/affaan-m/ECC/tree/main/skills/enterprise-agent-ops",
+        "skillsmp_url": "https://skillsmp.com/creators/affaan-m/ecc/skills-enterprise-agent-ops",
+        "repo_stars": 239888,
+        "catalog_updated_at": "2026-08-12T03:58:14+00:00",
+        "source_key": "affaan-m/ecc:skills/enterprise-agent-ops",
+        "family_key": "affaan-m/ecc:enterprise-agent-ops",
+        "aliases": [
+          {
+            "language": "zh",
+            "github_url": "https://github.com/affaan-m/ECC/tree/main/docs/zh-CN/skills/enterprise-agent-ops"
+          },
+          {
+            "language": "zh",
+            "github_url": "https://github.com/affaan-m/ECC/tree/main/docs/zh-CN/skills/enterprise-agent-ops"
+          },
+          {
+            "language": "en",
+            "github_url": "https://github.com/affaan-m/ECC/tree/main/docs/ja-JP/skills/enterprise-agent-ops"
+          }
+        ],
+        "query": "enterprise workflow evidence pack agent"
+      },
+      "catalogs": [
+        "skills.sh",
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "curiositech/some_claude_skills:output-contract-enforcer",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "curiositech/some_claude_skills",
+        "skill_name": "output-contract-enforcer",
+        "family_key": "curiositech/some_claude_skills:output-contract-enforcer",
+        "skills_sh_installs": 98,
+        "skills_sh_installs_display": "98",
+        "skills_sh_url": "https://skills.sh/curiositech/some_claude_skills/output-contract-enforcer"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "simota/agent-skills:anvil",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "simota/agent-skills",
+        "skill_name": "anvil",
+        "family_key": "simota/agent-skills:anvil",
+        "skills_sh_installs": 82,
+        "skills_sh_installs_display": "82",
+        "skills_sh_url": "https://skills.sh/simota/agent-skills/anvil"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "sylphxai/skills:enterprise-readiness-review",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "sylphxai/skills",
+        "skill_name": "enterprise-readiness-review",
+        "family_key": "sylphxai/skills:enterprise-readiness-review",
+        "skills_sh_installs": 47,
+        "skills_sh_installs_display": "47",
+        "skills_sh_url": "https://skills.sh/sylphxai/skills/enterprise-readiness-review"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "daemon-blockint-tech/agentic-enteprises-skill:ai-risk-governance",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "daemon-blockint-tech/agentic-enteprises-skill",
+        "skill_name": "ai-risk-governance",
+        "family_key": "daemon-blockint-tech/agentic-enteprises-skill:ai-risk-governance",
+        "skills_sh_installs": 31,
+        "skills_sh_installs_display": "31",
+        "skills_sh_url": "https://skills.sh/daemon-blockint-tech/agentic-enteprises-skill/ai-risk-governance"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "oldwinter/skills:enterprise-sales",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "oldwinter/skills",
+        "skill_name": "enterprise-sales",
+        "family_key": "oldwinter/skills:enterprise-sales",
+        "skills_sh_installs": 31,
+        "skills_sh_installs_display": "31",
+        "skills_sh_url": "https://skills.sh/oldwinter/skills/enterprise-sales"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "sylphxai/skills:release-evidence-pack-review",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "sylphxai/skills",
+        "skill_name": "release-evidence-pack-review",
+        "family_key": "sylphxai/skills:release-evidence-pack-review",
+        "skills_sh_installs": 31,
+        "skills_sh_installs_display": "31",
+        "skills_sh_url": "https://skills.sh/sylphxai/skills/release-evidence-pack-review"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "daemon-blockint-tech/agentic-enteprises-skill:incident-responder",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "daemon-blockint-tech/agentic-enteprises-skill",
+        "skill_name": "incident-responder",
+        "family_key": "daemon-blockint-tech/agentic-enteprises-skill:incident-responder",
+        "skills_sh_installs": 28,
+        "skills_sh_installs_display": "28",
+        "skills_sh_url": "https://skills.sh/daemon-blockint-tech/agentic-enteprises-skill/incident-responder"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "abpai/skills:code",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "abpai/skills",
+        "skill_name": "code",
+        "family_key": "abpai/skills:code",
+        "skills_sh_installs": 27,
+        "skills_sh_installs_display": "27",
+        "skills_sh_url": "https://skills.sh/abpai/skills/code"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "violabg/agentic-system-kit:bootstrap-agentic-system",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "violabg/agentic-system-kit",
+        "skill_name": "bootstrap-agentic-system",
+        "family_key": "violabg/agentic-system-kit:bootstrap-agentic-system",
+        "skills_sh_installs": 23,
+        "skills_sh_installs_display": "23",
+        "skills_sh_url": "https://skills.sh/violabg/agentic-system-kit/bootstrap-agentic-system"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "chann/skills:gen-backend-handoff",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "chann/skills",
+        "skill_name": "gen-backend-handoff",
+        "family_key": "chann/skills:gen-backend-handoff",
+        "skills_sh_installs": 21,
+        "skills_sh_installs_display": "21",
+        "skills_sh_url": "https://skills.sh/chann/skills/gen-backend-handoff"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "abpai/skills:engineering",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "abpai/skills",
+        "skill_name": "engineering",
+        "family_key": "abpai/skills:engineering",
+        "skills_sh_installs": 19,
+        "skills_sh_installs_display": "19",
+        "skills_sh_url": "https://skills.sh/abpai/skills/engineering"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "withkynam/vibecode-pro-max-kit:vc-risk-evidence-pack",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "withkynam/vibecode-pro-max-kit",
+        "skill_name": "vc-risk-evidence-pack",
+        "family_key": "withkynam/vibecode-pro-max-kit:vc-risk-evidence-pack",
+        "skills_sh_installs": 19,
+        "skills_sh_installs_display": "19",
+        "skills_sh_url": "https://skills.sh/withkynam/vibecode-pro-max-kit/vc-risk-evidence-pack"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "organvm-iv-taxis/a-i--skills:agent-development-pack",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "organvm-iv-taxis/a-i--skills",
+        "skill_name": "agent-development-pack",
+        "family_key": "organvm-iv-taxis/a-i--skills:agent-development-pack",
+        "skills_sh_installs": 12,
+        "skills_sh_installs_display": "12",
+        "skills_sh_url": "https://skills.sh/organvm-iv-taxis/a-i--skills/agent-development-pack"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "apify/apify-claude-code-plugin:apify-generate-output-schema",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "apify/apify-claude-code-plugin",
+        "skill_name": "apify-generate-output-schema",
+        "family_key": "apify/apify-claude-code-plugin:apify-generate-output-schema",
+        "skills_sh_installs": 11,
+        "skills_sh_installs_display": "11",
+        "skills_sh_url": "https://skills.sh/apify/apify-claude-code-plugin/apify-generate-output-schema"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "sjb/skills:agent-handoff",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "sjb/skills",
+        "skill_name": "agent-handoff",
+        "family_key": "sjb/skills:agent-handoff",
+        "skills_sh_installs": 11,
+        "skills_sh_installs_display": "11",
+        "skills_sh_url": "https://skills.sh/sjb/skills/agent-handoff"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "abpai/skills:harness",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "abpai/skills",
+        "skill_name": "harness",
+        "family_key": "abpai/skills:harness",
+        "skills_sh_installs": 10,
+        "skills_sh_installs_display": "10",
+        "skills_sh_url": "https://skills.sh/abpai/skills/harness"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "arjunmahishi/dotfiles:tsq",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "arjunmahishi/dotfiles",
+        "skill_name": "tsq",
+        "family_key": "arjunmahishi/dotfiles:tsq",
+        "skills_sh_installs": 10,
+        "skills_sh_installs_display": "10",
+        "skills_sh_url": "https://skills.sh/arjunmahishi/dotfiles/tsq"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "debug-zhuweijian/ai-research-toolkit:paperclip-pipeline",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "debug-zhuweijian/ai-research-toolkit",
+        "skill_name": "paperclip-pipeline",
+        "family_key": "debug-zhuweijian/ai-research-toolkit:paperclip-pipeline",
+        "skills_sh_installs": 10,
+        "skills_sh_installs_display": "10",
+        "skills_sh_url": "https://skills.sh/debug-zhuweijian/ai-research-toolkit/paperclip-pipeline"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "epismoai/skills:workflow-pack",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "epismoai/skills",
+        "skill_name": "workflow-pack",
+        "family_key": "epismoai/skills:workflow-pack",
+        "skills_sh_installs": 10,
+        "skills_sh_installs_display": "10",
+        "skills_sh_url": "https://skills.sh/epismoai/skills/workflow-pack"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "jarmen423/skills:wave-execution",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "jarmen423/skills",
+        "skill_name": "wave-execution",
+        "family_key": "jarmen423/skills:wave-execution",
+        "skills_sh_installs": 10,
+        "skills_sh_installs_display": "10",
+        "skills_sh_url": "https://skills.sh/jarmen423/skills/wave-execution"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "kislaya-sri/dark-factory-skills:code-output-handoff",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "kislaya-sri/dark-factory-skills",
+        "skill_name": "code-output-handoff",
+        "family_key": "kislaya-sri/dark-factory-skills:code-output-handoff",
+        "skills_sh_installs": 9,
+        "skills_sh_installs_display": "9",
+        "skills_sh_url": "https://skills.sh/kislaya-sri/dark-factory-skills/code-output-handoff"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "liqiongyu/lenny_skills_plus:enterprise-sales",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "liqiongyu/lenny_skills_plus",
+        "skill_name": "enterprise-sales",
+        "family_key": "liqiongyu/lenny_skills_plus:enterprise-sales",
+        "skills_sh_installs": 9,
+        "skills_sh_installs_display": "9",
+        "skills_sh_url": "https://skills.sh/liqiongyu/lenny_skills_plus/enterprise-sales"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "rishipratap10/my-skills:backend-api-endpoints-skill",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "rishipratap10/my-skills",
+        "skill_name": "backend-api-endpoints-skill",
+        "family_key": "rishipratap10/my-skills:backend-api-endpoints-skill",
+        "skills_sh_installs": 9,
+        "skills_sh_installs_display": "9",
+        "skills_sh_url": "https://skills.sh/rishipratap10/my-skills/backend-api-endpoints-skill"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "rishipratap10/my-skills:api-operational-readiness-skill",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "rishipratap10/my-skills",
+        "skill_name": "api-operational-readiness-skill",
+        "family_key": "rishipratap10/my-skills:api-operational-readiness-skill",
+        "skills_sh_installs": 8,
+        "skills_sh_installs_display": "8",
+        "skills_sh_url": "https://skills.sh/rishipratap10/my-skills/api-operational-readiness-skill"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "rishipratap10/my-skills:enterprise-auth-authorization-skill",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "rishipratap10/my-skills",
+        "skill_name": "enterprise-auth-authorization-skill",
+        "family_key": "rishipratap10/my-skills:enterprise-auth-authorization-skill",
+        "skills_sh_installs": 8,
+        "skills_sh_installs_display": "8",
+        "skills_sh_url": "https://skills.sh/rishipratap10/my-skills/enterprise-auth-authorization-skill"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "rishipratap10/my-skills:project-build-verification-skill",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "rishipratap10/my-skills",
+        "skill_name": "project-build-verification-skill",
+        "family_key": "rishipratap10/my-skills:project-build-verification-skill",
+        "skills_sh_installs": 8,
+        "skills_sh_installs_display": "8",
+        "skills_sh_url": "https://skills.sh/rishipratap10/my-skills/project-build-verification-skill"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "rishipratap10/my-skills:spring-boot-microservice-builder-skill",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "rishipratap10/my-skills",
+        "skill_name": "spring-boot-microservice-builder-skill",
+        "family_key": "rishipratap10/my-skills:spring-boot-microservice-builder-skill",
+        "skills_sh_installs": 8,
+        "skills_sh_installs_display": "8",
+        "skills_sh_url": "https://skills.sh/rishipratap10/my-skills/spring-boot-microservice-builder-skill"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "angelmic/everything-claude-code-ios:enterprise-agent-ops",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "angelmic/everything-claude-code-ios",
+        "skill_name": "enterprise-agent-ops",
+        "family_key": "angelmic/everything-claude-code-ios:enterprise-agent-ops",
+        "skills_sh_installs": 6,
+        "skills_sh_installs_display": "6",
+        "skills_sh_url": "https://skills.sh/angelmic/everything-claude-code-ios/enterprise-agent-ops"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "peterbamuhigire/chwezi-dev-engine:enterprise-ux-process",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "enterprise workflow evidence pack agent",
+        "owner_repo": "peterbamuhigire/chwezi-dev-engine",
+        "skill_name": "enterprise-ux-process",
+        "family_key": "peterbamuhigire/chwezi-dev-engine:enterprise-ux-process",
+        "skills_sh_installs": 5,
+        "skills_sh_installs_display": "5",
+        "skills_sh_url": "https://skills.sh/peterbamuhigire/chwezi-dev-engine/enterprise-ux-process"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "weirdsky924/agent-handoff-skill:agent-handoff",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "weirdsky924/agent-handoff-skill",
+        "skill_name": "agent-handoff",
+        "family_key": "weirdsky924/agent-handoff-skill:agent-handoff",
+        "skills_sh_installs": 5,
+        "skills_sh_installs_display": "5",
+        "skills_sh_url": "https://skills.sh/weirdsky924/agent-handoff-skill/agent-handoff"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "peterola/agentic-workflow-orchestra:agentic-workflow-orchestra",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "peterola/agentic-workflow-orchestra",
+        "skill_name": "agentic-workflow-orchestra",
+        "family_key": "peterola/agentic-workflow-orchestra:agentic-workflow-orchestra",
+        "skills_sh_installs": 4,
+        "skills_sh_installs_display": "4",
+        "skills_sh_url": "https://skills.sh/peterola/agentic-workflow-orchestra/agentic-workflow-orchestra"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "smota/metaskills:agent-builder",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "smota/metaskills",
+        "skill_name": "agent-builder",
+        "family_key": "smota/metaskills:agent-builder",
+        "skills_sh_installs": 4,
+        "skills_sh_installs_display": "4",
+        "skills_sh_url": "https://skills.sh/smota/metaskills/agent-builder"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "veritas501/agent-handoff:agent-handoff",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "veritas501/agent-handoff",
+        "skill_name": "agent-handoff",
+        "family_key": "veritas501/agent-handoff:agent-handoff",
+        "skills_sh_installs": 3,
+        "skills_sh_installs_display": "3",
+        "skills_sh_url": "https://skills.sh/veritas501/agent-handoff/agent-handoff"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "bgauryy/octocode:agentic-flow-best-practices",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": {
+        "source": "skills.sh",
+        "query": "agent skill output contract schema handoff",
+        "owner_repo": "bgauryy/octocode",
+        "skill_name": "agentic-flow-best-practices",
+        "family_key": "bgauryy/octocode:agentic-flow-best-practices",
+        "skills_sh_installs": 2,
+        "skills_sh_installs_display": "2",
+        "skills_sh_url": "https://skills.sh/bgauryy/octocode/agentic-flow-best-practices"
+      },
+      "skillsmp": null,
+      "catalogs": [
+        "skills.sh"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "openclaw/openclaw:acp-router",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "acp-router",
+        "author": "openclaw",
+        "description": "Route plain-language requests for Claude Code, Cursor, Copilot, OpenClaw ACP, OpenCode, Gemini CLI, Qwen, Kiro, Kimi, iFlow, Factory Droid, Kilocode, or explicit ACP harness work into either OpenClaw ACP runtime sessions or direct acpx-driven sessions (\"telephone game\" flow). For coding-agent thread requests, read this skill first, then use only `sessions_spawn` for thread creation. Codex chat binding defaults to the native Codex app-server plugin unless ACP is explicit or background spawn needs ACP.",
+        "content_language": "en",
+        "github_url": "https://github.com/openclaw/openclaw/tree/main/extensions/acpx/skills/acp-router",
+        "skillsmp_url": "https://skillsmp.com/creators/openclaw/openclaw/extensions-acpx-skills-acp-router",
+        "repo_stars": 386158,
+        "catalog_updated_at": "2026-07-16T15:51:30+00:00",
+        "source_key": "openclaw/openclaw:extensions/acpx/skills/acp-router",
+        "family_key": "openclaw/openclaw:acp-router",
+        "aliases": [],
+        "query": "agent skill output contract schema handoff"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "openclaw/openclaw:agent-transcript",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "agent-transcript",
+        "author": "openclaw",
+        "description": "Add a redacted agent transcript section to GitHub PR or issue bodies during OpenClaw agent-created PR/issue workflows.",
+        "content_language": "en",
+        "github_url": "https://github.com/openclaw/openclaw/tree/main/.agents/skills/agent-transcript",
+        "skillsmp_url": "https://skillsmp.com/creators/openclaw/openclaw/agents-skills-agent-transcript",
+        "repo_stars": 386158,
+        "catalog_updated_at": "2026-05-26T15:17:53+00:00",
+        "source_key": "openclaw/openclaw:.agents/skills/agent-transcript",
+        "family_key": "openclaw/openclaw:agent-transcript",
+        "aliases": [],
+        "query": "agent skill output contract schema handoff"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "openclaw/openclaw:coding-agent",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "coding-agent",
+        "author": "openclaw",
+        "description": "Delegate coding work to Codex, Claude Code, or OpenCode as background workers; not simple edits or read-only code lookup.",
+        "content_language": "en",
+        "github_url": "https://github.com/openclaw/openclaw/tree/main/skills/coding-agent",
+        "skillsmp_url": "https://skillsmp.com/creators/openclaw/openclaw/skills-coding-agent",
+        "repo_stars": 386158,
+        "catalog_updated_at": "2026-07-29T05:43:42+00:00",
+        "source_key": "openclaw/openclaw:skills/coding-agent",
+        "family_key": "openclaw/openclaw:coding-agent",
+        "aliases": [],
+        "query": "agent skill output contract schema handoff"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "openclaw/openclaw:control-ui-e2e",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "control-ui-e2e",
+        "author": "openclaw",
+        "description": "Use when testing, fixing, or extending the OpenClaw Control UI GUI with Vitest + Playwright end-to-end checks, mocked Gateway WebSocket flows, mocked dashboard runs, screenshots/videos, or agent-verifiable browser proof.",
+        "content_language": "en",
+        "github_url": "https://github.com/openclaw/openclaw/tree/main/.agents/skills/control-ui-e2e",
+        "skillsmp_url": "https://skillsmp.com/creators/openclaw/openclaw/agents-skills-control-ui-e2e",
+        "repo_stars": 386158,
+        "catalog_updated_at": "2026-08-06T22:57:41+00:00",
+        "source_key": "openclaw/openclaw:.agents/skills/control-ui-e2e",
+        "family_key": "openclaw/openclaw:control-ui-e2e",
+        "aliases": [],
+        "query": "agent skill output contract schema handoff"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "openclaw/openclaw:discord-clawd",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "discord-clawd",
+        "author": "openclaw",
+        "description": "Use to talk to the Discord-backed OpenClaw agent/session; not for archive search.",
+        "content_language": "en",
+        "github_url": "https://github.com/openclaw/openclaw/tree/main/.agents/skills/discord-clawd",
+        "skillsmp_url": "https://skillsmp.com/creators/openclaw/openclaw/agents-skills-discord-clawd",
+        "repo_stars": 386158,
+        "catalog_updated_at": "2026-04-27T06:50:15+00:00",
+        "source_key": "openclaw/openclaw:.agents/skills/discord-clawd",
+        "family_key": "openclaw/openclaw:discord-clawd",
+        "aliases": [],
+        "query": "agent skill output contract schema handoff"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "openclaw/openclaw:discord-user-post",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "discord-user-post",
+        "author": "openclaw",
+        "description": "Post an approved message as the logged-in Discord user through the Discord desktop app. Use for release announcements or other direct user-authored Discord posts; not for OpenClaw channel sends, bots, webhooks, relays, agent sessions, or archive search.",
+        "content_language": "en",
+        "github_url": "https://github.com/openclaw/openclaw/tree/main/.agents/skills/discord-user-post",
+        "skillsmp_url": "https://skillsmp.com/creators/openclaw/openclaw/agents-skills-discord-user-post",
+        "repo_stars": 386158,
+        "catalog_updated_at": "2026-06-15T09:26:30+00:00",
+        "source_key": "openclaw/openclaw:.agents/skills/discord-user-post",
+        "family_key": "openclaw/openclaw:discord-user-post",
+        "aliases": [],
+        "query": "agent skill output contract schema handoff"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "openclaw/openclaw:prose",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "prose",
+        "author": "openclaw",
+        "description": "OpenProse VM skill pack. Activate on any `prose` command, .prose files, or OpenProse mentions; orchestrates multi-agent workflows.",
+        "content_language": "en",
+        "github_url": "https://github.com/openclaw/openclaw/tree/main/extensions/open-prose/skills/prose",
+        "skillsmp_url": "https://skillsmp.com/creators/openclaw/openclaw/extensions-open-prose-skills-prose",
+        "repo_stars": 386158,
+        "catalog_updated_at": "2026-07-11T08:09:51+00:00",
+        "source_key": "openclaw/openclaw:extensions/open-prose/skills/prose",
+        "family_key": "openclaw/openclaw:prose",
+        "aliases": [],
+        "query": "agent skill output contract schema handoff"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "openclaw/openclaw:skill-creator",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "skill-creator",
+        "author": "openclaw",
+        "description": "Author or review AgentSkills: create, repair, validate, or restructure SKILL.md files and bundled resources.",
+        "content_language": "en",
+        "github_url": "https://github.com/openclaw/openclaw/tree/main/skills/skill-creator",
+        "skillsmp_url": "https://skillsmp.com/creators/openclaw/openclaw/skills-skill-creator",
+        "repo_stars": 386158,
+        "catalog_updated_at": "2026-08-11T08:36:00+00:00",
+        "source_key": "openclaw/openclaw:skills/skill-creator",
+        "family_key": "openclaw/openclaw:skill-creator",
+        "aliases": [],
+        "query": "agent skill output contract schema handoff"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "openclaw/openclaw:technical-documentation",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "technical-documentation",
+        "author": "openclaw",
+        "description": "Build and review high-quality technical docs as well as agent instruction files in your repository.",
+        "content_language": "en",
+        "github_url": "https://github.com/openclaw/openclaw/tree/main/.agents/skills/technical-documentation",
+        "skillsmp_url": "https://skillsmp.com/creators/openclaw/openclaw/agents-skills-technical-documentation",
+        "repo_stars": 386158,
+        "catalog_updated_at": "2026-05-25T06:20:14+00:00",
+        "source_key": "openclaw/openclaw:.agents/skills/technical-documentation",
+        "family_key": "openclaw/openclaw:technical-documentation",
+        "aliases": [],
+        "query": "agent skill output contract schema handoff"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "openclaw/openclaw:telegram-crabbox-e2e-proof",
+      "queries": [
+        "agent skill output contract schema handoff"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "telegram-crabbox-e2e-proof",
+        "author": "openclaw",
+        "description": "Use when reviewing, reproducing, or proving OpenClaw Telegram behavior with a real Telegram user on Crabbox, including PR review workflows that need an agent-controlled Telegram Desktop recording, TDLib user-driver commands, Convex-leased credentials, WebVNC observation, and motion-trimmed artifacts.",
+        "content_language": "en",
+        "github_url": "https://github.com/openclaw/openclaw/tree/main/.agents/skills/telegram-crabbox-e2e-proof",
+        "skillsmp_url": "https://skillsmp.com/creators/openclaw/openclaw/agents-skills-telegram-crabbox-e2e-proof",
+        "repo_stars": 386158,
+        "catalog_updated_at": "2026-07-27T08:33:06+00:00",
+        "source_key": "openclaw/openclaw:.agents/skills/telegram-crabbox-e2e-proof",
+        "family_key": "openclaw/openclaw:telegram-crabbox-e2e-proof",
+        "aliases": [],
+        "query": "agent skill output contract schema handoff"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "affaan-m/ecc:benchmark-methodology",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "benchmark-methodology",
+        "author": "affaan-m",
+        "description": "Use after competitive-platform-analysis has produced a tiered competitor set. Scores each competitor across nine weighted dimensions (positioning, voice, visual craft, offer packaging, evidence, enterprise-readiness, thought leadership, pricing, client's strategic tension) with explicit 1–5 rubrics and a tension-plot. Precedes competitive-report-structure.",
+        "content_language": "en",
+        "github_url": "https://github.com/affaan-m/ECC/tree/main/skills/benchmark-methodology",
+        "skillsmp_url": "https://skillsmp.com/creators/affaan-m/ecc/skills-benchmark-methodology",
+        "repo_stars": 239888,
+        "catalog_updated_at": "2026-07-17T21:13:49+00:00",
+        "source_key": "affaan-m/ecc:skills/benchmark-methodology",
+        "family_key": "affaan-m/ecc:benchmark-methodology",
+        "aliases": [
+          {
+            "language": "en",
+            "github_url": "https://github.com/affaan-m/ECC/tree/main/.agents/skills/benchmark-methodology"
+          }
+        ],
+        "query": "enterprise workflow evidence pack agent"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "microsoft/vscode:policy-and-managed-settings",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "policy-and-managed-settings",
+        "author": "microsoft",
+        "description": "Use whenever adding, modifying, or reviewing any Copilot, agent, LLM, AI, tool, permission, sandbox, MCP, model, telemetry, feature-gate, setting, configuration, or enterprise control—especially anything an organization or administrator may need to manage. Start here to decide whether it belongs in runtime managed settings, a typed SDK contract, VS Code configuration policy, extension policy, or a split implementation. Run on every new Copilot/agent/LLM control and ANY change that adds a `policy:` field.",
+        "content_language": "en",
+        "github_url": "https://github.com/microsoft/vscode/tree/main/.github/skills/policy-and-managed-settings",
+        "skillsmp_url": "https://skillsmp.com/creators/microsoft/vscode/github-skills-policy-and-managed-settings",
+        "repo_stars": 188654,
+        "catalog_updated_at": "2026-08-12T00:13:36+00:00",
+        "source_key": "microsoft/vscode:.github/skills/policy-and-managed-settings",
+        "family_key": "microsoft/vscode:policy-and-managed-settings",
+        "aliases": [],
+        "query": "enterprise workflow evidence pack agent"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "nexu-io/open-design:fs-electric-studio",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "fs-electric-studio",
+        "author": "nexu-io",
+        "description": "Open Design as an enterprise design platform: a buyer-forwardable proposal for a design-org's economic buyer — pain, value, ROI, rollout. Built as a decision-grade B2B sales deck for economic buyer, design VP, procurement.",
+        "content_language": "en",
+        "github_url": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/examples/fs-electric-studio",
+        "skillsmp_url": "https://skillsmp.com/creators/nexu-io/open-design/plugins-official-examples-fs-electric-studio",
+        "repo_stars": 85523,
+        "catalog_updated_at": "2026-07-14T08:43:57+00:00",
+        "source_key": "nexu-io/open-design:plugins/_official/examples/fs-electric-studio",
+        "family_key": "nexu-io/open-design:fs-electric-studio",
+        "aliases": [],
+        "query": "enterprise workflow evidence pack agent"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "nexu-io/open-design:html-ppt-obsidian-claude-gradient",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "html-ppt-obsidian-claude-gradient",
+        "author": "nexu-io",
+        "description": "Open Design's enterprise AI-adoption brief: local-first agents at work, the risk controls, the ROI, and the rollout plan. Built as a decision-grade AI literacy deck for leadership, IT, security.",
+        "content_language": "en",
+        "github_url": "https://github.com/nexu-io/open-design/tree/main/design-templates/html-ppt-obsidian-claude-gradient",
+        "skillsmp_url": "https://skillsmp.com/creators/nexu-io/open-design/design-templates-html-ppt-obsidian-claude-gradient",
+        "repo_stars": 85523,
+        "catalog_updated_at": "2026-07-18T03:41:08+00:00",
+        "source_key": "nexu-io/open-design:design-templates/html-ppt-obsidian-claude-gradient",
+        "family_key": "nexu-io/open-design:html-ppt-obsidian-claude-gradient",
+        "aliases": [
+          {
+            "language": "en",
+            "github_url": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/examples/html-ppt-obsidian-claude-gradient"
+          },
+          {
+            "language": "en",
+            "github_url": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/examples/html-ppt-obsidian-claude-gradient"
+          }
+        ],
+        "query": "enterprise workflow evidence pack agent"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    },
+    {
+      "family_key": "ruvnet/ruflo:harness-threat-model",
+      "queries": [
+        "enterprise workflow evidence pack agent"
+      ],
+      "skills_sh": null,
+      "skillsmp": {
+        "source": "skillsmp",
+        "name": "harness-threat-model",
+        "author": "ruvnet",
+        "description": "Enterprise-review-grade threat model from `harness threat-model <path>`. Categorizes MCP-surface threats; emits `worst: 'clean'|'low'|'medium'|'high'` + per-threat findings. Pure-read.",
+        "content_language": "en",
+        "github_url": "https://github.com/ruvnet/ruflo/tree/main/plugins/ruflo-metaharness/skills/harness-threat-model",
+        "skillsmp_url": "https://skillsmp.com/creators/ruvnet/ruflo/plugins-ruflo-metaharness-skills-harness-threat-model",
+        "repo_stars": 67763,
+        "catalog_updated_at": "2026-07-03T20:52:09+00:00",
+        "source_key": "ruvnet/ruflo:plugins/ruflo-metaharness/skills/harness-threat-model",
+        "family_key": "ruvnet/ruflo:harness-threat-model",
+        "aliases": [],
+        "query": "enterprise workflow evidence pack agent"
+      },
+      "catalogs": [
+        "skillsmp"
+      ],
+      "requires_source_review": true
+    }
+  ],
+  "missing_evidence": [],
+  "next_steps": [
+    "shortlist by job relevance and role coverage, not combined popularity",
+    "open canonical GitHub source and inspect SKILL.md before adoption",
+    "verify license, maintenance, permissions, security, duplication, and rating evidence",
+    "write keep/adapt/reject/invent synthesis before authoring"
+  ]
+}

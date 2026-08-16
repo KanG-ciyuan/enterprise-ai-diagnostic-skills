@@ -1,0 +1,29 @@
+{
+  "skill": "enterprise-ai-process-diagnosis",
+  "version": "0.2.0",
+  "evaluated_at": "2026-08-12",
+  "cases": [
+    {
+      "id": "urgent-procurement-evidence-pack",
+      "input_type": "simulated enterprise_material_evidence_pack",
+      "output": "evals/fixtures/urgent-procurement/actual-diagnosis.md",
+      "checks": {
+        "inherits_prohibited_conclusions": true,
+        "preserves_policy_practice_conflict": true,
+        "separates_business_and_integration_readiness": true,
+        "classifies_components_by_feasibility": true,
+        "includes_conditional_access_branches": true,
+        "includes_concrete_five_day_build_plan": true,
+        "avoids_roi_claim": true,
+        "avoids_fabricated_api": true
+      },
+      "evidence_level": "simulated-local",
+      "limitations": [
+        "not provider-backed runtime",
+        "not human practitioner reviewed",
+        "not based on real enterprise data",
+        "not production integration evidence"
+      ]
+    }
+  ]
+}

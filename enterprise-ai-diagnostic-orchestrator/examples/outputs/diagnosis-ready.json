@@ -1,0 +1,31 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_scheduling_proposal",
+  "contract_version": "0.1",
+  "event_id": "EVENT-DIAG-001",
+  "decision": "invoke_skill",
+  "target": "enterprise-ai-process-diagnosis",
+  "reason_codes": [
+    "DIAGNOSIS_GATE_CONFIRMED"
+  ],
+  "human_summary": "当前事件应由enterprise-ai-process-diagnosis处理；一次只调用一个主要Skill。",
+  "context_package": {
+    "enterprise_id": "ENT-SIM-RTL",
+    "project_id": "PRJ-SIM-RTL-V02",
+    "event_type": "diagnosis_gate_ready",
+    "actor_role": "enterprise_project_owner",
+    "payload": {
+      "process_id": "PROC-COMPLAINT",
+      "evidence_pack_ref": "EVIDENCE-V02-001@1",
+      "p0_coverage_checked": true,
+      "residual_risk_recorded": true
+    }
+  },
+  "human_task": null,
+  "proposed_state_change": {},
+  "next_expected_events": [
+    "process_diagnosis_completed",
+    "process_diagnosis_blocked"
+  ],
+  "write_authority": "scheduling_proposal",
+  "created_at": "2026-08-14T13:40:00+08:00"
+}

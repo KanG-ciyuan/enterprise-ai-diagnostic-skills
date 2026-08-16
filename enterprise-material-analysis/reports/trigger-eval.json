@@ -1,0 +1,188 @@
+{
+  "ok": true,
+  "threshold": 0.34,
+  "description_concepts": [
+    "analysis",
+    "evidence",
+    "materials",
+    "process"
+  ],
+  "missing_description_concepts": [],
+  "summary": {
+    "total": 13,
+    "passed": 13,
+    "false_positive": 0,
+    "false_negative": 0,
+    "pass_rate": 1.0
+  },
+  "failures": [],
+  "results": {
+    "should_trigger": [
+      {
+        "prompt": "分析这些流程卡、会议纪要和ERP样本，整理证据与冲突",
+        "family": "multi_material",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 1.0,
+        "matched_concepts": [
+          "analysis",
+          "evidence",
+          "materials",
+          "process"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "找出这份SOP和员工实际说法之间需要补证的地方",
+        "family": "policy_practice",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.5,
+        "matched_concepts": [
+          "analysis",
+          "evidence"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "把录音转写、Excel和截图整理成改造方可用的证据包",
+        "family": "evidence_pack",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.5,
+        "matched_concepts": [
+          "evidence",
+          "materials"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "核验多份岗位流程卡的交接说法，给出最小材料清单",
+        "family": "cross_role",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.75,
+        "matched_concepts": [
+          "analysis",
+          "materials",
+          "process"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "Build a source-located evidence ledger from these business process materials.",
+        "family": "english",
+        "expected_trigger": true,
+        "predicted_trigger": true,
+        "passed": true,
+        "score": 0.75,
+        "matched_concepts": [
+          "evidence",
+          "materials",
+          "process"
+        ],
+        "negative_pattern": null
+      }
+    ],
+    "should_not_trigger": [
+      {
+        "prompt": "请逐题采访这个采购员工并生成流程卡",
+        "family": "employee_interview",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.5,
+        "matched_concepts": [
+          "materials",
+          "process"
+        ],
+        "negative_pattern": "逐题采访"
+      },
+      {
+        "prompt": "根据这些材料决定使用n8n、RPA还是Agent",
+        "family": "technology_route",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.25,
+        "matched_concepts": [
+          "materials"
+        ],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "只总结一下会议纪要",
+        "family": "ordinary_summary",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.25,
+        "matched_concepts": [
+          "materials"
+        ],
+        "negative_pattern": "只总结"
+      },
+      {
+        "prompt": "审查这份合同有没有法律风险",
+        "family": "legal_review",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "直接开发一个企业材料上传系统",
+        "family": "implementation",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.25,
+        "matched_concepts": [
+          "materials"
+        ],
+        "negative_pattern": "直接开发"
+      }
+    ],
+    "near_neighbor": [
+      {
+        "prompt": "为下周的员工访谈生成问题清单",
+        "family": "interview_preparation",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "把已经确定的改造路线画成可视化",
+        "family": "visualization",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.0,
+        "matched_concepts": [],
+        "negative_pattern": null
+      },
+      {
+        "prompt": "分析这些材料并给企业老板最终改造方案",
+        "family": "diagnosis",
+        "expected_trigger": false,
+        "predicted_trigger": false,
+        "passed": true,
+        "score": 0.5,
+        "matched_concepts": [
+          "analysis",
+          "materials"
+        ],
+        "negative_pattern": "最终改造方案"
+      }
+    ]
+  }
+}

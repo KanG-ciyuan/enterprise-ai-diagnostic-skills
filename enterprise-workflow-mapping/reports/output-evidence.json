@@ -1,0 +1,38 @@
+{
+  "ok": true,
+  "evidence_kind": "provider_backed",
+  "run_at": "2026-08-12",
+  "provider": "Codex CLI",
+  "model": "gpt-5.6-terra",
+  "session_mode": "ephemeral-read-only",
+  "case": "sales-operations-weekly-review",
+  "task_inputs": [
+    "evals/fixtures/sales-operations/employee-background.md",
+    "evals/fixtures/sales-operations/sample-evidence.md"
+  ],
+  "withheld_inputs": [
+    "evals/fixtures/sales-operations/expected-workflow-card.md",
+    "evals/output_cases.json",
+    "reports"
+  ],
+  "additional_context": "The runner performed a policy-required local memory-index search. Returned lines contained general CRM/career context and did not expose the simulated expected workflow card.",
+  "assertions": {
+    "one_question_per_turn": true,
+    "question_ceiling": true,
+    "one_concrete_job": true,
+    "vague_action_follow_up": true,
+    "normal_and_exception_paths": true,
+    "employee_correction_before_confirmation": true,
+    "evidence_boundaries": true,
+    "visual_workflow": true,
+    "no_transformation_recommendation": true,
+    "no_roi_claim": true
+  },
+  "limitations": [
+    "simulated employee rather than real enterprise employee",
+    "exception prompts may have been easier because the raw role fixture contained explicit exceptions",
+    "no head-to-head baseline without the Skill",
+    "no human blind review",
+    "not a perfectly context-empty run because local memory lookup occurred"
+  ]
+}

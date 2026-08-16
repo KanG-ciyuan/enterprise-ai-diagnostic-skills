@@ -1,0 +1,13 @@
+log_id,approval_id,customer_name,customer_id,crm_current_owner,requested_new_sales,operation,operation_status,operator_role,operated_at,audit_ref,notes
+LOG-001,OA-001,星河制造,CUST-001,张敏,李浩,add_authorization,success,business_ops,2026-08-11T09:08:00+08:00,AUD-001,正常新增
+LOG-002,OA-002,远航科技,CUST-002,王强,陈璐,add_authorization,success,business_ops,2026-08-11T09:21:00+08:00,AUD-002,正常新增
+LOG-003,OA-003,新源物流,,unknown,李浩,search_customer,blocked,business_ops,2026-08-11T10:10:00+08:00,AUD-003,无客户编号且名称未搜索到，驳回补建
+LOG-004,OA-004,华南科技,CUST-004A,王强,陈璐,merge_duplicate,success,business_ops,2026-08-11T10:35:00+08:00,AUD-004,与CUST-004B核对后保留CUST-004A
+LOG-005,OA-005,华南科技,CUST-004B,王强,陈璐,delete_duplicate,success,business_ops,2026-08-11T10:36:00+08:00,AUD-005,错误重复记录删除
+LOG-006,OA-006,启明医疗,CUST-006,赵凯,李浩,verify_owner,blocked,business_ops,2026-08-11T11:14:00+08:00,AUD-006,申请声明王强但CRM当前归属赵凯，等待补加签
+LOG-007,OA-007,北辰能源,CUST-007,赵凯,陈璐,verify_owner,blocked,business_ops,2026-08-11T11:36:00+08:00,AUD-007,归属不符，待实际归属销售确认
+LOG-008,OA-008,蓝海零售,CUST-008,张敏,李浩,add_authorization,success,business_ops,2026-08-11T13:10:00+08:00,AUD-008,正常新增
+LOG-009,OA-009,安泰化工,CUST-009,赵凯,陈璐,add_authorization,success,business_ops,2026-08-11T14:22:00+08:00,AUD-009,正常新增
+LOG-010,OA-010,嘉禾食品,CUST-010,张敏,李浩,add_authorization,success,business_ops,2026-08-11T15:47:00+08:00,AUD-010,正常新增
+LOG-011,OA-011,离职交接名单-01,CUST-011,王强,陈璐,add_authorization,success,business_ops,2026-08-12T09:44:00+08:00,AUD-011,批量中的第一条
+LOG-012,OA-012,离职交接名单-02,CUST-012,王强,陈璐,add_authorization,pending,business_ops,2026-08-12T09:46:00+08:00,AUD-012,批量处理中尚未完成

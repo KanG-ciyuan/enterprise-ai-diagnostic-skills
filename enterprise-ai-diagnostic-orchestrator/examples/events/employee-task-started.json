@@ -1,0 +1,20 @@
+{
+  "contract_type": "enterprise_ai_diagnostic_orchestrator_event",
+  "contract_version": "0.1",
+  "event_id": "EVENT-TASK-001",
+  "event_type": "participant_task_started",
+  "enterprise_id": "ENT-SIM-RTL",
+  "project_id": "PRJ-SIM-RTL-V02",
+  "actor_role": "employee",
+  "authorization_status": "authorized",
+  "source_status": "known",
+  "payload": {
+    "task_id": "TASK-CSR-001",
+    "participant_id": "PART-CSR-001",
+    "department_id": "DEPT-STORE",
+    "role": "门店客服",
+    "process_id": "PROC-COMPLAINT",
+    "employee_visible_context_only": true
+  },
+  "created_at": "2026-08-14T10:00:00+08:00"
+}

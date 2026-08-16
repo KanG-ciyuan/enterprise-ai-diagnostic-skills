@@ -1,0 +1,94 @@
+{
+  "record_type": "enterprise_ai_diagnostic_master_record",
+  "schema_version": "0.2",
+  "record_id": "MASTER-SIM-CRM-AUTH-001",
+  "version": 1,
+  "enterprise_id": "ENT-SIM-BIZOPS",
+  "project_id": "PRJ-SIM-CRM-AUTH-001",
+  "project_identity": {
+    "enterprise_display_name": "模拟业务运营企业",
+    "project_name": "CRM客户访问授权流程诊断",
+    "project_owner_role": "企业业务运营负责人",
+    "created_at": "2026-08-15T19:15:16+08:00",
+    "simulation_only": true
+  },
+  "current_stage": {
+    "stage": "workflow_mapping",
+    "status": "active",
+    "owner_role": "企业项目负责人",
+    "updated_at": "2026-08-15T19:15:16+08:00",
+    "stop_reason": null
+  },
+  "research_coverage": [
+    {
+      "department_id": "DEPT-BIZOPS",
+      "role": "业务运营",
+      "process_id": "PROC-CRM-AUTH",
+      "priority": "P0",
+      "planned_participants": 1,
+      "status": "confirmed",
+      "gap": "本人流程卡已确认，仍缺系统材料核验"
+    },
+    {
+      "department_id": "DEPT-SALES",
+      "role": "销售申请人",
+      "process_id": "PROC-CRM-AUTH",
+      "priority": "P0",
+      "planned_participants": 1,
+      "status": "not_scheduled",
+      "gap": "尚未验证申请字段、发起体验和授权结果验收"
+    },
+    {
+      "department_id": "DEPT-IT",
+      "role": "CRM管理员",
+      "process_id": "PROC-CRM-AUTH",
+      "priority": "P1",
+      "planned_participants": 1,
+      "status": "not_scheduled",
+      "gap": "尚未验证批量能力、接口、权限和日志条件"
+    }
+  ],
+  "participant_tasks": [
+    {
+      "task_id": "TASK-BIZOPS-001",
+      "participant_id": "PART-BIZOPS-001",
+      "department_id": "DEPT-BIZOPS",
+      "role": "业务运营",
+      "process_id": "PROC-CRM-AUTH",
+      "priority": "P0",
+      "status": "confirmed",
+      "current_workflow_card": "CARD-BIZOPS-CRM-AUTH-001@1",
+      "updated_at": "2026-08-15T19:15:16+08:00",
+      "updated_by_role": "authorized_simulation_registrar",
+      "status_reason": "员工本人确认，登记提案通过结构与边界校验；尚未完成项目级证据门"
+    }
+  ],
+  "workflow_cards": [
+    {
+      "record_id": "CARD-BIZOPS-CRM-AUTH-001",
+      "record_type": "workflow_card",
+      "version": 1,
+      "lifecycle_status": "current",
+      "enterprise_id": "ENT-SIM-BIZOPS",
+      "project_id": "PRJ-SIM-CRM-AUTH-001",
+      "participant_id": "PART-BIZOPS-001",
+      "process_id": "PROC-CRM-AUTH",
+      "authorization_status": "authorized",
+      "evidence_level": "E3",
+      "upstream_records": [],
+      "supersedes": null,
+      "change_reason": "员工本人检查并明确确认流程卡v1",
+      "storage_ref": "simulations/business-operations-crm-authorization/01-employee-confirmed-workflow-card.md",
+      "created_at": "2026-08-15T19:15:16+08:00",
+      "created_by_role": "employee_workflow_agent",
+      "employee_confirmed": true,
+      "confirmed_at": "2026-08-15T19:15:16+08:00"
+    }
+  ],
+  "materials": [],
+  "conflicts_and_evidence_requests": [],
+  "organizational_confirmations": [],
+  "stops_and_recoveries": [],
+  "diagnoses_and_pilots": [],
+  "output_views": []
+}

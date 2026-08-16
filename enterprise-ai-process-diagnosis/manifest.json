@@ -1,0 +1,20 @@
+{
+  "name": "enterprise-ai-process-diagnosis",
+  "version": "0.2.0",
+  "owner": "Kang Jiaxin",
+  "updated_at": "2026-08-12",
+  "status": "personal-experiment",
+  "maturity_tier": "production-candidate",
+  "target_platforms": ["codex"],
+  "publication": "local-only",
+  "upstream_skills": ["enterprise-workflow-mapping", "enterprise-material-analysis"],
+  "release_gates": [
+    "package validation",
+    "trigger boundary evaluation",
+    "output contract tests",
+    "one simulated evidence-pack diagnosis",
+    "provider-backed runtime or explicit missing evidence",
+    "human review before public publication"
+  ],
+  "upstream_inspiration": null
+}

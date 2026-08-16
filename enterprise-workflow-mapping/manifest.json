@@ -1,0 +1,16 @@
+{
+  "name": "enterprise-workflow-mapping",
+  "version": "0.1.1",
+  "owner": "Kang Jiaxin",
+  "updated_at": "2026-08-12",
+  "status": "personal-experiment",
+  "maturity_tier": "scaffold",
+  "target_platforms": ["codex"],
+  "publication": "local-only",
+  "release_gates": [
+    "package validation",
+    "trigger boundary evaluation",
+    "two simulated employee cases including one difficult-interview case",
+    "human review before public publication"
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "record_type": "enterprise_ai_diagnostic_master_record",
+  "schema_version": "0.1",
+  "record_id": "MASTER-SIM-RTL-001",
+  "version": 1,
+  "enterprise_id": "ENT-SIM-RTL",
+  "project_id": "PRJ-SIM-RTL-001",
+  "project_identity": {
+    "enterprise_display_name": "模拟连锁零售企业",
+    "project_name": "门店客诉退款与补偿流程诊断",
+    "project_owner_role": "企业运营负责人",
+    "created_at": "2026-08-12T09:00:00+08:00"
+  },
+  "current_stage": {
+    "stage": "diagnosis",
+    "status": "review_required",
+    "owner_role": "改造方项目负责人",
+    "updated_at": "2026-08-13T15:00:00+08:00",
+    "stop_reason": "五项业务冲突等待有权负责人确认"
+  },
+  "research_coverage": [
+    {"department_id": "DEPT-STORE-A17", "role": "客服兼收银员", "process_id": "PROC-COMPLAINT", "planned_participants": 1, "status": "analyzed", "gap": "单员工口述需交叉验证"},
+    {"department_id": "DEPT-STORE-A17", "role": "店长", "process_id": "PROC-COMPLAINT", "planned_participants": 1, "status": "analyzed", "gap": "缺实际审批样本"},
+    {"department_id": "DEPT-REGION", "role": "区域经理", "process_id": "PROC-COMPLAINT", "planned_participants": 1, "status": "analyzed", "gap": "关闭口径未确认"},
+    {"department_id": "DEPT-QUALITY", "role": "总部品控", "process_id": "PROC-COMPLAINT", "planned_participants": 1, "status": "not_submitted", "gap": "缺高风险接收记录"}
+  ],
+  "workflow_cards": [
+    {
+      "record_id": "CARD-RTL-E017", "record_type": "workflow_card", "version": 1, "lifecycle_status": "current",
+      "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "participant_id": "PART-E017", "process_id": "PROC-COMPLAINT",
+      "authorization_status": "authorized", "upstream_records": [], "supersedes": null, "change_reason": "员工确认初版",
+      "storage_ref": "simulations/retail-complaint-refund/01-difficult-employee-mapping.md", "created_at": "2026-08-12T10:00:00+08:00", "created_by_role": "employee"
+    },
+    {
+      "record_id": "CARD-RTL-MGR", "record_type": "workflow_card", "version": 1, "lifecycle_status": "current",
+      "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "participant_id": "PART-MGR", "process_id": "PROC-COMPLAINT",
+      "authorization_status": "authorized", "upstream_records": [], "supersedes": null, "change_reason": "店长角色材料登记",
+      "storage_ref": "simulations/retail-complaint-refund/02-multi-role-materials.md", "created_at": "2026-08-12T10:10:00+08:00", "created_by_role": "store_manager"
+    },
+    {
+      "record_id": "CARD-RTL-REGION", "record_type": "workflow_card", "version": 1, "lifecycle_status": "current",
+      "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "participant_id": "PART-REGION", "process_id": "PROC-COMPLAINT",
+      "authorization_status": "authorized", "upstream_records": [], "supersedes": null, "change_reason": "区域角色材料登记",
+      "storage_ref": "simulations/retail-complaint-refund/02-multi-role-materials.md", "created_at": "2026-08-12T10:20:00+08:00", "created_by_role": "regional_manager"
+    }
+  ],
+  "materials": [
+    {"record_id": "MAT-R01", "record_type": "employee_interview", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "authorized", "analysis_status": "analyzed", "upstream_records": ["CARD-RTL-E017@1"], "supersedes": null, "change_reason": "访谈和确认卡", "storage_ref": "simulations/retail-complaint-refund/01-difficult-employee-mapping.md", "created_at": "2026-08-12T11:01:00+08:00", "created_by_role": "employee"},
+    {"record_id": "MAT-R02", "record_type": "manager_interview", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "authorized", "analysis_status": "analyzed", "upstream_records": ["CARD-RTL-MGR@1"], "supersedes": null, "change_reason": "店长访谈", "storage_ref": "simulations/retail-complaint-refund/02-multi-role-materials.md", "created_at": "2026-08-12T11:02:00+08:00", "created_by_role": "store_manager"},
+    {"record_id": "MAT-R03", "record_type": "meeting_transcript", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "authorized", "analysis_status": "analyzed", "upstream_records": [], "supersedes": null, "change_reason": "多角色会议转写", "storage_ref": "simulations/retail-complaint-refund/02-multi-role-materials.md", "created_at": "2026-08-12T11:03:00+08:00", "created_by_role": "project_contact"},
+    {"record_id": "MAT-R04", "record_type": "sop", "version": 5, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "authorized", "analysis_status": "analyzed", "upstream_records": [], "supersedes": null, "change_reason": "制度样本", "storage_ref": "simulations/retail-complaint-refund/02-multi-role-materials.md", "created_at": "2026-08-12T11:04:00+08:00", "created_by_role": "enterprise_owner"},
+    {"record_id": "MAT-R05", "record_type": "spreadsheet_sample", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "authorized", "analysis_status": "analyzed", "upstream_records": [], "supersedes": null, "change_reason": "十行登记表样本", "storage_ref": "simulations/retail-complaint-refund/02-multi-role-materials.md", "created_at": "2026-08-12T11:05:00+08:00", "created_by_role": "project_contact"},
+    {"record_id": "MAT-R06", "record_type": "pos_export_sample", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "authorized", "analysis_status": "analyzed", "upstream_records": [], "supersedes": null, "change_reason": "六行退款样本", "storage_ref": "simulations/retail-complaint-refund/02-multi-role-materials.md", "created_at": "2026-08-12T11:06:00+08:00", "created_by_role": "enterprise_it"},
+    {"record_id": "MAT-R07", "record_type": "unreadable_screenshot", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "authorized", "analysis_status": "unusable", "upstream_records": [], "supersedes": null, "change_reason": "来源不完整且不可读", "storage_ref": "simulations/retail-complaint-refund/02-multi-role-materials.md", "created_at": "2026-08-12T11:07:00+08:00", "created_by_role": "unknown_source"}
+  ],
+  "conflicts_and_evidence_requests": [
+    {"record_id": "X-R01", "record_type": "evidence_conflict", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "not_required", "upstream_records": ["MAT-R01@1", "MAT-R02@1", "MAT-R04@5", "MAT-R05@1", "MAT-R06@1"], "supersedes": null, "change_reason": "登记覆盖冲突", "storage_ref": "simulations/retail-complaint-refund/03-evidence-pack.md", "created_at": "2026-08-12T12:01:00+08:00", "created_by_role": "material_analyst"},
+    {"record_id": "X-R02", "record_type": "evidence_conflict", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "not_required", "upstream_records": ["MAT-R01@1", "MAT-R02@1", "MAT-R04@5"], "supersedes": null, "change_reason": "发券权限冲突", "storage_ref": "simulations/retail-complaint-refund/03-evidence-pack.md", "created_at": "2026-08-12T12:02:00+08:00", "created_by_role": "material_analyst"},
+    {"record_id": "X-R03", "record_type": "evidence_conflict", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "not_required", "upstream_records": ["MAT-R01@1", "MAT-R02@1"], "supersedes": null, "change_reason": "接管语义冲突", "storage_ref": "simulations/retail-complaint-refund/03-evidence-pack.md", "created_at": "2026-08-12T12:03:00+08:00", "created_by_role": "material_analyst"},
+    {"record_id": "X-R04", "record_type": "evidence_conflict", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "not_required", "upstream_records": ["MAT-R01@1", "MAT-R04@5", "MAT-R07@1"], "supersedes": null, "change_reason": "高风险上报冲突", "storage_ref": "simulations/retail-complaint-refund/03-evidence-pack.md", "created_at": "2026-08-12T12:04:00+08:00", "created_by_role": "material_analyst"},
+    {"record_id": "X-R05", "record_type": "evidence_conflict", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "not_required", "upstream_records": ["MAT-R03@1", "MAT-R05@1"], "supersedes": null, "change_reason": "关闭定义冲突", "storage_ref": "simulations/retail-complaint-refund/03-evidence-pack.md", "created_at": "2026-08-12T12:05:00+08:00", "created_by_role": "material_analyst"},
+    {"record_id": "EVIDENCE-RTL-001", "record_type": "enterprise_material_evidence_pack", "version": 1, "lifecycle_status": "current", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "authorized", "upstream_records": ["MAT-R01@1", "MAT-R02@1", "MAT-R03@1", "MAT-R04@5", "MAT-R05@1", "MAT-R06@1", "MAT-R07@1", "X-R01@1", "X-R02@1", "X-R03@1", "X-R04@1", "X-R05@1"], "supersedes": null, "change_reason": "零售材料证据包", "storage_ref": "simulations/retail-complaint-refund/03-evidence-pack.md", "created_at": "2026-08-12T12:30:00+08:00", "created_by_role": "material_analyst"}
+  ],
+  "organizational_confirmations": [],
+  "diagnoses_and_pilots": [
+    {"record_id": "DIAG-RTL-001", "record_type": "process_diagnosis", "version": 1, "lifecycle_status": "current", "review_status": "approved", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "authorized", "upstream_records": ["EVIDENCE-RTL-001@1"], "supersedes": null, "change_reason": "先统一业务流程再做离线影子验证", "storage_ref": "simulations/retail-complaint-refund/04-internal-diagnosis.md", "created_at": "2026-08-12T14:00:00+08:00", "created_by_role": "transformation_practitioner"},
+    {"record_id": "PILOT-RTL-001", "record_type": "shadow_pilot", "version": 1, "lifecycle_status": "current", "review_status": "draft", "enterprise_id": "ENT-SIM-RTL", "project_id": "PRJ-SIM-RTL-001", "authorization_status": "not_required", "upstream_records": ["DIAG-RTL-001@1"], "supersedes": null, "change_reason": "五天离线影子试点草案", "storage_ref": "simulations/retail-complaint-refund/04-internal-diagnosis.md", "created_at": "2026-08-12T14:10:00+08:00", "created_by_role": "transformation_practitioner"}
+  ],
+  "output_views": [
+    {"view_id": "VIEW-EMPLOYEE-E017", "audience_role": "employee", "publication_status": "published", "source_records": ["CARD-RTL-E017@1"], "allowed_sections": ["own_workflow_card", "confirmation_status"], "excluded_sections": ["other_employee_materials", "internal_diagnosis", "opportunity_ranking"]},
+    {"view_id": "VIEW-LEADER-001", "audience_role": "enterprise_leader", "publication_status": "published", "source_records": ["DIAG-RTL-001@1"], "allowed_sections": ["research_coverage", "confirmed_findings", "risks", "pilot", "decisions"], "excluded_sections": ["unrelated_raw_employee_materials", "internal_sales_advice"]},
+    {"view_id": "VIEW-PRACTITIONER-001", "audience_role": "transformation_practitioner", "publication_status": "published", "source_records": ["EVIDENCE-RTL-001@1", "DIAG-RTL-001@1"], "allowed_sections": ["authorized_material_index", "claims", "conflicts", "diagnosis", "technical_conditions"], "excluded_sections": ["other_enterprise_data"]}
+  ]
+}

@@ -1,0 +1,25 @@
+interface:
+  display_name: "企业AI应用诊断（改造方）"
+  short_description: "从证据判断真实需求、可开发条件与3至7天影子试点"
+  default_prompt: "Use $enterprise-ai-process-diagnosis to diagnose one enterprise process from an evidence pack or confirmed workflow cards. Preserve evidence conflicts and prohibited conclusions, separate business value from technical readiness, classify every component as developable, conditional, or blocked, and produce an internal diagnosis plus a client-facing shadow pilot."
+  examples:
+    - "用这份材料证据包诊断流程，并判断当前能开发到什么程度。"
+    - "先核对OA和ERP接口条件，再给出条件式技术方案。"
+    - "为这个具体流程设计一个3至7天离线影子试点。"
+compatibility:
+  canonical_format: "agent-skills"
+  adapter_targets:
+    - "openai"
+  activation:
+    mode: "manual-or-description"
+  execution:
+    context: "inline"
+  trust:
+    source_tier: "personal-local"
+    generated_claims: "evidence-and-condition-bound"
+  permissions:
+    network: "none required by the skill"
+    file_write: "none unless the user separately requests an artifact"
+    external_actions: "forbidden during diagnosis and shadow-pilot design"
+  degradation:
+    openai: "validated locally with simulated evidence-pack case; provider runtime pending"

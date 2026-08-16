@@ -1,0 +1,30 @@
+{
+  "recommended_threshold": 0.34,
+  "description_required_concepts": ["materials", "evidence", "analysis"],
+  "positive_concepts": {
+    "materials": ["materials", "材料", "流程卡", "纪要", "转写", "sop", "excel", "截图", "系统记录"],
+    "evidence": ["evidence", "证据", "来源", "补证", "证据账本"],
+    "analysis": ["analysis", "analyze", "find", "分析", "核验", "找出", "冲突", "交叉验证"],
+    "process": ["process", "流程", "岗位", "交接", "业务节点"]
+  },
+  "negative_patterns": ["采访员工", "逐题访谈", "逐题采访", "生成流程卡", "直接开发", "技术路线", "选择Agent", "只总结", "合同法律审查", "最终改造方案", "整个公司改造"],
+  "should_trigger": [
+    {"text": "分析这些流程卡、会议纪要和ERP样本，整理证据与冲突", "family": "multi_material"},
+    {"text": "找出这份SOP和员工实际说法之间需要补证的地方", "family": "policy_practice"},
+    {"text": "把录音转写、Excel和截图整理成改造方可用的证据包", "family": "evidence_pack"},
+    {"text": "核验多份岗位流程卡的交接说法，给出最小材料清单", "family": "cross_role"},
+    {"text": "Build a source-located evidence ledger from these business process materials.", "family": "english"}
+  ],
+  "should_not_trigger": [
+    {"text": "请逐题采访这个采购员工并生成流程卡", "family": "employee_interview"},
+    {"text": "根据这些材料决定使用n8n、RPA还是Agent", "family": "technology_route"},
+    {"text": "只总结一下会议纪要", "family": "ordinary_summary"},
+    {"text": "审查这份合同有没有法律风险", "family": "legal_review"},
+    {"text": "直接开发一个企业材料上传系统", "family": "implementation"}
+  ],
+  "near_neighbor": [
+    {"text": "为下周的员工访谈生成问题清单", "family": "interview_preparation"},
+    {"text": "把已经确定的改造路线画成可视化", "family": "visualization"},
+    {"text": "分析这些材料并给企业老板最终改造方案", "family": "diagnosis"}
+  ]
+}

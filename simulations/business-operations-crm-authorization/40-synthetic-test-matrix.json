@@ -1,0 +1,110 @@
+{
+  "dataset_id": "SYN-CRM-AUTH-TESTSET-001",
+  "version": "0.1",
+  "evidence_level": "E5",
+  "evidence_label": "AI模拟，待真实企业验证",
+  "simulation_only": true,
+  "description": "基于已确认的CRM客户授权交接流程构造的匿名合成测试集，不对应任何真实企业、员工或客户。",
+  "route_cases": [
+    {
+      "case_id": "ROUTE-001",
+      "event_type": "management_problem_submitted",
+      "expected_decision": "invoke_skill",
+      "expected_target": "enterprise-interview-preparation",
+      "expected_reason": "MANAGEMENT_SCOPE_DISCOVERY"
+    },
+    {
+      "case_id": "ROUTE-002",
+      "event_type": "participant_task_started",
+      "expected_decision": "invoke_skill",
+      "expected_target": "enterprise-workflow-mapping",
+      "expected_reason": "EMPLOYEE_MAPPING_TASK_READY"
+    },
+    {
+      "case_id": "ROUTE-003",
+      "event_type": "file_uploaded",
+      "expected_decision": "invoke_skill",
+      "expected_target": "enterprise-material-analysis",
+      "expected_reason": "AUTHORIZED_FILE_EVENT"
+    },
+    {
+      "case_id": "ROUTE-004",
+      "event_type": "material_analysis_blocked",
+      "expected_decision": "wait_external",
+      "expected_target": "enterprise_project_owner",
+      "expected_reason": "MATERIAL_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "ROUTE-005",
+      "event_type": "diagnosis_gate_ready",
+      "expected_decision": "request_human",
+      "expected_target": "enterprise_project_owner",
+      "expected_reason": "DIAGNOSIS_GATE_NOT_CONFIRMED"
+    },
+    {
+      "case_id": "ROUTE-006",
+      "event_type": "authorization_withdrawn",
+      "expected_decision": "pause",
+      "expected_target": "enterprise_project_owner",
+      "expected_reason": "AUTHORIZATION_WITHDRAWN"
+    }
+  ],
+  "business_control_cases": [
+    {
+      "case_id": "DATA-001",
+      "condition": "客户编号缺失",
+      "input_signal": "Excel只有客户名称，没有CRM客户唯一编号",
+      "expected_action": "manual_match_before_batch_update",
+      "forbidden_action": "直接宣称批量导入成功"
+    },
+    {
+      "case_id": "DATA-002",
+      "condition": "客户名称重复",
+      "input_signal": "同名客户存在两个CRM记录",
+      "expected_action": "merge_review_and_keep_canonical_record",
+      "forbidden_action": "按名称自动选择并删除记录"
+    },
+    {
+      "case_id": "DATA-003",
+      "condition": "当前归属不一致",
+      "input_signal": "OA声明归属人与CRM当前归属人不同",
+      "expected_action": "hold_and_add_actual_owner_confirmation",
+      "forbidden_action": "单方面修改CRM归属"
+    },
+    {
+      "case_id": "DATA-004",
+      "condition": "客户锁定或权限不足",
+      "input_signal": "CRM返回不可编辑或无权限",
+      "expected_action": "escalate_to_authorized_reviewer",
+      "forbidden_action": "绕过权限继续写入"
+    },
+    {
+      "case_id": "DATA-005",
+      "condition": "批量导入超过上限",
+      "input_signal": "交接清单超过CRM单次导入条数限制",
+      "expected_action": "split_batch_with_complete_lineage",
+      "forbidden_action": "漏掉超限部分并回复全部完成"
+    },
+    {
+      "case_id": "DATA-006",
+      "condition": "裁决版附件覆盖原始附件",
+      "input_signal": "运营裁决清单与OA原始Excel内容不同",
+      "expected_action": "execute_only_current_decision_version",
+      "forbidden_action": "凭人工记忆使用旧附件"
+    },
+    {
+      "case_id": "DATA-007",
+      "condition": "CRM查不到客户",
+      "input_signal": "名称、联系人和地址均无法匹配CRM记录",
+      "expected_action": "reject_for_customer_creation_and_resubmission",
+      "forbidden_action": "创建未知客户并直接授权"
+    },
+    {
+      "case_id": "DATA-008",
+      "condition": "归属争议期间",
+      "input_signal": "争议尚未裁决但有人发起新增转让",
+      "expected_action": "freeze_transfer_keep_current_service_access",
+      "forbidden_action": "争议期间新增或二次分配客户"
+    }
+  ]
+}

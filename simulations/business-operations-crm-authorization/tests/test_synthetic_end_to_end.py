@@ -112,6 +112,37 @@ class SyntheticEndToEndTest(unittest.TestCase):
         self.assertNotIn("建议采用RPA", report)
         self.assertNotIn("建议开发Agent", report)
 
+    def test_diagnosis_allows_only_offline_shadow_pilot(self):
+        report = (ROOT / "44-synthetic-inputs-diagnosis.md").read_text(encoding="utf-8")
+        self.assertIn("E5 AI模拟", report)
+        self.assertIn("主要业务结论 | **建议进入试点**", report)
+        self.assertIn("整体技术成熟度 | **可进入离线影子验证**", report)
+        self.assertIn("production_integration_status: blocked", report)
+        self.assertIn("production_read: false", report)
+        self.assertIn("production_write: false", report)
+        self.assertIn("不连接、不读取、不写入生产OA/CRM", report)
+
+    def test_diagnosis_preserves_unknown_system_conditions_and_human_gates(self):
+        report = (ROOT / "44-synthetic-inputs-diagnosis.md").read_text(encoding="utf-8")
+        self.assertIn("API、Webhook、导出、UI均未确认", report)
+        self.assertIn("不得虚构API端点", report)
+        self.assertIn("`可开发`，仅离线测试", report)
+        self.assertIn("`有条件`", report)
+        self.assertIn("`阻塞`", report)
+        self.assertIn("H2人工确认", report)
+        self.assertIn("不得让AI裁决客户归属", report)
+
+    def test_diagnosis_contains_client_version_and_no_benefit_commitment(self):
+        report = (ROOT / "44-synthetic-inputs-diagnosis.md").read_text(encoding="utf-8")
+        self.assertIn("## B. 客户沟通版", report)
+        self.assertIn("5天离线影子试点", report)
+        self.assertIn("谁来做", report)
+        self.assertIn("产出什么", report)
+        self.assertIn("什么情况暂停", report)
+        self.assertIn("不承诺ROI、自动化率、节省工时", report)
+        self.assertNotIn("预计节省", report)
+        self.assertNotIn("生产可用", report.replace("生产可用性", ""))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -128,6 +128,42 @@ def route_event(master_record: dict, event: dict) -> dict:
         return pause(event, "AUTHORIZATION_BLOCKED", "当前授权不足或已撤回，不能继续派生记录。", "请由有权角色确认授权状态和适用范围。", ["授权状态恢复为authorized或明确not_required", "复核受影响下游记录", "项目负责人手动恢复"])
 
     event_type = event.get("event_type")
+    if event_type == "manual_recovery_confirmed":
+        payload = event.get("payload", {})
+        if (
+            master.get("current_stage", {}).get("stage") != "paused"
+            or event.get("actor_role") != "enterprise_project_owner"
+            or payload.get("recovery_conditions_met") is not True
+            or payload.get("resume_stage") != "evidence_completion"
+            or not payload.get("recovery_basis")
+        ):
+            return proposal(
+                event,
+                "wait_external",
+                "enterprise_project_owner",
+                ["MANUAL_RECOVERY_OWNER_REQUIRED"],
+                "暂停项目只能由项目负责人在明确恢复依据后手动恢复。",
+                human_task=task(
+                    "S0_recovery",
+                    "enterprise_project_owner",
+                    "请确认恢复依据、恢复阶段和受影响引用已完成复核。",
+                    "当前恢复回执不满足项目负责人手动恢复条件。",
+                    "书面恢复依据、受影响记录复核结果和恢复阶段",
+                    "是否允许项目离开暂停状态",
+                    ["项目负责人确认", "恢复依据完整", "恢复阶段为evidence_completion"],
+                    "manual_recovery_confirmed",
+                ),
+                next_events=["manual_recovery_confirmed"],
+            )
+        return proposal(
+            event,
+            "wait_external",
+            "enterprise_project_owner",
+            ["MANUAL_RECOVERY_CONFIRMED", "EVIDENCE_COMPLETION_REQUIRED"],
+            "项目负责人已确认恢复；仅可回到补证阶段，不能直接进入诊断。",
+            state_change={"suggested_stage": "evidence_completion", "automatic_write": False},
+            next_events=["file_uploaded", "participant_task_started"],
+        )
     if event_type == "diagnosis_gate_ready" and master.get("current_stage", {}).get("stage") != "diagnosis":
         return proposal(
             event,

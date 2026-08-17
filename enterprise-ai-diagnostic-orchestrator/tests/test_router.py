@@ -101,6 +101,36 @@ class RouterTest(unittest.TestCase):
         self.assertIn("AUTHORIZATION_WITHDRAWN", result["reason_codes"])
         self.assertTrue(result["human_task"]["recovery_conditions"])
 
+    def test_owner_manual_recovery_proposes_evidence_completion(self):
+        self.master["current_stage"] = {"stage": "paused", "status": "paused"}
+        result = self.route(
+            "manual_recovery_confirmed",
+            actor_role="enterprise_project_owner",
+            payload={
+                "recovery_conditions_met": True,
+                "recovery_basis": "模拟授权方重新确认材料范围",
+                "resume_stage": "evidence_completion",
+            },
+        )
+        self.assertEqual("wait_external", result["decision"])
+        self.assertEqual("enterprise_project_owner", result["target"])
+        self.assertIn("MANUAL_RECOVERY_CONFIRMED", result["reason_codes"])
+        self.assertEqual("evidence_completion", result["proposed_state_change"]["suggested_stage"])
+        self.assertFalse(result["proposed_state_change"]["automatic_write"])
+        self.assertEqual(["file_uploaded", "participant_task_started"], result["next_expected_events"])
+
+    def test_non_owner_manual_recovery_keeps_project_waiting(self):
+        self.master["current_stage"] = {"stage": "paused", "status": "paused"}
+        result = self.route(
+            "manual_recovery_confirmed",
+            actor_role="employee",
+            payload={"recovery_conditions_met": True, "resume_stage": "evidence_completion"},
+        )
+        self.assertEqual("wait_external", result["decision"])
+        self.assertEqual("enterprise_project_owner", result["target"])
+        self.assertIn("MANUAL_RECOVERY_OWNER_REQUIRED", result["reason_codes"])
+        self.assertEqual({}, result["proposed_state_change"])
+
     def test_cross_enterprise_input_is_paused(self):
         result = self.route("file_uploaded", enterprise_id="ENT-OTHER")
         self.assertEqual("pause", result["decision"])

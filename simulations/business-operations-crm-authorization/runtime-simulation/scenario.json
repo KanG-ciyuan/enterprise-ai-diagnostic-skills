@@ -1,0 +1,130 @@
+{
+  "scenario_id": "SIM-RUNTIME-CRM-AUTH-001",
+  "evidence_level": "E5",
+  "simulation_only": true,
+  "production_write": false,
+  "events": [
+    {
+      "event_id": "EVENT-RUNTIME-001",
+      "event_type": "management_problem_submitted",
+      "actor_role": "enterprise_project_owner",
+      "authorization_status": "authorized",
+      "source_status": "known",
+      "payload": {"process_id": "PROC-CRM-AUTH"}
+    },
+    {
+      "event_id": "EVENT-RUNTIME-002",
+      "event_type": "interview_plan_confirmed",
+      "actor_role": "enterprise_project_owner",
+      "authorization_status": "authorized",
+      "source_status": "known",
+      "payload": {
+        "owner_confirmed": true,
+        "participant_roles": [
+          {
+            "department_id": "DEPT-BIZOPS",
+            "role": "业务运营",
+            "process_id": "PROC-CRM-AUTH",
+            "priority": "P0",
+            "planned_participants": 1
+          }
+        ],
+        "participants": [
+          {
+            "task_id": "TASK-RUNTIME-BIZOPS-001",
+            "participant_id": "PART-RUNTIME-BIZOPS-001",
+            "department_id": "DEPT-BIZOPS",
+            "role": "业务运营",
+            "process_id": "PROC-CRM-AUTH",
+            "priority": "P0",
+            "authorization_status": "authorized"
+          }
+        ]
+      }
+    },
+    {
+      "event_id": "EVENT-RUNTIME-003",
+      "event_type": "participant_task_started",
+      "actor_role": "employee",
+      "authorization_status": "authorized",
+      "source_status": "known",
+      "payload": {
+        "task_id": "TASK-RUNTIME-BIZOPS-001",
+        "participant_id": "PART-RUNTIME-BIZOPS-001",
+        "process_id": "PROC-CRM-AUTH"
+      }
+    },
+    {
+      "event_id": "EVENT-RUNTIME-004",
+      "event_type": "file_uploaded",
+      "actor_role": "employee",
+      "authorization_status": "authorized",
+      "source_status": "known",
+      "payload": {
+        "material_id": "MAT-RUNTIME-001",
+        "process_id": "PROC-CRM-AUTH",
+        "file_type": "xlsx"
+      }
+    },
+    {
+      "event_id": "EVENT-RUNTIME-005",
+      "event_type": "h1_required",
+      "actor_role": "agent",
+      "authorization_status": "not_required",
+      "source_status": "known",
+      "payload": {
+        "human_task": {
+          "task_type": "H1",
+          "responsible_role": "authorized_reviewer",
+          "question": "请确认客户编号缺失是否允许继续。",
+          "reason": "模拟清单缺少稳定标识。",
+          "required_evidence": "模拟字段核对说明",
+          "affected_decision": "材料是否可继续分析",
+          "recovery_conditions": ["确认字段口径"],
+          "expected_return_event": "file_uploaded"
+        }
+      }
+    },
+    {
+      "event_id": "EVENT-RUNTIME-006",
+      "event_type": "authorization_withdrawn",
+      "actor_role": "enterprise_project_owner",
+      "authorization_status": "withdrawn",
+      "source_status": "known",
+      "payload": {"affected_record": "MAT-RUNTIME-001@1"}
+    },
+    {
+      "event_id": "EVENT-RUNTIME-007",
+      "event_type": "manual_recovery_confirmed",
+      "actor_role": "enterprise_project_owner",
+      "authorization_status": "authorized",
+      "source_status": "known",
+      "payload": {
+        "recovery_conditions_met": true,
+        "recovery_basis": "模拟授权方重新确认范围并复核引用。",
+        "resume_stage": "evidence_completion"
+      }
+    }
+  ],
+  "human_actions": [
+    {
+      "action_id": "ACTION-RUNTIME-H1-001",
+      "action_type": "H1_completed",
+      "actor_role": "authorized_reviewer",
+      "after_event_id": "EVENT-RUNTIME-005",
+      "evidence_level": "E5",
+      "simulation_only": true,
+      "production_write": false
+    },
+    {
+      "action_id": "ACTION-RUNTIME-RECOVERY-001",
+      "action_type": "apply_manual_recovery",
+      "actor_role": "enterprise_project_owner",
+      "after_event_id": "EVENT-RUNTIME-007",
+      "resume_stage": "evidence_completion",
+      "evidence_level": "E5",
+      "simulation_only": true,
+      "production_write": false
+    }
+  ]
+}

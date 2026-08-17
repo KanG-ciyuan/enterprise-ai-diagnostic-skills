@@ -1,0 +1,20 @@
+{
+  "record_type": "enterprise_ai_diagnostic_master_record",
+  "schema_version": "0.2",
+  "record_id": "MASTER-SIM-RUNTIME-CRM-AUTH-001",
+  "version": 1,
+  "enterprise_id": "ENT-SIM-RUNTIME-BIZOPS",
+  "project_id": "PRJ-SIM-RUNTIME-CRM-AUTH-001",
+  "current_stage": {
+    "stage": "workflow_mapping",
+    "status": "active",
+    "owner_role": "enterprise_project_owner",
+    "updated_at": "2026-08-17T10:00:00+08:00",
+    "stop_reason": null
+  },
+  "research_coverage": [],
+  "participant_tasks": [],
+  "simulation_only": true,
+  "evidence_level": "E5",
+  "production_write": false
+}

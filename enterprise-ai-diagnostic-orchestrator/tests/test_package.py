@@ -21,6 +21,7 @@ class PackageContractTest(unittest.TestCase):
             "schema/orchestrator-event.schema.json",
             "schema/orchestrator-output.schema.json",
             "scripts/orchestrate_event.py",
+            "scripts/run_offline_simulation.py",
             "scripts/validate_orchestrator_output.py",
             "reports/prior-art-research.md",
         ]

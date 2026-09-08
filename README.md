@@ -83,7 +83,7 @@
 ## 仓库结构
 
 ```text
-enterprise-ai-diagnostic-skills-private/
+enterprise-ai-diagnostic-skills/
 ├── enterprise-interview-preparation/
 ├── enterprise-workflow-mapping/
 ├── enterprise-material-analysis/
@@ -141,8 +141,10 @@ python3 scripts/validate_personal_skill_ownership.py
 - 授权撤回后，相关上游材料及其派生记录必须进入复核状态，不得继续对外使用。
 - Skill 默认只生成建议、记录或登记提案，不自动联系员工、发送消息、修改业务系统或执行生产操作。
 
-## 所有权
+## 参与共建
 
-本仓库及其中由作者创建的 Skill、契约、模板、模拟案例和文档由 **Kang Jiaxin** 整理和维护。
+本仓库由 **Kang Jiaxin** 整理和维护。欢迎通过 Issue 讨论方法、证据边界和适用场景，也欢迎通过 Pull Request 参与改进。提交案例或夹具前，请确认其为合成或充分脱敏数据，并且具备公开授权。
 
-Copyright (c) 2026 Kang Jiaxin. All rights reserved.
+## 许可证
+
+本项目采用 [MIT License](./LICENSE) 开源。

@@ -1,7 +1,7 @@
 {
   "ok": false,
   "phase": "local",
-  "root": "/Users/kang/Documents/skill类型/enterprise-ai-process-diagnosis",
+  "root": "enterprise-ai-process-diagnosis",
   "version": "0.2.0",
   "repository": null,
   "summary": {
@@ -15,7 +15,7 @@
       "status": "block",
       "evidence": {
         "ok": true,
-        "root": "/Users/kang/Documents/skill类型/enterprise-ai-process-diagnosis",
+        "root": "enterprise-ai-process-diagnosis",
         "failures": [],
         "warnings": [
           "adapter target not declared: claude",

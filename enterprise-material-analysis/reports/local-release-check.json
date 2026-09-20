@@ -1,7 +1,7 @@
 {
   "ok": false,
   "phase": "local",
-  "root": "/Users/kang/Documents/skill类型/enterprise-material-analysis",
+  "root": "enterprise-material-analysis",
   "version": "0.1.0",
   "repository": null,
   "summary": {
@@ -15,7 +15,7 @@
       "status": "block",
       "evidence": {
         "ok": true,
-        "root": "/Users/kang/Documents/skill类型/enterprise-material-analysis",
+        "root": "enterprise-material-analysis",
         "failures": [],
         "warnings": [
           "adapter target not declared: claude",

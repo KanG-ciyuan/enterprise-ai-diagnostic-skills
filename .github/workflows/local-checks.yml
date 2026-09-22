@@ -1,0 +1,31 @@
+name: local-checks
+
+# Runs the repository's own validation exactly as documented in README.md under
+# "Validation Status": eight stdlib `unittest` suites plus the provenance guard.
+# No dependencies are installed — the check is Python 3 standard library only.
+#
+# The same script is the documented local entry point, so CI and a developer's
+# machine cannot drift apart.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run local checks
+        run: ./scripts/run_local_checks.sh

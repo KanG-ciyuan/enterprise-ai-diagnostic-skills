@@ -16,7 +16,52 @@ at the repository level.
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+
+- **`enterprise-material-analysis` `0.1.0` → `0.1.1`.** Three clarifications to
+  `references/evidence-model.md`, the canonical definition of the `E1`–`E5`
+  levels. No level was added, removed, or renumbered.
+
+  1. **A level comes from the source, not from confidence.** A person who asserts
+     "the policy requires X" without producing the document is `E3`, not `E4`.
+     Without the document there is no way to separate *the rule says this* from
+     *this is how the person remembers the rule*, so a verbal rule claim must not
+     acquire institutional standing through repetition. A rule claim that cannot
+     be documented stays `E3` for the whole engagement.
+  2. **Unwritten rules stay `E3`.** A practice a role is expected to follow, which
+     no document states, rests on one account. It is now labelled explicitly, with
+     the reason recorded: unwritten rules are the most fragile class in the model,
+     because with no document to hand over they are the first thing lost when the
+     person leaves the role and nothing in the record shows that something was lost.
+  3. **Document provenance is recorded as an open gap.** The model has no mechanism
+     to establish that an uploaded file *is* an institutional document. This is the
+     document-side form of the rule that fluent model output is not evidence: a
+     document that looks official is not thereby authoritative. The entry names the
+     reusable primitive that could close it — the named-authorizer capability already
+     implemented in `enterprise_authorizations` — and states that `E4` must not be
+     presented as authoritative while provenance is unestablished.
+
+### On the provenance of these changes
+
+All three came out of **one real, non-published case** (a retrospect on a process
+the maintainer personally executed; the case itself stays private and is not in
+this repository).
+
+The project's own meta-rule permits a single case to change core rules only when
+the item is a safety, fact, or permission invariant, or when a failure has recurred
+across two or more unrelated industries. These three were admitted on the first
+ground: each concerns what an evidence level can claim given its source, which is
+independent of industry, role, or process vocabulary.
+
+Process-specific detail from that case — the systems involved, the fields used, the
+escalation path — was deliberately **kept out** of the reference and stays in the
+private case record.
+
+One further observation from the same case was **also deliberately held back**: that
+when stated policy and reported practice match and both are followed, the defect
+sits in the design rather than in compliance. It is plausible but rests on a single
+case, so per the same meta-rule it is not yet a core rule. It is recorded here so the
+judgement is visible rather than silently applied or silently dropped.
 
 ---
 

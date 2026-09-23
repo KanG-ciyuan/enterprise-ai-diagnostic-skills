@@ -4,7 +4,7 @@ description: >
   Analyze and verify authorized enterprise process materials through evidence analysis that finds policy-versus-practice gaps, source conflicts, and missing proof, then produces a traceable evidence ledger, claim-to-source map, contradiction register, coverage gaps, and minimum evidence request for a later enterprise AI application diagnosis. Use when an implementation practitioner has workflow cards, meeting notes, transcripts, SOPs, spreadsheets, screenshots, forms, PDFs, system records, logs, or samples and needs to analyze or find what the materials can prove, distinguish actual operation, employee statements, intended policy, and model inference. Do not use to interview employees, ask questions one by one, generate an employee workflow card, produce ordinary summaries, perform legal or compliance audits, select technology, recommend transformation, claim ROI, or implement systems.
 metadata:
   owner: Kang Jiaxin
-  version: "0.1.0"
+  version: "0.1.1"
   maturity: personal-experiment
 ---
 

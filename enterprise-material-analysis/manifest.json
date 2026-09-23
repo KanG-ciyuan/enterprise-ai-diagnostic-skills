@@ -1,8 +1,8 @@
 {
   "name": "enterprise-material-analysis",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "owner": "Kang Jiaxin",
-  "updated_at": "2026-08-12",
+  "updated_at": "2026-09-22",
   "status": "personal-experiment",
   "maturity_tier": "production-candidate",
   "target_platforms": ["codex"],

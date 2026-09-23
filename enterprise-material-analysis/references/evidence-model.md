@@ -10,6 +10,34 @@
 | E4 | SOP, policy, form, specification, or intended flow | intended rule, design, or required process | actual compliance or execution frequency |
 | E5 | model inference or analyst hypothesis | a lead to verify | a fact, contradiction resolution, or external claim |
 
+## Assign A Level From The Source, Not From Confidence
+
+Take the level from **where the claim came from**, never from how firmly it was stated. A person who asserts "the policy requires X" without producing the document is still `E3`. `E4` is reserved for the document itself.
+
+Without the document there is no way to separate *the rule really says this* from *this is how the person remembers the rule*. A rule can be revised, and a recollection can be stale or simply wrong. Accepting a verbal rule claim as `E4` lets a confident statement pass as institutional evidence — which is the same failure the `E5` label exists to prevent, one level up.
+
+A rule claim that cannot be documented stays `E3` for the whole engagement, and every downstream artifact must carry that limit rather than quietly upgrading it.
+
+## Unwritten Rules Stay E3
+
+An unwritten rule — a practice a role is *expected* to follow, which no document states — is `E3`, because it rests on one person's account. It is not `E4`: there is no document whose authority can be checked.
+
+Record it, label it unwritten, and do not let it acquire the standing of a documented rule through repetition.
+
+Unwritten rules are the most fragile class in the model. With no document to hand over, they survive only by word of mouth and demonstration, so they are the first thing lost when the person leaves the role — and nothing in the record shows that something was lost.
+
+## Document Provenance Is Not Self-Evident (known gap)
+
+This model has **no mechanism to establish that an uploaded file is an institutional document**. Anyone can upload a file that presents itself as an SOP, a policy, or a signed approval.
+
+This is the document-side form of the rule that fluent model output is not evidence:
+
+> A document that looks official is not thereby authoritative.
+
+Until a provenance mechanism exists, an `E4` classification rests on the upload alone. A reusable primitive already exists elsewhere in this suite — the named-authorizer capability in `enterprise_authorizations` (a named enterprise confirmer, a one-time capability, and a recorded confirmation with reason and time). Extending it to documents would require a **named enterprise confirmer to attest the document's authority and effective scope**, instead of letting the uploader self-certify.
+
+**Status: open.** Do not present an `E4` claim as authoritative where document provenance has not been established, and say so in the evidence pack rather than leaving the gap implicit.
+
 ## Independence
 
 Two documents copied from the same meeting or one manager repeating an employee's account are not independent corroboration. Record source lineage. Upgrade to E2 only when the supporting roles or source origins are materially independent.

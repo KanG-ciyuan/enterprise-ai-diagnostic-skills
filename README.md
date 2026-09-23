@@ -195,6 +195,24 @@ Humans own high-risk decisions and final responsibility.
 
 ---
 
+## Real-Work Case Study
+
+> **`E3` — method validation, not an enterprise diagnosis.** No client engagement has taken place. The record is one person's retrospective on work they personally executed, desensitized. It supports *how the method behaved*, not *how any enterprise works*.
+
+Every other case in this repository is synthetic. [`case-studies/real-process-retrospective.md`](case-studies/real-process-retrospective.md) is the first one built from real work, and it exists because the synthetic cases share a weakness this README already admits: **when the same person writes the material and answers the questions, the method can only be shown to be self-consistent.**
+
+What using it on real content produced:
+
+- **A scope error the method caught by itself.** Estimating volume showed the chosen work unit was the wrong one — the same operations ran under a second, far more frequent trigger. Chasing the originally chosen scope would have produced "this does not matter."
+- **Two AI inferences that were fluent, plausible, and wrong.** Both had been written into a draft. They were caught only because they were labelled as inferences and checked line by line. Had they been written as fact, a real case would now contain two false facts. This is the concrete form of *AI-generated coherence is not evidence*.
+- **Three rules promoted into the canonical evidence model** — including the recognition that a verbal rule claim stays `E3` without the document, and an **open** gap: the model cannot establish that an uploaded file *is* an institutional document.
+- **One insight deliberately withheld.** An apparently strong finding rested on a single case, so the project's own meta-rule barred it from the core. It is recorded in [`CHANGELOG.md`](CHANGELOG.md) as identified, not adopted, and why — rather than being silently used or silently dropped.
+- **A method limit the original design missed.** "Minimum evidence request" assumes the person still has access to materials, colleagues and systems. For a retrospective by someone who has left the role, every corroboration path fails at once, so the case is `E3` permanently.
+
+The page states plainly what it withheld and why. It claims less than a client case study would; that is the method working.
+
+---
+
 ## CRM Case Study
 
 > ## Synthetic / `E5` — Method Validation Only
@@ -402,7 +420,8 @@ enterprise-ai-diagnostic-skills/
 ├── enterprise-ai-process-diagnosis/       # specialist Skill - diagnosis + shadow pilot
 ├── enterprise-ai-diagnostic-orchestrator/ # orchestrator Skill - router + runnable code
 ├── enterprise-ai-diagnostic-master-record/# shared record contract (not a Skill)
-├── simulations/                           # synthetic end-to-end cases
+├── simulations/                           # synthetic end-to-end cases (E5)
+├── case-studies/                          # records of the method used on real work
 ├── deliverables/                          # static report and proposal artifacts
 ├── outputs/                               # one committed XLSX artifact, no generator
 ├── docs/                                  # offline-runtime design note and plan

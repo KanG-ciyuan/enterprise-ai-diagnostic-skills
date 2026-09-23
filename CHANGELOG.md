@@ -41,6 +41,24 @@ at the repository level.
      implemented in `enterprise_authorizations` — and states that `E4` must not be
      presented as authoritative while provenance is unestablished.
 
+### Added
+
+- **`case-studies/`** — a new directory for records of the method being used on
+  **real work**, as distinct from `simulations/`, which holds synthetic `E5` cases.
+  Every page states its own evidence level, its disclosure limits, and what it can
+  and cannot support.
+- [`case-studies/real-process-retrospective.md`](case-studies/real-process-retrospective.md) —
+  the first such record: a desensitized retrospective on a process the maintainer
+  personally executed. It documents a scope error the method caught by itself, two
+  fluent-but-wrong AI inferences that were caught only because they were labelled
+  as inferences and checked, the three rules promoted into the evidence model, the
+  insight deliberately withheld, and a method limit the original design missed
+  (a retrospective by someone who has left the role cannot be corroborated, so it
+  stays `E3` permanently).
+- Both READMEs link the record and state plainly that it is `E3`, that no client
+  engagement has taken place, and that it is method validation rather than an
+  enterprise diagnosis.
+
 ### On the provenance of these changes
 
 All three came out of **one real, non-published case** (a retrospect on a process

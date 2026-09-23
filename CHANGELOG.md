@@ -16,6 +16,53 @@ at the repository level.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A test imported a third-party package, so the suite was never actually
+  standard-library-only.** `enterprise-interview-preparation/tests/test_package.py`
+  did `import yaml`. PyYAML is not part of the standard library. The suite passed
+  on any machine that happened to have PyYAML installed and failed on a clean one,
+  which is why **every CI run failed from the first push onward while local runs
+  stayed green** — including the `v0.1.0` tag and the run this entry was written
+  to fix. CI output:
+
+  ```
+  FAIL (1 tests)
+  ImportError: Failed to import test module: test_package
+  ModuleNotFoundError: No module named 'yaml'
+  ```
+
+  The `yaml` call parsed the handoff block embedded in each
+  `reports/runtime-case-*.md`. It is now replaced with standard-library
+  structural checks, which is the change that keeps this repository's stated
+  "Python 3 standard library only; there is nothing to install for validation"
+  property true rather than adding a dependency to CI.
+
+  **What the assertion still verifies:** exactly one handoff block per document;
+  every contract key present as a top-level key; the `record_type` and
+  `schema_version` literals; and that `participant_roles`, `evidence_requests`
+  and `conflict_hypotheses` are block sequences whose items carry nested keys of
+  their own.
+
+  **What it no longer verifies:** full YAML semantics. The replacement does not
+  implement flow collections, anchors, multi-line scalars, or type coercion, and
+  it asserts literal text rather than parsed scalar types. A malformed YAML
+  document that still has the right shape would now pass. This is a genuine
+  reduction in strength, accepted in exchange for the suite running on a bare
+  interpreter.
+
+- **Verification now reproduces the CI environment.** Absence of PyYAML is
+  simulated locally before trusting a green run:
+
+  ```bash
+  mkdir -p /tmp/noyaml
+  printf 'raise ImportError("yaml is not installed")\n' > /tmp/noyaml/yaml.py
+  PYTHONPATH=/tmp/noyaml ./scripts/run_local_checks.sh   # 8 suites, 131 tests, OK
+  ```
+
+  Every Python import across the tree was then audited: the only remaining
+  non-stdlib import is the in-repo `validate_skill_handoff` module.
+
 ### Changed
 
 - **`enterprise-material-analysis` `0.1.0` → `0.1.1`.** Three clarifications to

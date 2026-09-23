@@ -3,10 +3,43 @@ import re
 import unittest
 from pathlib import Path
 
-import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
+
+# The runtime-case documents embed a handoff block in a ```yaml fence. This
+# suite validates that block **without a YAML parser**: PyYAML is not part of
+# the standard library, and this repository's stated requirement is that every
+# suite runs on a bare Python 3 with nothing installed. A previous revision
+# imported `yaml`, which passed on machines that happened to have PyYAML and
+# failed on a clean CI runner.
+#
+# The checks below therefore assert the *structure* the handoff contract needs,
+# not full YAML semantics. They do not implement flow collections, anchors,
+# multi-line scalars, or type coercion, and they intentionally do not assert
+# scalar types beyond the literal text. See CHANGELOG.md for what this narrowed.
+
+
+def handoff_block(text: str) -> str:
+    blocks = re.findall(r"```yaml\n(.*?)\n```", text, re.S)
+    if len(blocks) != 1:
+        raise AssertionError(f"expected exactly one handoff block, found {len(blocks)}")
+    return blocks[0]
+
+
+def top_level_keys(block: str) -> set:
+    return set(re.findall(r"^([A-Za-z_][A-Za-z0-9_]*):", block, re.M))
+
+
+def block_items(block: str, key: str):
+    """Return the raw first line of each `- ` item directly under a top-level key."""
+    match = re.search(rf"^{re.escape(key)}:[ \t]*\n((?:[ \t]+.*\n|\n)*)", block, re.M)
+    if not match:
+        return []
+    return [
+        line.strip()[1:].strip()
+        for line in match.group(1).splitlines()
+        if line.strip().startswith("-")
+    ]
 
 
 class InterviewPreparationPackageTest(unittest.TestCase):
@@ -121,16 +154,34 @@ class InterviewPreparationPackageTest(unittest.TestCase):
             "conflict_hypotheses", "evidence_requests", "coverage_gaps",
             "prohibited_promises", "upstream_records", "created_at",
         }
-        for path in sorted((ROOT / "reports").glob("runtime-case-*.md")):
-            blocks = re.findall(r"```yaml\n(.*?)\n```", path.read_text(encoding="utf-8"), re.S)
-            self.assertEqual(1, len(blocks), path)
-            payload = yaml.safe_load(blocks[0])
-            self.assertTrue(required <= set(payload), path)
-            self.assertEqual("enterprise_interview_plan", payload["record_type"], path)
-            self.assertEqual("0.2", payload["schema_version"], path)
-            self.assertTrue(all(isinstance(item, dict) for item in payload["participant_roles"]), path)
-            self.assertTrue(all(isinstance(item, dict) for item in payload["evidence_requests"]), path)
-            self.assertTrue(all(isinstance(item, dict) for item in payload["conflict_hypotheses"]), path)
+        list_of_mappings = ("participant_roles", "evidence_requests", "conflict_hypotheses")
+        cases = sorted((ROOT / "reports").glob("runtime-case-*.md"))
+        self.assertTrue(cases, "no runtime-case documents found")
+        for path in cases:
+            block = handoff_block(path.read_text(encoding="utf-8"))
+
+            # Every contract key is present as a top-level key.
+            self.assertTrue(required <= top_level_keys(block), f"{path}: missing {sorted(required - top_level_keys(block))}")
+
+            # Identity literals the downstream handoff depends on.
+            self.assertIn("record_type: enterprise_interview_plan", block, path)
+            self.assertIn('schema_version: "0.2"', block, path)
+
+            # The three role/evidence/conflict collections must be block
+            # sequences of mappings: at least one `- ` item, and each item must
+            # carry at least one nested `key:` of its own.
+            for key in list_of_mappings:
+                items = block_items(block, key)
+                self.assertTrue(items, f"{path}: {key} has no block sequence items")
+                nested = re.search(
+                    rf"^{re.escape(key)}:[ \t]*\n(?:[ \t]+.*\n|\n)*?[ \t]{{4,}}[A-Za-z_][A-Za-z0-9_]*:",
+                    block, re.M,
+                )
+                self.assertIsNotNone(nested, f"{path}: {key} items are not mappings")
+                self.assertTrue(
+                    any(re.match(r"[A-Za-z_][A-Za-z0-9_]*:", item) or item == "" for item in items),
+                    f"{path}: {key} item shape unexpected: {items[:2]}",
+                )
 
     def test_public_package_has_no_private_paths_or_secret_values(self) -> None:
         public = [

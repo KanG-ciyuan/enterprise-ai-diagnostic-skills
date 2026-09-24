@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用一次真实工作，验证我的 AI 诊断方法论 · 案例复盘</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#fff; --ink:#141a21; --muted:#5d6b7a; --line:#e3e8ee;
+    --accent:#1b5faa; --accent-soft:#eef4fb; --ok:#12704a; --ok-soft:#e9f6ef;
+    --warn:#a4580a; --warn-soft:#fdf3e6; --shadow:0 1px 2px rgba(20,26,33,.05),0 8px 24px rgba(20,26,33,.06);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.8 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px 90px}
+
+  /* ---------- hero ---------- */
+  .hero{padding:56px 0 34px}
+  .eyebrow{font-size:13px;letter-spacing:.14em;color:var(--accent);font-weight:700;text-transform:uppercase}
+  h1{font-size:34px;line-height:1.32;margin:14px 0 14px;letter-spacing:-.4px}
+  .lede{font-size:18px;color:var(--muted);margin:0 0 22px;line-height:1.7}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:4px 13px;font-size:13px;color:var(--muted);font-weight:600}
+  .chip.a{background:var(--accent-soft);border-color:#cfe0f3;color:var(--accent)}
+  .chip.w{background:var(--warn-soft);border-color:#f0dcbd;color:var(--warn)}
+
+  /* ---------- sections ---------- */
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:28px 32px;margin-bottom:18px;box-shadow:var(--shadow)}
+  h2{font-size:19px;margin:0 0 6px;letter-spacing:-.2px}
+  .kicker{font-size:13px;color:var(--muted);margin:0 0 18px}
+  h3{font-size:16px;margin:24px 0 8px}
+  p{margin:12px 0}
+  ul{margin:12px 0;padding-left:22px}
+  li{margin:7px 0}
+
+  /* ---------- 30s summary ---------- */
+  .summary{background:linear-gradient(180deg,#fff,#fbfcfd)}
+  .summary ol{counter-reset:n;list-style:none;padding:0;margin:6px 0 0}
+  .summary ol li{counter-increment:n;position:relative;padding-left:42px;margin:14px 0}
+  .summary ol li::before{content:counter(n);position:absolute;left:0;top:2px;
+    width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;
+    font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+  /* ---------- tables ---------- */
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin:14px 0}
+  th,td{border:1px solid var(--line);padding:10px 13px;text-align:left;vertical-align:top}
+  th{background:#f4f7fa;font-weight:700;font-size:13.5px;color:#3b4655}
+  .bad{color:#9aa4b0;text-decoration:line-through}
+  .good{color:var(--ok);font-weight:700}
+
+  /* ---------- callouts ---------- */
+  .note{border-left:3px solid var(--accent);background:#f8fafc;
+    padding:14px 18px;margin:16px 0;border-radius:0 10px 10px 0;font-size:15px}
+  .note.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+  .note.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+  .note .t{display:block;font-weight:700;margin-bottom:4px}
+
+  blockquote{margin:16px 0;padding:14px 18px;border-left:3px solid #cfe0f3;
+    background:#fafcfe;border-radius:0 10px 10px 0;color:#2c3742}
+
+  code{background:#f2f5f8;padding:1px 6px;border-radius:5px;font-size:13.5px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  /* ---------- footer ---------- */
+  footer{text-align:center;color:var(--muted);font-size:13.5px;padding:34px 0 0;line-height:1.9}
+  footer a{color:var(--accent)}
+
+  @media print{
+    :root{--shadow:none}
+    body{background:#fff;font-size:12.5pt}
+    .wrap{max-width:none;padding:0}
+    section{break-inside:avoid;border-color:#d8d8d8;padding:18px 20px;margin-bottom:12px}
+    .hero{padding:0 0 20px}
+    h1{font-size:22pt}
+    .print-hint{display:none}
+  }
+  @media (max-width:640px){
+    .wrap{padding:0 14px 60px}
+    .hero{padding:36px 0 24px}
+    h1{font-size:25px}
+    .lede{font-size:16px}
+    section{padding:20px 18px;border-radius:12px}
+    table{font-size:13px}
+    th,td{padding:8px 9px}
+  }
+  .print-hint{text-align:center;font-size:13px;color:var(--muted);padding:6px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">企业 AI 落地方法论 · 真实案例复盘</div>
+  <h1>我用一次真实工作，<br>验证了自己的 AI 诊断方法论</h1>
+  <p class="lede">
+    过程中 AI 两次给出<strong>流畅、专业、但错误</strong>的判断 —— 两条都被真实证据拦下，
+    没有变成案例里的假事实。这是一次方法验证，不是客户案例。
+  </p>
+  <div class="chips">
+    <span class="chip a">真实工作 · 非模拟</span>
+    <span class="chip">证据等级 E3 · 已脱敏</span>
+    <span class="chip">方法验证，非企业诊断</span>
+    <span class="chip w">无客户委托</span>
+  </div>
+</header>
+
+<section class="summary">
+  <h2>30 秒版</h2>
+  <p class="kicker">如果只看一屏，看这里。</p>
+  <ol>
+    <li>我设计了一套<strong>证据分级方法</strong>（把「看到的」「听说的」「文件写的」「AI 猜的」严格分开），但它此前<strong>只在模拟数据上验证过</strong>。</li>
+    <li>我把它用在一次<strong>自己亲手做过的真实工作</strong>上。方法当场<strong>自己抓到一个选题错误</strong> —— 原定范围其实工作量极小，真正的大头在另一处。</li>
+    <li>过程中 AI 下了<strong>两个推断，都写得很像真的，都错了</strong>。它们没变成假事实，只因为被标注为推断并逐条核对。</li>
+    <li>产出：<strong>3 条规则</strong>写进工具、<strong>1 条洞察被故意扣下</strong>（附理由）、<strong>1 个方法限制</strong>被发现。</li>
+    <li>全部证据为 <strong>E3（单人回忆）</strong>。它<strong>不</strong>证明任何企业如何运作 —— 这一点我写在最前面。</li>
+  </ol>
+</section>
+
+<section>
+  <h2>1 · 为什么必须用真实工作验证</h2>
+  <p class="kicker">模拟案例有一个绕不过去的弱点</p>
+  <p>我原来的案例全是合成的。合成案例只能证明方法<strong>自洽</strong>，不能证明它在<strong>真实材料</strong>上成立 —— 而真实材料里全是含糊、矛盾、缺失和记忆偏差。</p>
+  <div class="note warn">
+    <span class="t">出题人和答题人是同一个人</span>
+    用编出来的材料验证方法，等于自己出题自己答。要验证，就得把它用在一份<strong>不是自己编的</strong>材料上。
+  </div>
+</section>
+
+<section>
+  <h2>2 · 方法自己抓到的选题错误</h2>
+  <p class="kicker">第一个证据：它真的会反驳使用者</p>
+  <p>我先提出的范围是「某部门管理流程」。<strong>这个范围被当场否掉了</strong> —— 因为它答不上四个基本问题：</p>
+  <table>
+    <tr><th>问题</th><th>「某部门管理流程」</th></tr>
+    <tr><td>谁触发它开始？</td><td class="bad">答不上</td></tr>
+    <tr><td>谁做？（一个岗位）</td><td class="bad">所有人</td></tr>
+    <tr><td>什么时候算完？</td><td class="bad">答不上</td></tr>
+    <tr><td>中间要做什么决定？</td><td class="bad">很多，说不清</td></tr>
+  </table>
+  <p>四个都答不上，说明那是<strong>部门</strong>，不是<strong>流程</strong>。切成具体流程后，又发生了第二次修正：</p>
+  <div class="note ok">
+    <span class="t">走到「估算工作量」这一步时，选题被推翻了</span>
+    原定场景<strong>每月只发生一两次</strong>，本身工作量很小；真正的重复劳动在<strong>同一组操作的另一个高频触发源</strong>上，每天都在发生。<br>
+    两者执行的是<strong>完全相同的动作</strong>，只有触发源不同 —— 如果只盯原定范围，会得出「这事不重要」的错误结论。
+  </div>
+</section>
+
+<section>
+  <h2>3 · 核心事件：AI 两次推断错误</h2>
+  <p class="kicker">这是全文最强的部分，因为它是我自己的翻车</p>
+  <p>整理记录时，AI 助手基于访谈内容<strong>自行推断</strong>了两处，并写进了草稿。<br>
+  两条都写得很流畅、很像真的。<strong>两条都是错的。</strong></p>
+  <table>
+    <tr><th style="width:47%">AI 的推断</th><th>实际事实</th></tr>
+    <tr>
+      <td>记录里出现「删除错误记录」<br>→ 判定为<strong>破坏性操作</strong>，并标为<strong>风险项</strong></td>
+      <td class="good">实际是<strong>合并</strong>：历史跟进与关联订单会并入保留的记录，该设计在系统开发阶段已考虑。不构成风险。</td>
+    </tr>
+    <tr>
+      <td>记录里出现「超时自动取消」<br>→ 判定为请求<strong>静默消失</strong></td>
+      <td class="good">实际<strong>会通知发起人并提醒</strong>。</td>
+    </tr>
+  </table>
+  <p>两条错得都很自然 —— 因为「删除」和「自动取消」在字面上确实指向那个方向。它们具备一切让人轻信的特征：<strong>用词专业、逻辑顺畅、语气确定。</strong></p>
+
+  <h3>它们为什么没有变成假事实</h3>
+  <ol>
+    <li>两条都被<strong>显式标注为推断</strong>，列进「待本人确认」，而不是混进正文写成事实；</li>
+    <li>记录者<strong>逐条核对</strong>并纠正了它们。</li>
+  </ol>
+  <div class="note warn">
+    <span class="t">如果第 1 条没做到</span>
+    这两条假事实现在就已经进入一份真实案例了。这正是这套方法存在的理由：<br><br>
+    <strong>「AI 生成的流畅，不等于证据。」</strong>
+  </div>
+</section>
+
+<section>
+  <h2>4 · 产出（一）：三条规则写进工具</h2>
+  <p class="kicker">教训没有停在案例里，而是变成了可复用规则</p>
+  <table>
+    <tr><th style="width:34%">规则</th><th>内容</th></tr>
+    <tr>
+      <td><strong>等级来自来源，<br>不来自自信程度</strong></td>
+      <td>口头声称「制度规定是这样」而没有文件，只能记为 <code>E3</code>。没有文件，就无法区分「制度真是这样」与「本人记忆中的制度是这样」。</td>
+    </tr>
+    <tr>
+      <td><strong>隐性规定停留在 E3</strong></td>
+      <td>无文件、但属于该角色被期望遵循的做法，仍基于单人口述。它的风险特征是：<strong>没有文件可交接，是人离开岗位后最先丢失、且记录上看不出丢了什么的那一类。</strong></td>
+    </tr>
+    <tr>
+      <td><strong>文件溯源无法自证<br>（已知缺口）</strong></td>
+      <td>模型没有机制确认一份上传文件<strong>确实是</strong>企业制度文件。这是「流畅输出不等于证据」在文件侧的同一形态：<strong>看起来像制度，不等于制度。</strong></td>
+    </tr>
+  </table>
+</section>
+
+<section>
+  <h2>5 · 产出（二）：一条洞察被<strong>故意扣下</strong></h2>
+  <p class="kicker">这条最能说明这套方法怎么自我约束</p>
+  <p>复盘还得到一条看起来很有价值的判断：</p>
+  <blockquote>
+    当<strong>制度与实际一致、且双方都严格照做</strong>时，流程中的低效与风险<strong>不是执行走样，而是制度设计本身带来的</strong> —— 改进的阻力在制度，不在执行。
+  </blockquote>
+  <p>这条<strong>没有</strong>写进核心规则。原因是项目自己的元规则：</p>
+  <div class="note">
+    <span class="t">元规则</span>
+    只有<strong>安全、事实、权限不变量</strong>，或在<strong>两个以上无关行业重复出现的失败</strong>，才进入核心规则。
+  </div>
+  <p>上面三条规则以<strong>第一个理由</strong>入选（它们讲的是「证据来源能支撑什么」，与行业、角色、流程词汇无关）。而这条是<strong>单案例的判断</strong>，不满足任何一个条件。</p>
+  <div class="note ok">
+    <span class="t">处置：既没偷偷加进去，也没丢掉</span>
+    它被记入变更记录，注明<strong>已识别、暂不采纳、以及原因</strong>。<br>
+    让这个判断可见，而不是悄悄用掉或悄悄扔掉。
+  </div>
+</section>
+
+<section>
+  <h2>6 · 产出（三）：发现一个方法限制</h2>
+  <p class="kicker">原设计没覆盖到的情况</p>
+  <p>复盘原本准备按标准的「最小补证请求」把证据从 <code>E3</code> 升到 <code>E2</code>（找一位当时同事确认）。</p>
+  <p><strong>这条路走不通</strong> —— 记录者已离开该岗位，与当时同事无联系。进一步确认后发现，<strong>其余补证路径同样失效</strong>：当时的书面文件、系统日志、流程量导出，全部不可得。</p>
+  <div class="note warn">
+    <span class="t">由此得到一条原方法未覆盖的限制</span>
+    「最小补证请求」默认当事人仍能接触到材料、同事和系统。对<strong>离职者事后复盘</strong>类案例，这条假设不成立，<strong>全部补证路径会同时失效</strong>。<br><br>
+    <strong>推论</strong>：若要把案例做到 <code>E2</code> 以上，摸排必须在<strong>当事人仍在职时</strong>或<strong>在企业配合下</strong>完成；事后复盘只能产出 <code>E3</code>，<strong>且应事先声明这一上限</strong>，而不是做完才发现补不到证。
+  </div>
+</section>
+
+<section>
+  <h2>7 · 这份记录能证明什么，不能证明什么</h2>
+  <p class="kicker">我把边界写在最显眼的地方</p>
+  <table>
+    <tr><th style="width:50%">它<strong>能</strong>支持</th><th>它<strong>不能</strong>支持</th></tr>
+    <tr><td>这套方法可以在<strong>真实内容</strong>上端到端走完</td><td><strong>任何企业</strong>实际如何运作</td></tr>
+    <tr><td>记录者<strong>当时确实这么做</strong>（这是 E3 的合法射程）</td><td>制度原文、全公司做法、其他岗位是否相同</td></tr>
+    <tr><td>真实内容会<strong>暴露模拟案例暴露不出</strong>的方法缺口</td><td>任何数量、效率、收益、ROI 结论</td></tr>
+    <tr><td>方法缺口一旦被发现，<strong>可以被修进工具并被测试守住</strong></td><td>结论在其他行业同样成立</td></tr>
+  </table>
+  <div class="note warn">
+    <span class="t">一句话</span>
+    <strong>这是一次方法验证，不是一次企业诊断。</strong>两者都有价值，但不能混为一谈。
+  </div>
+</section>
+
+<section>
+  <h2>8 · 脱敏：故意没写什么</h2>
+  <p class="kicker">省略是刻意的，不是遗漏</p>
+  <p>为避免暴露任何特定企业的内部运作，本记录<strong>有意省略</strong>了：</p>
+  <ul>
+    <li>企业、部门、岗位、人员与客户的一切标识；</li>
+    <li>具体系统的名称与厂商；</li>
+    <li>审批层级的具体级数、角色名称与内部编号；</li>
+    <li>具体时效数值与超时规则；</li>
+    <li>流程特有的异常处理动作与术语；</li>
+    <li>实际数量、耗时与任何可能被反推为经营数据的估算。</li>
+  </ul>
+  <p>保留的只有<strong>方法的执行过程，以及它修正自身的机制</strong> —— 这也正是本页要展示的东西。</p>
+</section>
+
+<footer>
+  <div class="print-hint">提示：按 <code>⌘P</code> 可另存为 PDF，方便直接发送。</div>
+  <p style="margin-top:18px">
+    完整方法与代码仓库：<br>
+    <a href="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills">github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills</a>
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -10,6 +10,11 @@ as evidence about how any particular enterprise operates.
 |---|---|---|---|
 | [真实流程复盘：方法第一次被真实使用验证](real-process-retrospective.md) | 方法验证（记录者亲历的真实工作，事后复盘） | 全程 `E3`，已脱敏 | 三条证据模型规则；一条被扣下的洞察；一个新增的方法限制；一次 AI 推断被真实证据拦截的实例 |
 
+The same record is also available as a self-contained, offline-capable page for
+readers who are not on GitHub — no build step, no external requests:
+
+- [`real-process-retrospective.html`](real-process-retrospective.html)
+
 ## Reading note
 
 The repository's synthetic cases live in [`simulations/`](../simulations/) and are

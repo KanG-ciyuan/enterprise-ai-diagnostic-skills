@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>企业 AI 流程诊断 · 项目介绍</title>
+<style>
+  :root{
+    --bg:#f5f7f9; --card:#fff; --ink:#151b22; --muted:#5e6b79; --line:#e3e8ee;
+    --accent:#1b5faa; --accent-soft:#eef4fb; --ok:#0f6b46; --ok-soft:#e9f6ef;
+    --warn:#9d5408; --warn-soft:#fdf4e7; --shadow:0 1px 2px rgba(21,27,34,.05),0 10px 28px rgba(21,27,34,.07);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:17px/1.85 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 80px}
+
+  /* hero */
+  .hero{padding:60px 0 30px}
+  .eyebrow{font-size:13px;letter-spacing:.16em;color:var(--accent);font-weight:700}
+  h1{font-size:38px;line-height:1.3;margin:16px 0 18px;letter-spacing:-.6px}
+  .lede{font-size:19px;color:#3c4854;margin:0 0 24px;line-height:1.75}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:5px 14px;font-size:13.5px;color:var(--muted);font-weight:600}
+  .chip.a{background:var(--accent-soft);border-color:#cfe0f3;color:var(--accent)}
+
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:30px 34px;margin-bottom:18px;box-shadow:var(--shadow)}
+  h2{font-size:22px;margin:0 0 8px;letter-spacing:-.3px}
+  .kicker{font-size:14px;color:var(--muted);margin:0 0 20px}
+  h3{font-size:17px;margin:26px 0 8px}
+  p{margin:13px 0}
+  ul,ol{margin:13px 0;padding-left:24px}
+  li{margin:8px 0}
+  strong{color:#0d1319}
+
+  .big{font-size:19px;line-height:1.75;color:#2b3742}
+
+  /* steps */
+  .steps{counter-reset:s;list-style:none;padding:0;margin:20px 0 6px}
+  .steps li{counter-increment:s;position:relative;padding-left:52px;margin:20px 0}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:1px;
+    width:32px;height:32px;border-radius:9px;background:var(--accent);color:#fff;
+    font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .steps b{display:block;font-size:16.5px;margin-bottom:2px}
+  .steps span{color:var(--muted);font-size:15.5px}
+
+  /* compare */
+  table{width:100%;border-collapse:collapse;font-size:15.5px;margin:16px 0}
+  th,td{border:1px solid var(--line);padding:12px 15px;text-align:left;vertical-align:top}
+  th{background:#f3f6f9;font-weight:700;font-size:14.5px}
+  td.muted{color:var(--muted)}
+  td.us{background:#f7fbf9}
+
+  /* callouts */
+  .note{border-left:3px solid var(--accent);background:#f8fafc;
+    padding:15px 20px;margin:18px 0;border-radius:0 10px 10px 0;font-size:16px}
+  .note.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+  .note.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+  .note .t{display:block;font-weight:700;margin-bottom:5px}
+
+  /* skill cards */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0 4px}
+  .sk{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:#fcfdfe}
+  .sk b{display:block;font-size:16px;margin-bottom:5px;color:var(--accent)}
+  .sk span{font-size:15px;color:var(--muted);line-height:1.7}
+
+  footer{text-align:center;color:var(--muted);font-size:14px;padding:34px 0 0;line-height:2}
+  footer a{color:var(--accent);word-break:break-all}
+  .print-hint{font-size:13px;color:#8b97a4}
+
+  @media print{
+    :root{--shadow:none}
+    body{background:#fff;font-size:12pt}
+    .wrap{max-width:none;padding:0}
+    section{break-inside:avoid;border-color:#d9d9d9;padding:18px 20px;margin-bottom:12px}
+    .hero{padding:0 0 18px}
+    h1{font-size:23pt}
+    .print-hint{display:none}
+  }
+  @media (max-width:680px){
+    .wrap{padding:0 14px 56px}
+    .hero{padding:38px 0 22px}
+    h1{font-size:26px}
+    .lede{font-size:17px}
+    section{padding:22px 19px;border-radius:12px}
+    .grid{grid-template-columns:1fr}
+    table{font-size:14px}
+    th,td{padding:9px 11px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">个人项目 · 企业 AI 落地</div>
+  <h1>在动手做 AI 之前，<br>先搞清楚业务到底怎么跑</h1>
+  <p class="lede">
+    这是一套帮企业判断「哪里真的该用 AI、哪里根本不该用」的方法，
+    以及一个从访谈、核对材料到给出方案都能跑通的完整流程。
+  </p>
+  <div class="chips">
+    <span class="chip a">已开源 · 含可运行代码</span>
+    <span class="chip">5 个模块 · 131 项自动测试</span>
+    <span class="chip">含真实工作复盘</span>
+    <span class="chip">个人项目 · 尚无客户委托</span>
+  </div>
+</header>
+
+<section>
+  <h2>它解决什么问题</h2>
+  <p class="kicker">企业上 AI 最常见的失败方式</p>
+  <p class="big">
+    很多公司上 AI 是从「选模型、买工具」开始的 —— 但这时<strong>还没人真正搞清业务是怎么跑的</strong>。
+  </p>
+  <p>
+    结果是一个没人用的系统：一线员工觉得不顺手，管理层觉得没效果，
+    钱花了，问题还在。
+  </p>
+  <div class="note warn">
+    <span class="t">打个比方</span>
+    这就像医生没问诊、没检查，直接开药。药本身可能没错，但没对症。
+  </div>
+  <p>
+    这个项目要解决的，就是<strong>开药之前的那一步</strong>：把企业的真实流程摸清楚，
+    判断哪些问题靠改流程就能解决、哪些需要系统、<strong>哪些才真的轮到 AI</strong>。
+  </p>
+</section>
+
+<section>
+  <h2>它怎么做的</h2>
+  <p class="kicker">四步，从模糊需求走到可执行方案</p>
+  <ol class="steps">
+    <li>
+      <b>先跟管理层谈，把范围定死</b>
+      <span>不是「优化整个公司」，而是一个具体的流程：谁触发、谁执行、什么时候算完成。范围定不下来，后面全是空谈。</span>
+    </li>
+    <li>
+      <b>再跟一线员工聊，还原真实做法</b>
+      <span>制度写的是「应该怎么做」，员工做的是「实际怎么做」，这两件事经常不一样。用一问一答的方式逐步追问，直到能把这条流程画出来、并由员工本人确认。</span>
+    </li>
+    <li>
+      <b>核对材料，把「听说的」和「看到的」分开</b>
+      <span>员工说的、文件写的、系统里能查到的，可信度完全不同。这套方法会给每条信息标注来源，冲突的地方保留冲突，不强行抹平。</span>
+    </li>
+    <li>
+      <b>给出方案 —— 包括「不需要 AI」</b>
+      <span>把问题拆到具体环节：哪些改流程就行、哪些用规则就够、哪些才需要 AI 或自动化。最后给一份可以先小范围离线验证的方案，不碰生产系统。</span>
+    </li>
+  </ol>
+</section>
+
+<section>
+  <h2>它和常见做法有什么不一样</h2>
+  <table>
+    <tr><th style="width:50%">常见做法</th><th>这个项目</th></tr>
+    <tr>
+      <td class="muted">拿着方案找问题：先定了要上 AI，再去找哪里能用</td>
+      <td class="us">先搞清问题，再决定要不要上 AI</td>
+    </tr>
+    <tr>
+      <td class="muted">把 AI 说得很厉害，什么都能做</td>
+      <td class="us">明确标注哪些是事实、哪些只是猜测</td>
+    </tr>
+    <tr>
+      <td class="muted">承诺降本 30%、提效一倍</td>
+      <td class="us"><strong>不给没根据的数字</strong>，先做小范围验证</td>
+    </tr>
+    <tr>
+      <td class="muted">报告写完就结束</td>
+      <td class="us">每条结论都能追到来源，并说清哪些还没证据</td>
+    </tr>
+    <tr>
+      <td class="muted">默认「客户要 AI 就上 AI」</td>
+      <td class="us"><strong>「不需要 AI，用普通系统就够」是可以给的正式结论</strong></td>
+    </tr>
+  </table>
+  <div class="note ok">
+    <span class="t">最后一条其实是这类工作最重要的能力</span>
+    敢说「这里不该用 AI」的人，才有资格说「这里该用 AI」。否则所有结论都不可信。
+  </div>
+</section>
+
+<section>
+  <h2>能给企业带来什么</h2>
+  <ul>
+    <li><strong>少走弯路</strong> —— 在花钱买系统之前，先知道该买什么、或者根本不用买；</li>
+    <li><strong>决策有依据</strong> —— 每条判断都能指回具体来源，不是"我觉得"；</li>
+    <li><strong>风险可控</strong> —— 先在离线环境用小样本验证，不接生产系统、不动客户数据；</li>
+    <li><strong>责任清楚</strong> —— 明确哪部分该改流程、哪部分该定规则、哪部分才交给 AI，哪部分必须由人拍板。</li>
+  </ul>
+</section>
+
+<section>
+  <h2>这个项目能证明我什么能力</h2>
+  <p class="kicker">我把项目做成了可运行的东西，不只是 PPT</p>
+  <div class="grid">
+    <div class="sk">
+      <b>业务理解力</b>
+      <span>能把一线员工「看情况」「直接处理了」这类含糊说法，一步步追成一条画得出来、他自己认得的流程。</span>
+    </div>
+    <div class="sk">
+      <b>AI 判断力</b>
+      <span>清楚 AI 能做什么、不能做什么。会把「AI 的推断」和「事实」严格分开，不让它冒充结论。</span>
+    </div>
+    <div class="sk">
+      <b>工程落地能力</b>
+      <span>项目里有可运行的代码、自动测试和版本发布，不是一份文档或一次演示。</span>
+    </div>
+    <div class="sk">
+      <b>对外沟通能力</b>
+      <span>同一套结论能出两个版本：管理层看的内部版，和企业能直接看的客户版 —— 事实一致，话说得不一样。</span>
+    </div>
+  </div>
+  <div class="note">
+    <span class="t">还有一条我自己觉得最难得的</span>
+    我把它用在了一次<strong>真实工作</strong>上。过程中 AI 给出两个「看起来很像真的、但都是错的」判断 ——
+    因为我坚持逐条核对，它们被拦下了，没有变成假事实。<br>
+    <span style="font-size:15px;color:var(--muted)">这件事我写进了项目记录里，也在下面可以点开看。</span>
+  </div>
+</section>
+
+<section>
+  <h2>为什么这个项目对应 FDE 岗位</h2>
+  <p class="kicker">Forward Deployed Engineer · 前场工程师</p>
+  <p>
+    FDE 的核心工作是：<strong>进到客户的业务里，搞清楚他们实际怎么运转，
+    判断哪些能被 AI 解决，做出能用的东西，再交出去。</strong>
+  </p>
+  <p>这个项目的四个模块，正好对应这四件事：</p>
+  <table>
+    <tr><th style="width:52%">FDE 要做的事</th><th>项目里对应的部分</th></tr>
+    <tr><td>搞清客户实际怎么运转</td><td class="us">员工流程摸排：一问一答还原真实做法</td></tr>
+    <tr><td>区分「说的」和「真的」</td><td class="us">材料核对与证据分级</td></tr>
+    <tr><td>判断哪里该用 AI、哪里不该</td><td class="us">条件式技术方案 + 责任分配</td></tr>
+    <tr><td>跟客户讲清楚，不瞎承诺</td><td class="us">管理层内部版 + 客户版输出</td></tr>
+    <tr><td>做出能跑的东西</td><td class="us">可运行的路由器、报告与验证用例</td></tr>
+  </table>
+  <div class="note ok">
+    <span class="t">我认为这是我区别于其他候选人的地方</span>
+    大多数人能展示「我会调模型、会搭知识库」。<br>
+    而 FDE 最难、也最少人系统化解决的，是<strong>客户自己都说不清自己的流程</strong> ——
+    怎么把它问出来、核对清楚、变成可执行的方案。这个项目做的正是这一半。
+  </div>
+</section>
+
+<section>
+  <h2>现在做到哪一步了</h2>
+  <p class="kicker">我想把进度说得准确，不夸大</p>
+  <table>
+    <tr><th style="width:34%">项目状态</th><th></th></tr>
+    <tr><td>已开源</td><td class="us">公开仓库，可自由查看与使用</td></tr>
+    <tr><td>可运行的代码</td><td class="us">含自动测试与版本发布，每次改动自动校验</td></tr>
+    <tr><td>模拟案例</td><td class="us">制造业采购、零售客诉、CRM 客户交接三个完整演练</td></tr>
+    <tr><td>真实工作复盘</td><td class="us">已用真实经历验证过一次方法，并据此修正了方法本身</td></tr>
+    <tr><td>客户委托</td><td class="muted"><strong>尚无</strong>。没有真实企业项目，也没有实测收益数据。</td></tr>
+  </table>
+  <div class="note warn">
+    <span class="t">我特意把最后一行写出来</span>
+    没有实测收益就不该声称有。这也是这套方法本身的规矩 ——
+    它宁可说「还不确定」，也不会编一个好看的数字。
+  </div>
+</section>
+
+<footer>
+  <div class="print-hint">按 <code>⌘P</code> 可另存为 PDF，方便直接发送。</div>
+  <p style="margin-top:20px">
+    想看方法细节、代码和那次真实复盘：<br>
+    <a href="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills">github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills</a>
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

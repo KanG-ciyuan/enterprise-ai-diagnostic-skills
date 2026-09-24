@@ -16,6 +16,17 @@ at the repository level.
 
 ## [Unreleased]
 
+Nothing yet.
+
+---
+
+## [0.1.1] — 2026-09-23
+
+Snapshot taken after the first **green** CI run. `v0.1.0` was tagged while CI was
+still failing on every push (see Fixed below), so this tag exists to mark a
+revision whose stated checks were observed to pass on the runner, not only
+locally.
+
 ### Fixed
 
 - **A test imported a third-party package, so the suite was never actually
@@ -214,5 +225,6 @@ Stated explicitly so this changelog cannot be read as more than it is:
 - The tests validate the repository against itself. The large majority are
   string-containment assertions on Markdown; none tests a real model.
 
-[Unreleased]: https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/releases/tag/v0.1.1
 [0.1.0]: https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/releases/tag/v0.1.0

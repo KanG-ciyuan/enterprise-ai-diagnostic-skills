@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  :root{
+    --paper:#f5f2eb; --paper2:#ebe6da; --card:#fbf9f4; --ink:#1c1a17; --ink2:#45413a;
+    --muted:#6b655a; --faint:#a39c8e; --rule:#d8d0c0; --seal:#b0302a; --night:#1c1a17;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1800px;height:700px;overflow:hidden}
+  body{background:var(--paper);color:var(--ink);
+    font:400 17px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Songti SC","Noto Serif SC",STSong,serif}
+  .sans{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+  .mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+  .wrap{width:1800px;height:700px;padding:30px 46px 24px;display:flex;flex-direction:column}
+
+  /* 头部 */
+  .hd{display:flex;justify-content:space-between;align-items:flex-end;
+      border-bottom:2px solid var(--ink);padding-bottom:16px}
+  .hd h1{font-size:34px;font-weight:700;letter-spacing:-.3px;line-height:1.2}
+  .hd .sub{margin-top:7px;font-size:15px;color:var(--muted);letter-spacing:.02em}
+  .hd .rt{text-align:right;font-size:14px;color:var(--muted);line-height:1.85}
+
+  /* 四个模块 */
+  .flow{margin-top:26px;display:grid;grid-template-columns:1fr 46px 1fr 46px 1fr 46px 1fr;align-items:stretch}
+  .mod{border:1px solid var(--rule);border-top:3px solid var(--ink);background:var(--card);
+       padding:18px 20px 16px;display:flex;flex-direction:column}
+  .mod .n{font-size:12px;font-weight:700;color:var(--seal);letter-spacing:.1em;margin-bottom:9px}
+  .mod h2{font-size:21px;font-weight:700;line-height:1.35;margin-bottom:9px}
+  .mod p{font-size:14px;line-height:1.62;color:var(--ink2);flex:1}
+  .mod .pkg{margin-top:13px;font-size:11.5px;color:var(--muted);
+       background:var(--paper2);border:1px solid var(--rule);border-radius:4px;
+       padding:4px 9px;align-self:flex-start}
+  .arw{display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:26px}
+
+  /* 总控条 */
+  .orch{margin-top:20px;background:var(--night);color:#ece6da;padding:17px 24px;
+        display:flex;align-items:center;gap:22px}
+  .orch .tag{font-size:11.5px;letter-spacing:.12em;font-weight:700;color:#c98b6b;
+        border:1px solid #4a4238;border-radius:4px;padding:4px 10px;white-space:nowrap}
+  .orch b{font-size:17px;font-weight:700;color:#fff}
+  .orch span{font-size:14px;color:#a8a092}
+
+  /* 底部三层 */
+  .foot{margin-top:22px;display:grid;grid-template-columns:1.55fr 1fr;gap:26px;align-items:stretch}
+  .ev{border:1px solid var(--rule);background:var(--paper2);padding:16px 20px}
+  .ev .t{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--muted);margin-bottom:12px}
+  .ladder{display:grid;grid-template-columns:repeat(5,1fr);gap:0}
+  .rung{padding:0 14px;border-left:1px solid var(--rule)}
+  .rung:first-child{border-left:0;padding-left:0}
+  .rung .lv{font-size:19px;font-weight:700;letter-spacing:-.3px}
+  .rung .nm{font-size:13.5px;font-weight:600;margin-top:3px}
+  .rung .ds{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .rung.hi .lv{color:var(--seal)}
+
+  .gate{border:1px solid var(--rule);background:var(--card);padding:16px 20px;
+        display:flex;flex-direction:column;justify-content:center}
+  .gate .t{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--muted);margin-bottom:10px}
+  .gate .row{display:flex;align-items:baseline;gap:12px;margin:5px 0}
+  .gate .who{font-size:13px;font-weight:700;min-width:58px}
+  .gate .who.a{color:var(--seal)}
+  .gate .who.h{color:var(--ink)}
+  .gate .what{font-size:14px;color:var(--ink2)}
+
+  .base{margin-top:16px;padding-top:13px;border-top:1px solid var(--rule);
+        display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hd">
+    <div>
+      <h1>企业 AI 流程诊断系统</h1>
+      <div class="sub mono">enterprise-ai-diagnostic-skills</div>
+    </div>
+    <div class="rt sans">
+      在动手做 AI 之前，先把业务查清楚<br>
+      开源 · MIT · <span class="mono">v0.1.1</span>
+    </div>
+  </div>
+
+  <!-- 四步 -->
+  <div class="flow">
+    <div class="mod">
+      <div class="n sans">第一步</div>
+      <h2>管理层访谈</h2>
+      <p>把范围定死：一条流程，不是整个公司。谁触发、谁执行、什么时候算完。</p>
+      <div class="pkg mono">interview-preparation</div>
+    </div>
+    <div class="arw">→</div>
+    <div class="mod">
+      <div class="n sans">第二步</div>
+      <h2>员工流程摸排</h2>
+      <p>一次问一个问题，把「看情况」追成一张画得出来、员工本人确认过的流程卡。</p>
+      <div class="pkg mono">workflow-mapping</div>
+    </div>
+    <div class="arw">→</div>
+    <div class="mod">
+      <div class="n sans">第三步</div>
+      <h2>材料证据核对</h2>
+      <p>员工说的、文件写的、系统查到的分开标注。有冲突就留着，不强行抹平。</p>
+      <div class="pkg mono">material-analysis</div>
+    </div>
+    <div class="arw">→</div>
+    <div class="mod">
+      <div class="n sans">第四步</div>
+      <h2>条件式诊断</h2>
+      <p>拆到具体环节：改流程、定规则、用 AI、交给人。含「不需要 AI」这一结论。</p>
+      <div class="pkg mono">ai-process-diagnosis</div>
+    </div>
+  </div>
+
+  <!-- 总控 -->
+  <div class="orch">
+    <div class="tag mono">orchestrator</div>
+    <div>
+      <b class="sans">总控路由</b>
+      <span class="sans"> — 每个事件只做一个决定；证据不够就退回补证，授权被撤回就暂停</span>
+    </div>
+  </div>
+
+  <!-- 证据分级 + 决策门 -->
+  <div class="foot">
+    <div class="ev">
+      <div class="t sans">贯穿全程：证据分级 · 低等级不得回答高等级才能回答的问题</div>
+      <div class="ladder">
+        <div class="rung"><div class="lv mono">E1</div><div class="nm sans">亲眼看到</div><div class="ds sans">系统记录、日志、真实样本</div></div>
+        <div class="rung"><div class="lv mono">E2</div><div class="nm sans">多方印证</div><div class="ds sans">互不相干的来源说法一致</div></div>
+        <div class="rung"><div class="lv mono">E3</div><div class="nm sans">某人说的</div><div class="ds sans">员工、管理者、客户陈述</div></div>
+        <div class="rung"><div class="lv mono">E4</div><div class="nm sans">文件写的</div><div class="ds sans">制度、SOP、表单</div></div>
+        <div class="rung hi"><div class="lv mono">E5</div><div class="nm sans">AI 推断</div><div class="ds sans">必须标注「待验证」</div></div>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="t sans">终点：人类决策门</div>
+      <div class="row"><span class="who a sans">Agent</span><span class="what sans">只能建议、登记、提出方案</span></div>
+      <div class="row"><span class="who h sans">人</span><span class="what sans">批准、承诺、承担最终责任</span></div>
+    </div>
+  </div>
+
+  <div class="base sans">
+    <span>共享记录 <span class="mono">master-record</span> · schemas v0.1 / v0.2 · 4 个校验器 · 131 项自动测试</span>
+    <span class="mono">github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills</span>
+  </div>
+
+</div>
+</body>
+</html>

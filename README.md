@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(max-width: 640px)" srcset="assets/readme/hero-mobile.png">
-    <img src="assets/readme/hero.png" alt="Enterprise AI Diagnostic System — concept cover: understand the process, verify evidence, then automate." width="1902">
+    <img src="assets/readme/hero.png" alt="Enterprise AI Diagnostic System — concept cover: understand the process, verify evidence, then automate." width="2172">
   </picture>
 </p>
 
@@ -68,7 +68,7 @@ The cover and panels below are **concept artwork**, not application screenshots 
 The Skills guide role-specific discovery for one bounded process. The independent app prototype explores AI-assisted interviews across seven evidence dimensions; employees confirm or correct the record.
 
 <p align="center">
-  <a href="assets/readme/interview.png"><img src="assets/readme/interview.png" alt="Concept artwork of an AI-assisted employee interview and seven evidence dimensions; not a runtime screenshot." width="626"></a>
+  <a href="assets/readme/interview.png"><img src="assets/readme/interview.png" alt="Concept artwork of an AI-assisted employee interview and seven evidence dimensions; not a runtime screenshot." width="800"></a>
 </p>
 
 [Explore workflow mapping](enterprise-workflow-mapping/SKILL.md) · [See the app prototype](#application-prototype)
@@ -80,7 +80,7 @@ The Skills guide role-specific discovery for one bounded process. The independen
 The Skills distinguish E1–E5 sources and what each can support. The app prototype maintains server-side evidence versions and invalidates affected cross-dimension inferences for renewed verification.
 
 <p align="center">
-  <a href="assets/readme/evidence.png"><img src="assets/readme/evidence.png" alt="Concept artwork of evidence records, versions and dependencies; not a runtime screenshot." width="626"></a>
+  <a href="assets/readme/evidence.png"><img src="assets/readme/evidence.png" alt="Concept artwork of evidence records, versions and dependencies; not a runtime screenshot." width="800"></a>
 </p>
 
 [Read the evidence model](#the-evidence-model) · [Review app acceptance boundaries](apps/enterprise-diagnostic/ACCEPTANCE.md)
@@ -92,7 +92,7 @@ The Skills distinguish E1–E5 sources and what each can support. The app protot
 The Skills produce conditional options and shadow-pilot designs. The app prototype offers verifier review and owner decisions. Neither module autonomously changes production business systems.
 
 <p align="center">
-  <a href="assets/readme/diagnosis.png"><img src="assets/readme/diagnosis.png" alt="Concept artwork of evidence-gated findings, process options and human review; not a runtime screenshot." width="626"></a>
+  <a href="assets/readme/diagnosis.png"><img src="assets/readme/diagnosis.png" alt="Concept artwork of evidence-gated findings, process options and human review; not a runtime screenshot." width="800"></a>
 </p>
 
 [Explore the deliverables](#what-you-get) · [Read the human decision boundary](#human--rule--agent-boundary)

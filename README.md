@@ -1,27 +1,46 @@
-# Enterprise AI Diagnostic System
+<p align="center">
+  <picture>
+    <source media="(max-width: 640px)" srcset="assets/readme/hero-mobile.png">
+    <img src="assets/readme/hero.png" alt="Enterprise AI Diagnostic System — concept cover: understand the process, verify evidence, then automate." width="1902">
+  </picture>
+</p>
 
-English | [简体中文](README.zh-CN.md)
+<p align="center">
+  <a href="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml"><img src="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml/badge.svg?branch=main" alt="Local checks · main"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-94a3b8?labelColor=0b1220" alt="License: MIT"></a>
+  <a href="apps/enterprise-diagnostic/LICENSE"><img src="https://img.shields.io/badge/App%20license-Apache--2.0-94a3b8?labelColor=0b1220" alt="App license: Apache-2.0"></a>
+  <a href="#status-and-limits"><img src="https://img.shields.io/badge/Status-Prototype-388bfd?labelColor=0b1220" alt="Status: Prototype"></a>
+</p>
 
-[![Local checks](https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml/badge.svg)](https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml)
-[![Version](https://img.shields.io/github/v/tag/KanG-ciyuan/enterprise-ai-diagnostic-skills?label=version&sort=semver)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-131%20passing-brightgreen)](#validation)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![App License: Apache-2.0](https://img.shields.io/badge/app%20license-Apache--2.0-blue)](apps/enterprise-diagnostic/LICENSE)
+<p align="center"><strong>Enterprise AI Diagnostic System</strong></p>
 
-**Understand how the business actually works before deciding what AI should automate.**
+<p align="center">Understand the process. Verify the evidence. Then automate.</p>
 
-A working system for the step that most AI projects skip: establishing what a business process actually does, what the evidence supports, and where AI is — and is not — justified. Delivered as five agent Skill packages plus a shared record contract, with runnable routing and validation code. The repository also contains an independent local application prototype in `apps/enterprise-diagnostic/`.
+<p align="center">
+  <a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a>
+</p>
 
-![System architecture](assets/architecture.png)
+Start with one real business process: understand the work, verify its claims, and propose changes for human review.
+
+**Five agent Skills + one independent local application prototype.** They share this repository; runtime integration between the Skills and the app is not implemented.
+
+<p align="center">
+  <a href="#quick-start">Use the Skills</a> · <a href="#application-prototype">Run the local app</a> · <a href="#validation">Review validation</a>
+</p>
 
 ---
 
 ## Contents
 
+<details>
+<summary>Browse the full documentation</summary>
+
+- [Visual overview](#visual-overview)
 - [What this is](#what-this-is)
 - [Why it exists](#why-it-exists)
 - [Quick start](#quick-start)
 - [Application prototype](#application-prototype)
+- [System architecture](#system-architecture)
 - [How it works](#how-it-works)
 - [What you get](#what-you-get)
 - [The evidence model](#the-evidence-model)
@@ -34,9 +53,55 @@ A working system for the step that most AI projects skip: establishing what a bu
 - [Contributing](#contributing)
 - [License](#license)
 
+</details>
+
+---
+
+## Visual overview
+
+The cover and panels below are **concept artwork**, not application screenshots or a promise of shipped UI. Labels and layouts are illustrative; see [the evidence model](#the-evidence-model) for the authoritative level definitions.
+
+### 01 / AI-ASSISTED INTERVIEW
+
+**Understand how the work actually happens.**
+
+The Skills guide role-specific discovery for one bounded process. The independent app prototype explores AI-assisted interviews across seven evidence dimensions; employees confirm or correct the record.
+
+<p align="center">
+  <a href="assets/readme/interview.png"><img src="assets/readme/interview.png" alt="Concept artwork of an AI-assisted employee interview and seven evidence dimensions; not a runtime screenshot." width="626"></a>
+</p>
+
+[Explore workflow mapping](enterprise-workflow-mapping/SKILL.md) · [See the app prototype](#application-prototype)
+
+### 02 / EVIDENCE VERIFICATION
+
+**Keep the source, the version, and the obligation to recheck.**
+
+The Skills distinguish E1–E5 sources and what each can support. The app prototype maintains server-side evidence versions and invalidates affected cross-dimension inferences for renewed verification.
+
+<p align="center">
+  <a href="assets/readme/evidence.png"><img src="assets/readme/evidence.png" alt="Concept artwork of evidence records, versions and dependencies; not a runtime screenshot." width="626"></a>
+</p>
+
+[Read the evidence model](#the-evidence-model) · [Review app acceptance boundaries](apps/enterprise-diagnostic/ACCEPTANCE.md)
+
+### 03 / PROCESS DIAGNOSIS
+
+**Propose a justified change. Leave the decision with people.**
+
+The Skills produce conditional options and shadow-pilot designs. The app prototype offers verifier review and owner decisions. Neither module autonomously changes production business systems.
+
+<p align="center">
+  <a href="assets/readme/diagnosis.png"><img src="assets/readme/diagnosis.png" alt="Concept artwork of evidence-gated findings, process options and human review; not a runtime screenshot." width="626"></a>
+</p>
+
+[Explore the deliverables](#what-you-get) · [Read the human decision boundary](#human--rule--agent-boundary)
+
 ---
 
 ## What this is
+
+A working system for the step that most AI projects skip: establishing what a business process actually does, what the evidence supports, and where AI is — and is not — justified. Delivered as five agent Skill packages plus a shared record contract, with runnable routing and validation code. The repository also contains an independent local application prototype in `apps/enterprise-diagnostic/`.
 
 A diagnosis system for enterprise AI adoption, packaged as agent instructions.
 
@@ -167,6 +232,14 @@ npm install -g wrangler@4.127.1
 The example configuration uses development/demo auth paths. Do not expose it to the internet. The app is a prototype for synthetic/local data; it is not a production service, not security-certified, and has not been validated with real enterprises. An earlier static demo remains under `deliverables/enterprise-owner-entry-v0.1/` for history.
 
 The app directory is licensed under **Apache-2.0** (see [its LICENSE](apps/enterprise-diagnostic/LICENSE)); the rest of the repository remains under the root MIT license.
+
+---
+
+## System architecture
+
+This diagram explains the Skill workflow, orchestrator, shared record contract, and human decision gate. It does not represent an integrated Skills–app runtime; see [Application prototype](#application-prototype) for the independent app.
+
+![System architecture](assets/architecture.png)
 
 ---
 

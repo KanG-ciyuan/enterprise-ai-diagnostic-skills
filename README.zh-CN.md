@@ -1,27 +1,46 @@
-# 企业 AI 流程诊断系统
+<p align="center">
+  <picture>
+    <source media="(max-width: 640px)" srcset="assets/readme/hero-mobile.png">
+    <img src="assets/readme/hero.png" alt="Enterprise AI Diagnostic System — concept cover: understand the process, verify evidence, then automate." width="1902">
+  </picture>
+</p>
 
-[English](README.md) | 简体中文
+<p align="center">
+  <a href="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml"><img src="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml/badge.svg?branch=main" alt="Local checks · main"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-94a3b8?labelColor=0b1220" alt="License: MIT"></a>
+  <a href="apps/enterprise-diagnostic/LICENSE"><img src="https://img.shields.io/badge/App%20license-Apache--2.0-94a3b8?labelColor=0b1220" alt="App license: Apache-2.0"></a>
+  <a href="#状态与限制"><img src="https://img.shields.io/badge/Status-Prototype-388bfd?labelColor=0b1220" alt="Status: Prototype"></a>
+</p>
 
-[![本地检查](https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml/badge.svg)](https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml)
-[![版本](https://img.shields.io/github/v/tag/KanG-ciyuan/enterprise-ai-diagnostic-skills?label=version&sort=semver)](CHANGELOG.md)
-[![测试](https://img.shields.io/badge/tests-131%20passing-brightgreen)](#验证状态)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![应用许可证: Apache-2.0](https://img.shields.io/badge/app%20license-Apache--2.0-blue)](apps/enterprise-diagnostic/LICENSE)
+<p align="center"><strong>Enterprise AI Diagnostic System</strong></p>
 
-**在动手做 AI 之前，先搞清楚业务到底怎么跑。**
+<p align="center">Understand the process. Verify the evidence. Then automate.</p>
 
-这是一套**可运行的系统**，专门做大多数 AI 项目会跳过的那一步：把一条业务流程的实际运行方式查清楚，判定证据支持什么，然后判断哪里该用 AI、哪里不该用、哪里根本不需要 AI。交付形态是五个 Agent Skill 包加一份共享记录契约，另含可运行的路由与校验代码。仓库还包含一个独立的应用原型：`apps/enterprise-diagnostic/`。
+<p align="center">
+  <a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a>
+</p>
 
-![系统架构](assets/architecture.png)
+从一条真实工作流程出发：理解实际做法，核实证据，再提出供人审阅的改造选项。
+
+**五个 Agent Skill 包 + 一个独立的本地应用原型。** 两者位于同一仓库，目前没有实现 Skills 与应用的运行时集成。
+
+<p align="center">
+  <a href="#快速开始">使用 Skills</a> · <a href="#应用原型">运行本地应用</a> · <a href="#验证状态">查看验证范围</a>
+</p>
 
 ---
 
 ## 目录
 
+<details>
+<summary>展开完整文档目录</summary>
+
+- [功能概览](#功能概览)
 - [这是什么](#这是什么)
 - [为什么需要它](#为什么需要它)
 - [快速开始](#快速开始)
 - [应用原型](#应用原型)
+- [系统架构](#系统架构)
 - [工作方式](#工作方式)
 - [你会得到什么](#你会得到什么)
 - [证据分级](#证据分级)
@@ -34,9 +53,55 @@
 - [参与贡献](#参与贡献)
 - [开源许可证](#开源许可证)
 
+</details>
+
+---
+
+## 功能概览
+
+以下主视觉与功能图均裁自已确认的**概念设计稿**，不是应用运行截图，也不代表已交付的界面。图中标签与布局仅作示意；证据等级以[证据分级](#证据分级)中的定义为准。
+
+### 01 / AI-ASSISTED INTERVIEW
+
+**AI 辅助企业访谈**
+
+Skills 指导有界流程的角色访谈；独立应用原型探索七个证据维度的 AI 辅助访谈。员工确认或更正记录，模型提议不直接成为事实。
+
+<p align="center">
+  <a href="assets/readme/interview.png"><img src="assets/readme/interview.png" alt="概念设计：AI 辅助员工访谈与七维证据导航，非实际运行截图。" width="626"></a>
+</p>
+
+[了解访谈方法](enterprise-workflow-mapping/SKILL.md) · [查看应用原型](#应用原型)
+
+### 02 / EVIDENCE VERIFICATION
+
+**证据核验与版本管理**
+
+Skills 区分 E1–E5 的来源和证明范围。应用原型在服务端维护证据版本，并让受影响的跨维度推断失效，要求重新核验。
+
+<p align="center">
+  <a href="assets/readme/evidence.png"><img src="assets/readme/evidence.png" alt="概念设计：证据资料、版本和依赖关系视图，非实际运行截图。" width="626"></a>
+</p>
+
+[阅读证据模型](#证据分级) · [查看应用验收边界](apps/enterprise-diagnostic/ACCEPTANCE.md)
+
+### 03 / PROCESS DIAGNOSIS
+
+**流程诊断与人工决策**
+
+Skills 产出有条件的改造选项与影子试点设计；应用原型提供核验和负责人决策流程。最终决策由人承担，系统不自动修改生产业务。
+
+<p align="center">
+  <a href="assets/readme/diagnosis.png"><img src="assets/readme/diagnosis.png" alt="概念设计：有证据约束的流程发现、改造选项和人工审阅，非实际运行截图。" width="626"></a>
+</p>
+
+[查看诊断交付物](#你会得到什么) · [阅读人类决策边界](#人--规则--agent-的边界)
+
 ---
 
 ## 这是什么
+
+这是一套**可运行的系统**，专门做大多数 AI 项目会跳过的那一步：把一条业务流程的实际运行方式查清楚，判定证据支持什么，然后判断哪里该用 AI、哪里不该用、哪里根本不需要 AI。交付形态是五个 Agent Skill 包加一份共享记录契约，另含可运行的路由与校验代码。仓库还包含一个独立的应用原型：`apps/enterprise-diagnostic/`。
 
 一套面向企业 AI 落地的诊断系统，以 Agent 指令的形式打包。
 
@@ -167,6 +232,14 @@ npm install -g wrangler@4.127.1
 示例配置使用 development/演示鉴权路径，**不要暴露到互联网**。应用原型仅用于合成/本地数据，不是生产服务，不是安全认证产品，也未经真实企业验证。早期静态演示仍保留在 `deliverables/enterprise-owner-entry-v0.1/` 供历史参考。
 
 应用目录采用 **Apache-2.0**（见[应用 LICENSE](apps/enterprise-diagnostic/LICENSE)）；仓库其余内容仍按根目录 MIT 许可证发布。
+
+---
+
+## 系统架构
+
+下图解释 Skills 的工作顺序、总控路由、共享记录契约和人类决策门。它不是 Skills 与应用已经集成的运行时架构；应用原型另见[应用原型](#应用原型)。
+
+![系统架构](assets/architecture.png)
 
 ---
 

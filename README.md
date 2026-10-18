@@ -6,10 +6,11 @@ English | [简体中文](README.zh-CN.md)
 [![Version](https://img.shields.io/github/v/tag/KanG-ciyuan/enterprise-ai-diagnostic-skills?label=version&sort=semver)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-131%20passing-brightgreen)](#validation)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![App License: Apache-2.0](https://img.shields.io/badge/app%20license-Apache--2.0-blue)](apps/enterprise-diagnostic/LICENSE)
 
 **Understand how the business actually works before deciding what AI should automate.**
 
-A working system for the step that most AI projects skip: establishing what a business process actually does, what the evidence supports, and where AI is — and is not — justified. Delivered as five agent Skill packages plus a shared record contract, with runnable routing and validation code.
+A working system for the step that most AI projects skip: establishing what a business process actually does, what the evidence supports, and where AI is — and is not — justified. Delivered as five agent Skill packages plus a shared record contract, with runnable routing and validation code. The repository also contains an independent local application prototype in `apps/enterprise-diagnostic/`.
 
 ![System architecture](assets/architecture.png)
 
@@ -20,6 +21,7 @@ A working system for the step that most AI projects skip: establishing what a bu
 - [What this is](#what-this-is)
 - [Why it exists](#why-it-exists)
 - [Quick start](#quick-start)
+- [Application prototype](#application-prototype)
 - [How it works](#how-it-works)
 - [What you get](#what-you-get)
 - [The evidence model](#the-evidence-model)
@@ -42,7 +44,7 @@ It runs one bounded enterprise process end to end:
 
 **management discovery → employee workflow mapping → authorized material analysis → evidence-gated diagnosis → shadow-pilot design → human decision gate.**
 
-Five Skill packages carry the steps. A sixth module holds the shared record contract. The orchestrator routes between them. Evidence levels (`E1`–`E5`) run through all of it, and nothing advances on assertion alone.
+Five Skill packages carry the steps. A sixth module holds the shared record contract. The orchestrator routes between them. Evidence levels (`E1`–`E5`) run through all of it, and nothing advances on assertion alone. The Skills are method and instruction packages, not an autonomous interviewer running on its own.
 
 It is built for transformation practitioners and enterprise project owners who must decide where AI is justified, where it is not, and where the process itself has to be fixed first.
 
@@ -136,6 +138,35 @@ python3 scripts/validate_handoff_chain.py \
   examples/skill-handoffs/material-analysis.json \
   examples/skill-handoffs/diagnosis.json
 ```
+
+---
+
+## Application prototype
+
+[`apps/enterprise-diagnostic/`](apps/enterprise-diagnostic/) is a separate local prototype that implements the evidence-first interview workflow as an interactive browser application. It is **not** a runtime dependency of the five Skills, and the repository does not claim a fully automated Skills↔app pipeline. The interview is user-initiated and AI-assisted: the AI proposes questions and drafts, while the employee confirms or corrects the record and authorized humans remain responsible for facts and decisions.
+
+What it implements locally:
+
+- AI-assisted interview across seven evidence dimensions (`trigger`, `inputs`, `steps`, `judgments`, `exceptions`, `handoff`, `burden`);
+- employee confirmation/correction, verifier fact review (including second confirmation for high-impact facts), decision packets and owner decisions;
+- server-side evidence versions, canonical workflow cards, verdict freshness and submission gates;
+- cross-dimension evidence dependency invalidation (G14): affected inferences become stale while unrelated ones remain valid;
+- Cloudflare Pages Functions + local D1 persistence; the test path uses a local model stub and requires no paid model call.
+
+Quick start (local only; see [`apps/enterprise-diagnostic/README.md`](apps/enterprise-diagnostic/README.md) for requirements and limits):
+
+```bash
+cd apps/enterprise-diagnostic
+cp .dev.vars.example .dev.vars
+cp wrangler.toml.example wrangler.toml
+npm install -g wrangler@4.127.1
+./scripts/dev.sh
+# http://127.0.0.1:8788/
+```
+
+The example configuration uses development/demo auth paths. Do not expose it to the internet. The app is a prototype for synthetic/local data; it is not a production service, not security-certified, and has not been validated with real enterprises. An earlier static demo remains under `deliverables/enterprise-owner-entry-v0.1/` for history.
+
+The app directory is licensed under **Apache-2.0** (see [its LICENSE](apps/enterprise-diagnostic/LICENSE)); the rest of the repository remains under the root MIT license.
 
 ---
 
@@ -295,7 +326,7 @@ Declared status, taken from the files themselves:
 
 The badge above reads **Prototype**. `production-candidate` is the repository's own per-package tier label; it is a candidate tier, not a production claim, and it does not override `status: personal-experiment` or `publication: local-only`.
 
-Even though every package declares `local-only` publication, the repository is public on GitHub under the MIT License. Maintainer metadata names **Kang Jiaxin** in the manifests, `SKILL.md` files and `agents/interface.yaml`; `LICENSE` names the copyright holder as **Kang**. The two are not unified here, and `LICENSE` has not been altered.
+Even though every package declares `local-only` publication, the repository is public on GitHub under the MIT License. The application subdirectory is separately offered under Apache-2.0; see [License](#license). Maintainer metadata names **Kang Jiaxin** in the manifests, `SKILL.md` files and `agents/interface.yaml`; `LICENSE` names the copyright holder as **Kang**. The two are not unified here, and `LICENSE` has not been altered.
 
 **What does not exist, stated plainly:**
 
@@ -303,8 +334,8 @@ Even though every package declares `local-only` publication, the repository is p
 - **No real client results.** No ROI, efficiency gain, cost saving, quality improvement, accuracy figure or adoption number has been measured, because no real engagement has taken place.
 - **No independent or provider-backed validation.** The repository's own artifact records `"provider_backed": false`. A runtime case record states that independent runtime remains `missing evidence`.
 - **No executed shadow pilot.** Only a synthetic, accelerated, single-session simulation exists. Nothing was connected to a production OA or CRM.
-- **Not cross-platform.** All five manifests declare `"target_platforms": ["codex"]`.
-- **Not a runtime system.** No database, unified entry point, task queue, scheduler or web service. The executable logic is a deterministic router, an offline simulation runner, four validators and the root provenance guard.
+- **Not cross-platform (Skill manifests).** All five manifests declare `"target_platforms": ["codex"]`. The application prototype is a separate local browser UI and is not covered by that manifest claim.
+- **Not a runtime system (Skill layer).** The five Skills remain agent instructions with a deterministic router, an offline simulation runner, four validators and the root provenance guard. The separate application prototype adds a local Pages Functions + D1 runtime; it does not turn the Skills themselves into a production service.
 - **Not a substitute for the people.** It does not interview employees autonomously, contact anyone, send messages, modify business systems, or make commitments.
 
 ---
@@ -327,7 +358,21 @@ python3 -m unittest discover -s deliverables/management-diagnostic-report-v0.1/t
 python3 scripts/validate_personal_skill_ownership.py                            # personal_skill_ownership_valid
 ```
 
-[`scripts/run_local_checks.sh`](scripts/run_local_checks.sh) runs all eight suites and the guard in one command and exits non-zero on any failure. [`.github/workflows/local-checks.yml`](.github/workflows/local-checks.yml) calls that same script on every push and pull request, so local and CI execution cannot drift.
+[`scripts/run_local_checks.sh`](scripts/run_local_checks.sh) runs all eight suites and the guard in one command and exits non-zero on any failure. [`.github/workflows/local-checks.yml`](.github/workflows/local-checks.yml) calls that same script on every push and pull request, so local and CI execution cannot drift between the 131 Python checks; the workflow also runs the application targeted checks below.
+
+### Application prototype validation (separate)
+
+The application prototype is **not** part of the 131-test count above; its two targeted suites are run as additional steps in `.github/workflows/local-checks.yml`. Its own targeted checks are also runnable from the app directory:
+
+```bash
+cd apps/enterprise-diagnostic
+node tests/pilot09c_g14_final_fix_runtime.mjs
+node tests/pilot09c_g14_runtime.mjs
+```
+
+For the frozen G14 candidate, the independent acceptance record reports 231/231 targeted runtime checks and 4/4 original G14 HTTP scenarios, with two new FINAL edge scenarios independently re-run (3/3). That is a **scoped acceptance record**, not a full-suite or production security claim; see [`apps/enterprise-diagnostic/ACCEPTANCE.md`](apps/enterprise-diagnostic/ACCEPTANCE.md).
+
+---
 
 ### What the tests do and do not prove
 
@@ -364,6 +409,8 @@ Both committed local release checks — `enterprise-material-analysis/reports/lo
 
 **Authorization withdrawal.** When authorization is withdrawn, the upstream material and everything derived from it must enter review state and may not continue to be used externally. This is enforced in code, in the validator, and in tests: the router requires `H2` human review on withdrawal, and `test_withdrawn_material_propagates_through_evidence_pack_to_diagnosis` proves the propagation. Output views must use `metadata_policy: preserve_source_metadata` — a view may filter content but may not strip evidence level, `E5` label, conflict status, authorization status or version lineage.
 
+**Application prototype data.** The app is a local prototype for synthetic/local data. Its development/example auth configuration must not be exposed to the internet. Do not enter real employee or customer data, credentials or raw interview records into the demo.
+
 **Anti-overclaim rules.** Do not claim efficiency, cost, quality, integration readiness or business improvement without the required evidence. Client communication must not hide a material risk or evidence gap, turn an assumption into a confirmed fact, or promise ROI, accuracy, delivery or compliance without evidence.
 
 **Attribution guard.** [`scripts/validate_personal_skill_ownership.py`](scripts/validate_personal_skill_ownership.py) walks every text file in the five package directories and fails if a package does not declare `owner: Kang Jiaxin`, if a forbidden attribution marker appears, if an external URL other than the JSON Schema dialect URI is present, or if a package declares an `upstream_inspiration`. It is a real provenance guard, and it is the reason former attribution names appear in this repository only as forbidden-marker constants inside the guard itself. Its scope is limited to the five package directories: it does not scan the root `README.md`, `docs/`, `simulations/`, `deliverables/`, `outputs/`, `scripts/` or `enterprise-ai-diagnostic-master-record/`, so the URL-bearing prior-art research reports outside those directories are not covered by it.
@@ -383,6 +430,7 @@ Both committed local release checks — `enterprise-material-analysis/reports/lo
 ├── enterprise-ai-process-diagnosis/        # Skill 4 - diagnosis + shadow pilot
 ├── enterprise-ai-diagnostic-orchestrator/  # Skill 5 - router (runnable code)
 ├── enterprise-ai-diagnostic-master-record/ # shared record contract (not a Skill)
+├── apps/enterprise-diagnostic/             # local browser prototype (Apache-2.0)
 ├── simulations/                            # synthetic end-to-end cases (E5)
 ├── case-studies/                           # records of the method used on real work
 ├── portfolio/                              # reader-facing project introduction
@@ -415,6 +463,9 @@ It must exit zero. If you change a `SKILL.md`, a template or a schema, update th
 
 ## License
 
-Released under the [MIT License](LICENSE).
+This repository has **two license scopes**:
 
-Copyright (c) Kang.
+- The **Skill packages, simulations, documents and other existing content** are released under the root [MIT License](LICENSE), Copyright (c) Kang, unless a directory states otherwise.
+- The **application prototype** at [`apps/enterprise-diagnostic/`](apps/enterprise-diagnostic/) is separately licensed under **Apache License 2.0** — see [apps/enterprise-diagnostic/LICENSE](apps/enterprise-diagnostic/LICENSE), Copyright 2026 Kang Jiaxin.
+
+The root `LICENSE` remains MIT and is not replaced; the app subdirectory does not relicense the rest of the repository, and the Apache-2.0 license does not apply to the Skills or legacy content. If third-party material is added to the app, review its license and add a NOTICE where required.

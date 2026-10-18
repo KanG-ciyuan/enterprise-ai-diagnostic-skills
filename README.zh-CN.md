@@ -6,10 +6,11 @@
 [![版本](https://img.shields.io/github/v/tag/KanG-ciyuan/enterprise-ai-diagnostic-skills?label=version&sort=semver)](CHANGELOG.md)
 [![测试](https://img.shields.io/badge/tests-131%20passing-brightgreen)](#验证状态)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![应用许可证: Apache-2.0](https://img.shields.io/badge/app%20license-Apache--2.0-blue)](apps/enterprise-diagnostic/LICENSE)
 
 **在动手做 AI 之前，先搞清楚业务到底怎么跑。**
 
-这是一套**可运行的系统**，专门做大多数 AI 项目会跳过的那一步：把一条业务流程的实际运行方式查清楚，判定证据支持什么，然后判断哪里该用 AI、哪里不该用、哪里根本不需要 AI。交付形态是五个 Agent Skill 包加一份共享记录契约，另含可运行的路由与校验代码。
+这是一套**可运行的系统**，专门做大多数 AI 项目会跳过的那一步：把一条业务流程的实际运行方式查清楚，判定证据支持什么，然后判断哪里该用 AI、哪里不该用、哪里根本不需要 AI。交付形态是五个 Agent Skill 包加一份共享记录契约，另含可运行的路由与校验代码。仓库还包含一个独立的应用原型：`apps/enterprise-diagnostic/`。
 
 ![系统架构](assets/architecture.png)
 
@@ -20,6 +21,7 @@
 - [这是什么](#这是什么)
 - [为什么需要它](#为什么需要它)
 - [快速开始](#快速开始)
+- [应用原型](#应用原型)
 - [工作方式](#工作方式)
 - [你会得到什么](#你会得到什么)
 - [证据分级](#证据分级)
@@ -42,7 +44,7 @@
 
 **管理层访谈 → 员工流程摸排 → 授权材料分析 → 证据门诊断 → 影子试点设计 → 人类决策门。**
 
-五个 Skill 包承担这五步，第六个模块承载共享记录契约，总控在它们之间路由。证据分级（`E1`–`E5`）贯穿全程，**任何结论都不能只靠一句断言推进**。
+五个 Skill 包承担这五步，第六个模块承载共享记录契约，总控在它们之间路由。证据分级（`E1`–`E5`）贯穿全程，**任何结论都不能只靠一句断言推进**。这些 Skill 是方法与指令包，不是自主运行的访谈机器人。
 
 它面向改造方从业者与企业项目负责人 —— 那些必须判断**AI 在哪儿用得上、在哪儿用不上、以及哪儿的流程本身得先改**的人。
 
@@ -136,6 +138,35 @@ python3 scripts/validate_handoff_chain.py \
   examples/skill-handoffs/material-analysis.json \
   examples/skill-handoffs/diagnosis.json
 ```
+
+---
+
+## 应用原型
+
+[`apps/enterprise-diagnostic/`](apps/enterprise-diagnostic/) 是一个独立的本地浏览器原型，把证据优先的访谈流程实现为可交互应用。它**不是**五个 Skill 的运行时依赖，仓库也不宣称已经实现 Skills 与应用的自动流水线。访谈由用户发起、AI 辅助：AI 只提议问题和草稿，员工确认或纠正记录，事实与决策仍由有权人类负责。
+
+本地已实现：
+
+- 七个证据维度的 AI 辅助访谈（`trigger`、`inputs`、`steps`、`judgments`、`exceptions`、`handoff`、`burden`）；
+- 员工确认/纠正、核验人事实审核（高影响事实需二次确认）、决策包与负责人决策；
+- 服务端证据版本、规范流程卡、判定新鲜度与提交门禁；
+- 跨维度证据依赖失效（G14）：受影响推断变为 stale，无关推断保持有效；
+- Cloudflare Pages Functions + 本地 D1；测试路径使用本地模型 stub，不需要付费模型调用。
+
+快速开始（仅本地；环境与限制见 [`apps/enterprise-diagnostic/README.zh-CN.md`](apps/enterprise-diagnostic/README.zh-CN.md)）：
+
+```bash
+cd apps/enterprise-diagnostic
+cp .dev.vars.example .dev.vars
+cp wrangler.toml.example wrangler.toml
+npm install -g wrangler@4.127.1
+./scripts/dev.sh
+# http://127.0.0.1:8788/
+```
+
+示例配置使用 development/演示鉴权路径，**不要暴露到互联网**。应用原型仅用于合成/本地数据，不是生产服务，不是安全认证产品，也未经真实企业验证。早期静态演示仍保留在 `deliverables/enterprise-owner-entry-v0.1/` 供历史参考。
+
+应用目录采用 **Apache-2.0**（见[应用 LICENSE](apps/enterprise-diagnostic/LICENSE)）；仓库其余内容仍按根目录 MIT 许可证发布。
 
 ---
 
@@ -295,7 +326,7 @@ python3 scripts/validate_handoff_chain.py \
 
 因此上方的徽章写的是 **Prototype**，而不是 Experimental、Production 或 Enterprise Ready。`production-candidate` 是仓库自己的逐包层级标签；它是候选层级，不是生产声明，也不覆盖 `status: personal-experiment` 或 `publication: local-only`。
 
-尽管所有包都声明 `local-only` 发布，仓库实际以 MIT 许可证公开在 GitHub 上。维护者元数据在 manifest、`SKILL.md` 和 `agents/interface.yaml` 中署名 **Kang Jiaxin**；`LICENSE` 中的版权人写的是 **Kang**。本文不统一这两个名字，`LICENSE` 也未被改动。
+尽管所有包都声明 `local-only` 发布，仓库实际以 MIT 许可证公开在 GitHub 上；应用子目录另行采用 Apache-2.0，见[开源许可证](#开源许可证)。维护者元数据在 manifest、`SKILL.md` 和 `agents/interface.yaml` 中署名 **Kang Jiaxin**；`LICENSE` 中的版权人写的是 **Kang**。本文不统一这两个名字，`LICENSE` 也未被改动。
 
 **以下这些，确实还不存在，直说：**
 
@@ -303,8 +334,8 @@ python3 scripts/validate_handoff_chain.py \
 - **没有真实客户结果。** 没有测量过任何 ROI、效率提升、成本节约、质量改善、准确率或采用率数据，因为从未发生过真实项目。
 - **没有独立或 provider 支持的验证。** 仓库自己的产物记录 `"provider_backed": false`。一份运行时案例记录直说独立运行仍是 `missing evidence`。
 - **没有执行过影子试点。** 只存在一次合成的、加速的单场次模拟。没有连接过任何生产 OA 或 CRM。
-- **不跨平台。** 五个 manifest 全部声明 `"target_platforms": ["codex"]`。
-- **不是运行时系统。** 没有数据库、没有统一入口、没有任务队列、没有调度器、没有 Web 服务。可执行逻辑只有确定性路由器、离线模拟运行器、四个校验器和根级来源守卫。
+- **不跨平台（Skill manifest）。** 五个 manifest 全部声明 `"target_platforms": ["codex"]`；应用原型是独立的本地浏览器 UI，不受该 manifest 声明约束。
+- **不是运行时系统（Skill 层）。** 五个 Skill 仍是指令体系加确定性路由器、离线模拟运行器、四个校验器和根级来源守卫。独立的应用原型新增了本地 Pages Functions + D1 运行时，但没有把 Skill 本身变成生产服务。
 - **不能替代人。** 它不会自主访谈员工、不会联系任何人、不会发送消息、不会修改业务系统、不会作出承诺。
 
 ---
@@ -327,7 +358,19 @@ python3 -m unittest discover -s deliverables/management-diagnostic-report-v0.1/t
 python3 scripts/validate_personal_skill_ownership.py                            # personal_skill_ownership_valid
 ```
 
-[`scripts/run_local_checks.sh`](scripts/run_local_checks.sh) 用一条命令跑完全部八个套件与守卫，任何失败都以非零退出。[`.github/workflows/local-checks.yml`](.github/workflows/local-checks.yml) 在每次 push 和 pull request 时调用同一个脚本，所以本地与 CI 不会漂移。
+[`scripts/run_local_checks.sh`](scripts/run_local_checks.sh) 用一条命令跑完全部八个套件与守卫，任何失败都以非零退出。[`.github/workflows/local-checks.yml`](.github/workflows/local-checks.yml) 在每次 push 和 pull request 时调用同一个脚本，所以 131 项 Skill 检查的本地与 CI 不会漂移；该工作流还会运行下方的应用定向检查。
+
+### 应用原型验证（独立）
+
+应用原型**不计入**上面的 131 项测试；它的两个定向套件已作为额外步骤接入 `.github/workflows/local-checks.yml`，也可以从应用目录手动运行：
+
+```bash
+cd apps/enterprise-diagnostic
+node tests/pilot09c_g14_final_fix_runtime.mjs
+node tests/pilot09c_g14_runtime.mjs
+```
+
+对于冻结的 G14 候选，独立验收记录报告 231/231 定向运行时检查、4/4 原 G14 HTTP 场景，以及两个新增 FINAL 边界场景独立复跑 3/3。这是**限定范围的验收记录**，不是全量测试或生产安全认证；详见 [`apps/enterprise-diagnostic/ACCEPTANCE.md`](apps/enterprise-diagnostic/ACCEPTANCE.md)。
 
 ### 测试证明了什么，没证明什么
 
@@ -364,6 +407,8 @@ python3 scripts/validate_personal_skill_ownership.py                            
 
 **授权撤回。** 授权被撤回时，上游材料及由其派生的一切必须进入复核状态，不得继续对外使用。这在代码、校验器和测试中都被强制：路由器在撤回时要求 `H2` 人工复核，`test_withdrawn_material_propagates_through_evidence_pack_to_diagnosis` 证明该传播。输出视图必须使用 `metadata_policy: preserve_source_metadata` —— 视图可以过滤内容，但不得剥掉证据等级、`E5` 标注、冲突状态、授权状态或版本血缘。
 
+**应用原型数据。** 应用是仅用于合成/本地数据的本地原型；其 development/示例鉴权配置不得暴露到互联网。请勿在演示中输入真实员工/客户数据、凭据或原始访谈记录。
+
 **反过度声称规则。** 没有相应证据，不得声称效率、成本、质量、集成就绪度或业务改善。客户沟通不得隐藏实质性风险或证据缺口，不得把假设变成已确认事实，不得在没有证据时承诺 ROI、准确率、交付或合规。
 
 **来源守卫。** [`scripts/validate_personal_skill_ownership.py`](scripts/validate_personal_skill_ownership.py) 遍历五个包目录下的每个文本文件，在以下情况失败：包未声明 `owner: Kang Jiaxin`、出现被禁止的署名标记、出现 JSON Schema 方言 URI 以外的外部 URL、或包声明了 `upstream_inspiration`。它是一道真实的来源守卫，也是本仓库中曾经的署名只以守卫内部禁用常量的形式存在的原因。它的作用范围仅限五个包目录：不扫描根 `README.md`、`docs/`、`simulations/`、`deliverables/`、`outputs/`、`scripts/` 和 `enterprise-ai-diagnostic-master-record/`，所以这些目录之外带 URL 的先例研究报告不在它的覆盖范围内。
@@ -383,6 +428,7 @@ python3 scripts/validate_personal_skill_ownership.py                            
 ├── enterprise-ai-process-diagnosis/        # Skill 4 - 诊断与影子试点
 ├── enterprise-ai-diagnostic-orchestrator/  # Skill 5 - 总控路由（可运行代码）
 ├── enterprise-ai-diagnostic-master-record/ # 共享记录契约（不是 Skill）
+├── apps/enterprise-diagnostic/             # 本地浏览器原型（Apache-2.0）
 ├── simulations/                            # 合成端到端案例（E5）
 ├── case-studies/                           # 方法用于真实工作的记录
 ├── portfolio/                              # 面向读者的项目介绍页
@@ -415,6 +461,9 @@ python3 scripts/validate_personal_skill_ownership.py                            
 
 ## 开源许可证
 
-以 [MIT 许可证](LICENSE) 发布。
+本仓库有**两个许可证范围**：
 
-Copyright (c) Kang.
+- **Skill 包、模拟案例、文档及其他既有内容**按根目录 [MIT 许可证](LICENSE) 发布，Copyright (c) Kang，除非该目录另有说明。
+- **应用原型** [`apps/enterprise-diagnostic/`](apps/enterprise-diagnostic/) 单独采用 **Apache License 2.0** —— 见 [apps/enterprise-diagnostic/LICENSE](apps/enterprise-diagnostic/LICENSE)，Copyright 2026 Kang Jiaxin。
+
+根 `LICENSE` 保持 MIT，不被替换；应用子目录没有重新许可仓库其他内容，Apache-2.0 也不适用于 Skills 或历史内容。若应用后续加入第三方内容，需要审查其许可证并按需添加 NOTICE。

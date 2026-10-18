@@ -1,11 +1,16 @@
 name: local-checks
 
-# Runs the repository's own validation exactly as documented in README.md under
+# Runs the repository's own validation that is documented in README.md under
 # "Validation Status": eight stdlib `unittest` suites plus the provenance guard.
-# No dependencies are installed — the check is Python 3 standard library only.
+# No Python dependencies are installed — the check is Python 3 standard library only.
 #
 # The same script is the documented local entry point, so CI and a developer's
-# machine cannot drift apart.
+# machine cannot drift apart for the 131 Skills checks.
+#
+# The application prototype is validated by additional Node.js steps below. Those
+# tests use a local model stub and need no API key, paid model call, network or
+# production database. They are intentionally limited to the two targeted suites;
+# the historical G14 full audit is not part of CI.
 
 on:
   push:
@@ -18,6 +23,7 @@ permissions:
 jobs:
   local-checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -29,3 +35,15 @@ jobs:
 
       - name: Run local checks
         run: ./scripts/run_local_checks.sh
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Application tests were validated locally with Node 22.22.3.
+          node-version: "22"
+
+      - name: Run application targeted checks
+        working-directory: apps/enterprise-diagnostic
+        run: |
+          node tests/pilot09c_g14_final_fix_runtime.mjs
+          node tests/pilot09c_g14_runtime.mjs

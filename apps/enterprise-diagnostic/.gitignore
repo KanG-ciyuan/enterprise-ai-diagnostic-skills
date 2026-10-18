@@ -1,0 +1,25 @@
+# Local runtime/state
+.wrangler/
+dist/
+node_modules/
+__pycache__/
+*.pyc
+
+# Local secrets — never commit or upload
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Local configuration copies (contains real resource IDs/credentials if edited)
+wrangler.toml
+wrangler.*.toml

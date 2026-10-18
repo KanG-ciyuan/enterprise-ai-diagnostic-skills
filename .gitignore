@@ -1,3 +1,16 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# Git worktrees / local tooling
+.worktrees/
+.superpowers/
+
+# Local application runtime/state and secrets (nested app .gitignore is authoritative)
+apps/enterprise-diagnostic/.wrangler/
+apps/enterprise-diagnostic/dist/
+apps/enterprise-diagnostic/.dev.vars
+apps/enterprise-diagnostic/.dev.vars.*
+!apps/enterprise-diagnostic/.dev.vars.example
+apps/enterprise-diagnostic/wrangler.toml
+apps/enterprise-diagnostic/wrangler.*.toml

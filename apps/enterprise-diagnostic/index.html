@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="企业 AI 流程诊断交互式 MVP">
+    <title>企业 AI 流程诊断</title>
+    <link rel="stylesheet" href="styles.css?v=workbench-v5">
+    <script src="mock-data.js?v=workbench-v5" defer></script>
+    <script src="agent-adapter.js?v=workbench-v5" defer></script>
+    <script src="formal-ui-contract.js?v=workbench-v6" defer></script>
+    <script src="api-client.js?v=workbench-v6" defer></script>
+    <script src="app.js?v=workbench-v6" defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="app-header__inner">
+        <div class="brand-lockup">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div>
+            <p class="product-name">企业 AI 流程诊断</p>
+            <p class="diagnostic-name">客户交接流程 · 交互式 MVP</p>
+          </div>
+        </div>
+        <div id="backend-status" class="header-status" data-state="idle">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="backend-status-label">E5合成数据 · 等待进入项目</span>
+          <button type="button" data-action="retry-backend" hidden>重试</button>
+        </div>
+        <!-- 正式模式下的身份条：让人始终知道“我是谁、在哪个项目、怎么退出” -->
+        <div id="formal-identity" class="formal-identity" hidden>
+          <!-- B2-02：正式业务环境标识。只陈述可验证的事实（运行模式 + 当前项目），
+               不作文本未经验证的真实性承诺。 -->
+          <span class="formal-identity__env" id="formal-identity-env">正式业务</span>
+          <span class="formal-identity__role" id="formal-identity-role">—</span>
+          <span class="formal-identity__sep" aria-hidden="true">·</span>
+          <span class="formal-identity__project" id="formal-identity-project">—</span>
+          <span class="formal-identity__name" id="formal-identity-name"></span>
+          <button class="formal-identity__exit" type="button" data-action="formal-logout">退出</button>
+        </div>
+        <div class="header-tools" aria-label="工作区工具">
+          <button class="project-switcher" type="button" data-action="show-project-list" aria-label="切换项目">
+            <span>锐新科技</span><strong>客户交接流程诊断</strong>
+          </button>
+          <button class="icon-tool" type="button" data-action="focus-search" aria-label="搜索任务" title="搜索任务">⌕</button>
+          <button class="icon-tool" type="button" aria-label="通知" title="通知">○</button>
+          <button class="avatar-button" type="button" aria-label="当前演示身份">K</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="product-shell">
+      <aside id="workspace-sidebar" class="workspace-sidebar" aria-label="主导航">
+        <div class="sidebar-heading"><span class="sidebar-overline">DIAGNOSIS</span><strong>诊断工作区</strong></div>
+        <nav class="sidebar-nav">
+          <button type="button" data-action="workspace-nav" data-nav="overview" class="sidebar-item is-active"><span class="sidebar-icon">⌂</span>工作概览</button>
+          <button type="button" data-action="workspace-nav" data-nav="mapping" class="sidebar-item"><span class="sidebar-icon">↗</span>流程摸排</button>
+          <button type="button" data-action="workspace-nav" data-nav="facts" class="sidebar-item"><span class="sidebar-icon">✓</span>材料与事实</button>
+          <button type="button" data-action="workspace-nav" data-nav="risks" class="sidebar-item"><span class="sidebar-icon">◇</span>风险与建议</button>
+          <button type="button" data-action="workspace-nav" data-nav="decisions" class="sidebar-item"><span class="sidebar-icon">○</span>审阅决策</button>
+        </nav>
+        <div class="sidebar-footer"><span class="status-dot" aria-hidden="true"></span><span>E5 合成数据 · 本地演示</span></div>
+      </aside>
+      <main class="app-main">
+      <aside class="global-boundary">
+        <strong>演示边界</strong>
+        <span>当前使用 E5 合成模拟材料，不连接OA、CRM或ERP，不修改任何企业业务数据。</span>
+      </aside>
+      <p id="status-message" class="status-message" role="status" aria-live="polite" hidden></p>
+
+      <section id="invitation-gate-view" class="view invitation-view" data-view hidden aria-labelledby="invitation-gate-title">
+        <div class="invitation-shell">
+          <div class="invitation-story">
+            <p class="invitation-overline">受邀项目 · 客户交接流程诊断</p>
+            <h1 id="invitation-gate-title" tabindex="-1">先还原真实工作，<br>再决定从哪里改。</h1>
+            <p class="invitation-lead">把员工经验、流程材料和系统记录放在同一条证据链上。Agent 负责整理和发现冲突，人负责确认关键事实。</p>
+            <div class="invitation-journey" aria-label="诊断流程预览">
+              <div><span>01</span><strong>摸清流程</strong><em>员工还原真实工作</em></div>
+              <div><span>02</span><strong>核验事实</strong><em>人机共同确认冲突</em></div>
+              <div><span>03</span><strong>审阅改造</strong><em>负责人决定小范围试点</em></div>
+            </div>
+          </div>
+          <div class="invitation-entry">
+            <div class="entry-heading">
+              <span class="entry-index">PROJECT / 001</span>
+              <h2>通过项目邀请进入</h2>
+              <p>企业项目不开放自行注册。使用邀请中的身份进入已分配工作台。</p>
+            </div>
+            <form id="invitation-form" class="invitation-form">
+              <label for="invitation-identity">手机号或企业邮箱</label>
+              <input id="invitation-identity" name="identity" type="text" autocomplete="username" placeholder="输入邀请中的手机号或企业邮箱" required>
+              <fieldset class="role-selector">
+                <legend>本次演示职责</legend>
+                <input id="invitation-role" name="role" type="hidden" value="owner">
+                <div class="role-options" role="radiogroup" aria-label="本次演示职责">
+                  <button class="role-option" type="button" role="radio" aria-checked="false" data-role-choice="employee"><span class="role-option-icon">↗</span><strong>参与流程的员工</strong><small>还原真实工作</small></button>
+                  <button class="role-option" type="button" role="radio" aria-checked="false" data-role-choice="verifier"><span class="role-option-icon">✓</span><strong>流程核验人员</strong><small>确认关键事实</small></button>
+                  <button class="role-option is-selected" type="button" role="radio" aria-checked="true" data-role-choice="owner"><span class="role-option-icon">◌</span><strong>企业负责人</strong><small>审阅改造建议</small></button>
+                  <button class="role-option" type="button" role="radio" aria-checked="false" data-role-choice="external_builder"><span class="role-option-icon">＋</span><strong>外部改造方</strong><small>创建项目与设定范围</small></button>
+                </div>
+              </fieldset>
+              <button class="primary-button entry-button" type="submit"><span>进入项目</span><span aria-hidden="true">→</span></button>
+            </form>
+            <p class="invitation-boundary"><span aria-hidden="true">●</span> 静态原型模拟身份壳 · 不执行真实登录或系统连接</p>
+          </div>
+        </div>
+      </section>
+
+      <!--
+        独立演示入口（B2-02）。
+        ?demo=1 只决定"是否渲染这个容器"——属于前端路由，不授予任何后端权限。
+        真正的权限判定在服务端 functions/api/demo/enter.js：非显式 development 一律 403。
+      -->
+      <section id="demo-entry-view" class="view demo-entry-view" data-view hidden aria-labelledby="demo-entry-title">
+        <div class="formal-entry-shell">
+          <div class="demo-entry-panel">
+            <p class="panel-label">交互式演示</p>
+            <h1 id="demo-entry-title" tabindex="-1">选一个身份，直接进工作台</h1>
+            <p>演示项目里已经有完整内容：一个已授权的诊断项目、一份已核验的证据材料、一条待还原的客户交接工作。用哪个身份进去，看到的就是那个身份的工作台。</p>
+            <div class="demo-role-grid">
+              <button type="button" class="demo-role" data-action="demo-enter" data-demo-role="employee">
+                <span class="demo-role__name">一线员工</span>
+                <span class="demo-role__desc">还原实际工作 · 与 Agent 一问一答</span>
+              </button>
+              <button type="button" class="demo-role" data-action="demo-enter" data-demo-role="verifier">
+                <span class="demo-role__name">流程核验人员</span>
+                <span class="demo-role__desc">逐条确认候选事实 · 高影响事实需二次确认</span>
+              </button>
+              <button type="button" class="demo-role" data-action="demo-enter" data-demo-role="owner">
+                <span class="demo-role__name">企业负责人</span>
+                <span class="demo-role__desc">只审阅已确认事实形成的决策摘要</span>
+              </button>
+              <button type="button" class="demo-role" data-action="demo-enter" data-demo-role="builder">
+                <span class="demo-role__name">外部改造方</span>
+                <span class="demo-role__desc">建项目 · 发起企业授权 · 邀请成员</span>
+              </button>
+            </div>
+            <p id="demo-entry-status" class="form-help" role="status" aria-live="polite">当前使用 E5 合成数据，不连接 OA、CRM 或 ERP，不修改任何企业数据。</p>
+            <p class="demo-entry-boundary">演示入口只在显式 development 环境可用；服务端会拒绝生产语义下的演示会话请求。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="formal-entry-view" class="view formal-entry-view" data-view hidden aria-labelledby="formal-entry-title">
+        <div class="formal-entry-shell">
+          <div class="formal-entry-story">
+            <p class="panel-label">企业 AI 流程诊断</p>
+            <h1 id="formal-entry-title" tabindex="-1">从真实工作出发，<br>再决定流程如何改。</h1>
+            <p>外部改造方建立诊断项目并邀请企业参与人。员工还原实际工作，核验人员确认事实，企业负责人只审阅已发布的决策摘要。</p>
+            <ol class="formal-entry-steps"><li>创建客户交接项目</li><li>邀请员工与核验人</li><li>依据已确认事实决策</li></ol>
+          </div>
+
+        </div>
+
+        <!-- 完整授权流程：企业正式交付走这条路，默认折叠 -->
+        <details class="formal-entry-more">
+          <summary>了解完整授权流程（企业正式交付时走这条）</summary>
+          <div class="formal-entry-shell">
+          <div class="formal-entry-mode-switch" role="tablist" aria-label="登录方式">
+            <button class="mode-tab" type="button" role="tab" aria-selected="true" data-action="show-builder-login">新改造方开通</button>
+            <button class="mode-tab" type="button" role="tab" aria-selected="false" data-action="show-member-login">已有账号，重新进入</button>
+          </div>
+          <form id="formal-builder-login-form" class="formal-entry-form">
+            <div><p class="panel-label">新改造方开通</p><h2>建立项目控制台</h2><p>仅用于创建新的外部改造方账号。已有成员请使用右侧的邮箱验证登录。</p></div>
+            <label>企业名称<input name="enterpriseName" autocomplete="organization" required maxlength="200" placeholder="例如：锐新科技"></label>
+            <label>工作邮箱<input name="email" type="email" autocomplete="email" required placeholder="name@company.com"></label>
+            <label>你的姓名<input name="name" autocomplete="name" placeholder="用于记录创建人"></label>
+            <label class="bootstrap-field">受控开通码<input name="bootstrapToken" type="password" autocomplete="one-time-code" placeholder="请输入受控开通码" required><small class="form-help">开通码由管理员发放，不在页面显示。</small></label>
+            <button class="primary-button" type="submit">登录并进入项目控制台</button>
+            <p class="form-help">受邀成员请使用邀请链接进入，系统会从邀请中确定角色，不提供角色选择。</p>
+          </form>
+          <form id="formal-member-login-form" class="formal-entry-form" hidden>
+            <div><p class="panel-label">已有账号，重新进入</p><h2>用登记邮箱恢复项目</h2><p>输入已加入项目的邮箱，验证链接会恢复你已有的项目和职责。</p></div>
+            <label>登记邮箱<input name="email" type="email" autocomplete="email" required placeholder="name@company.com"></label>
+            <button class="primary-button" type="submit">发送验证链接</button>
+            <p id="formal-member-login-status" class="form-help" role="status" aria-live="polite"></p>
+            <div id="formal-member-test-consume" class="formal-member-test-consume" hidden>
+              <label>隔离测试验证 token<input name="testToken" autocomplete="one-time-code" placeholder="仅 .invalid 本地测试使用"></label>
+              <button class="secondary-button" type="button" data-action="consume-member-test-token">消费测试链接</button>
+            </div>
+          </form>
+          <form id="formal-invitation-accept-form" class="formal-entry-form" hidden>
+            <div><p class="panel-label">项目邀请</p><h2>确认后进入你的工作台</h2><p>你的项目和职责已由邀请确定。本页不会提供角色切换。</p></div>
+            <label>邀请邮箱<input name="email" type="email" autocomplete="email" required placeholder="输入收到邀请的邮箱"></label>
+            <label>你的姓名<input name="name" autocomplete="name" placeholder="用于任务交接记录"></label>
+            <button class="primary-button" type="submit">确认并进入工作台</button>
+            <p class="form-help">如果邮箱与邀请不匹配，系统不会创建项目成员关系。</p>
+          </form>
+          </div>
+        </details>
+      </section>
+
+      <section id="formal-builder-view" class="view formal-builder-view" data-view data-formal-role="external_builder" hidden aria-labelledby="formal-builder-title">
+        <nav class="formal-role-nav" aria-label="外部改造方工作区"><a href="#formal-builder-overview">项目概览</a><a href="#formal-invitation-panel">成员与邀请</a><a href="#formal-builder-control">当前任务</a><a href="#formal-builder-decision-panel">决策包</a></nav>
+        <header class="formal-page-heading"><div><p class="panel-label">外部改造方</p><h1 id="formal-builder-title" tabindex="-1">项目控制台</h1><p>从空项目开始，先明确范围，再把具体任务交给受邀成员。</p></div></header>
+        <div id="formal-builder-overview" class="formal-builder-grid">
+          <form id="formal-project-form" class="formal-panel"><p class="panel-label">第一步</p><h2>创建诊断项目</h2><label>项目名称<input name="name" required maxlength="200" value="客户交接流程诊断"></label><label>本次范围<textarea name="scope" required rows="5" placeholder="明确从哪里开始，到哪里结束；本轮只做客户交接流程。"></textarea></label><button class="primary-button" type="submit">创建项目</button></form>
+          <section class="formal-panel"><p class="panel-label">已创建项目</p><h2>项目与当前阻塞</h2><div id="formal-project-list" class="formal-project-list" role="status">正在读取项目…</div></section>
+        </div>
+        <section id="formal-invitation-panel" class="formal-panel formal-invitation-panel" hidden><div><p class="panel-label">第二步</p><h2>邀请项目参与人</h2><p>成员接受邀请后，系统才会分配其唯一主任务。</p></div><form id="formal-invitation-form" class="formal-invitation-form"><label>邮箱<input name="email" type="email" required placeholder="member@company.com"></label><label>职责<select name="role"><option value="employee">一线员工</option><option value="verifier">流程核验人员</option><option value="owner">企业负责人</option></select></label><button class="primary-button" type="submit">生成邀请链接</button></form><div id="formal-invitation-result" aria-live="polite"></div></section>
+        <section id="formal-builder-control" class="formal-panel formal-control-panel" hidden aria-live="polite"></section>
+        <section id="formal-builder-decision-panel" class="formal-panel" hidden></section>
+      </section>
+
+      <section id="project-list-view" class="view" data-view aria-labelledby="project-list-title">
+        <div class="page-heading">
+          <div>
+            <h1 id="project-list-title" tabindex="-1">流程诊断项目</h1>
+            <p>这里用于推进流程诊断项目，不处理 OA、CRM 或 ERP 的业务待办。</p>
+          </div>
+          <button class="primary-button" type="button" data-action="open-project-wizard">新建诊断项目</button>
+        </div>
+        <section class="project-intro">
+          <strong>本次演示会做什么</strong>
+          <span>使用客户交接的模拟访谈和材料，展示 Agent 如何整理事实、发现断点，并在无法判断时交给人确认。</span>
+        </section>
+        <div id="project-list" class="project-list"></div>
+      </section>
+
+      <section id="workspace-dashboard-view" class="view workspace-dashboard" data-view hidden aria-labelledby="workspace-title">
+        <header class="workspace-page-heading">
+          <div>
+            <p id="workspace-role-label" class="workspace-eyebrow">企业负责人工作台</p>
+            <h1 id="workspace-title" tabindex="-1">工作概览</h1>
+            <p id="workspace-subtitle">聚焦当前待办、项目阻塞和下一步决策。</p>
+          </div>
+          <div class="heading-actions">
+            <button class="secondary-button" type="button" data-action="simulate-state-menu">状态演示</button>
+            <button class="primary-button" type="button" data-action="open-next-task">处理下一项</button>
+          </div>
+        </header>
+        <section id="workspace-overview" class="workspace-overview" aria-label="项目摘要"></section>
+        <section id="work-queue" class="work-queue" aria-labelledby="work-queue-title"></section>
+      </section>
+
+      <section id="diagnostic-workbench-view" class="view" data-view hidden aria-labelledby="workbench-title">
+        <div class="page-heading">
+          <div>
+            <p class="back-link"><button class="text-button" type="button" data-action="show-project-list">返回项目列表</button></p>
+            <h1 id="workbench-title" tabindex="-1">客户交接流程诊断</h1>
+            <p>先看已确认事实和证据，再看模拟 Agent 的分析；证据不足时，系统会停下等待人工确认。</p>
+          </div>
+          <span id="workbench-state" class="state-chip">尚未开始模拟</span>
+        </div>
+        <div id="diagnostic-workbench"></div>
+      </section>
+
+      <section id="verifier-workbench-view" class="view" data-view hidden aria-labelledby="verifier-workbench-title">
+        <div class="page-heading">
+          <div>
+            <p class="dialog-kicker">流程核验人员</p>
+            <h1 id="verifier-workbench-title" tabindex="-1">事实核验工作台</h1>
+            <p>先看两条证据，再回答一个具体业务问题。系统已在证据不足处暂停。</p>
+          </div>
+          <span class="warning-chip">已暂停 · 等待人工判断</span>
+        </div>
+        <div id="demo-verifier-workbench"></div>
+      </section>
+
+      <section id="owner-review-view" class="view" data-view hidden aria-labelledby="owner-review-title">
+        <div class="page-heading">
+          <div>
+            <p class="dialog-kicker">企业负责人</p>
+            <h1 id="owner-review-title" tabindex="-1">审阅与决策</h1>
+            <p>先看已确认事实和核心风险，再决定是否进入小范围影子试点。这里是决策摘要，不是任务清单。</p>
+          </div>
+          <span class="simulation-note">影子试点建议</span>
+        </div>
+        <div id="owner-review-workbench"></div>
+      </section>
+
+      <section id="formal-employee-view" class="view app-shell-view" data-view data-formal-role="employee" hidden aria-labelledby="formal-employee-title">
+        <h1 id="formal-employee-title" class="visually-hidden" tabindex="-1">还原客户交接工作</h1>
+
+        <div class="app-shell">
+          <!-- 工作区：我在哪、流程走到哪、我的任务 -->
+          <aside class="shell-pane shell-pane--nav" aria-label="工作区">
+            <div class="pane-head">
+              <span class="pane-head__label">工作区</span>
+              <span class="pane-head__meta" id="formal-employee-nav-meta">—</span>
+            </div>
+            <div class="pane-body">
+              <div class="pane-block">
+                <div class="pane-block__title"><span class="pane-block__icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="4.2" cy="3.6" r="1.7"/><circle cx="11.8" cy="12.4" r="1.7"/><path d="M4.2 5.3v3.1a2 2 0 0 0 2 2h3.6"/></svg></span>流程</div>
+                <ol class="step-rail" id="formal-employee-steps"></ol>
+              </div>
+              <div class="pane-block">
+                <div class="pane-block__title"><span class="pane-block__icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2.6"/><path d="M5.6 8.2l1.7 1.7 3.2-3.5"/></svg></span>我的任务</div>
+                <div id="formal-employee-task"></div>
+              </div>
+              <div class="pane-block" id="formal-employee-nav-progress"></div>
+            </div>
+          </aside>
+
+          <!-- 对话区：Agent 一次一问，保留历史，永不覆盖 -->
+          <section class="shell-pane shell-pane--thread" aria-label="对话区">
+            <div class="pane-head pane-head--app">
+              <span class="pane-head__avatar" aria-hidden="true">AI</span>
+              <div class="pane-head__titles">
+                <span class="pane-head__title">客户交接流程还原</span>
+                <span class="pane-head__sub" id="formal-employee-thread-meta">—</span>
+              </div>
+              <span class="pane-head__badge">自适应提问</span>
+              <div class="pane-head__tools">
+                <button class="icon-button" type="button" title="回到最新一问" aria-label="回到最新一问" data-action="scroll-thread-bottom">↓</button>
+                <button class="icon-button" type="button" title="保存草稿并稍后继续" aria-label="保存草稿并稍后继续" data-action="save-formal-employee-draft">⤓</button>
+              </div>
+            </div>
+            <div class="pane-body thread" id="formal-employee-thread" aria-live="polite"></div>
+        <div class="composer" id="formal-employee-composer">
+          <div class="composer__inner">
+            <label class="visually-hidden" for="formal-employee-answer">你的回答</label>
+            <textarea id="formal-employee-answer" class="composer__input" rows="3"
+              placeholder="用你真实做过的一次工作来回答，不必写成报告。Enter 发送，Shift + Enter 换行。"></textarea>
+            <div class="composer__actions" id="formal-employee-composer-actions"></div>
+          </div>
+        </div>
+          </section>
+
+          <!-- 轨迹区：证据与已还原的流程卡，随时可查 -->
+          <aside class="shell-pane shell-pane--trace" aria-label="轨迹区">
+            <div class="pane-head">
+              <span class="pane-head__label">轨迹区</span>
+              <span class="pane-head__meta">证据与流程卡</span>
+            </div>
+            <div class="pane-body" id="formal-employee-trace"></div>
+          </aside>
+        </div>
+
+        <!-- 输入框：固定在底部，只有这里承载操作 -->
+      </section>
+
+      <section id="formal-verifier-view" class="view app-shell-view" data-view data-formal-role="verifier" hidden aria-labelledby="formal-verifier-title">
+        <h1 id="formal-verifier-title" class="visually-hidden" tabindex="-1">逐条确认候选事实</h1>
+
+        <div class="app-shell">
+          <aside class="shell-pane shell-pane--nav" aria-label="工作区">
+            <div class="pane-head">
+              <span class="pane-head__label">工作区</span>
+              <span class="pane-head__meta" id="verifier-nav-meta">—</span>
+            </div>
+            <div class="pane-body">
+              <div class="pane-block">
+                <div class="pane-block__title"><span class="pane-block__icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="4.2" cy="3.6" r="1.7"/><circle cx="11.8" cy="12.4" r="1.7"/><path d="M4.2 5.3v3.1a2 2 0 0 0 2 2h3.6"/></svg></span>流程</div>
+                <ol class="step-rail" id="verifier-steps"></ol>
+              </div>
+              <div class="pane-block">
+                <div class="pane-block__title"><span class="pane-block__icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2.6"/><path d="M5.6 8.2l1.7 1.7 3.2-3.5"/></svg></span>我的任务</div>
+                <div id="verifier-task"></div>
+              </div>
+              <div class="pane-block" id="verifier-nav-progress"></div>
+              <div class="pane-block" id="verifier-nav-history"></div>
+            </div>
+          </aside>
+
+          <section class="shell-pane shell-pane--thread" aria-label="待核验事实">
+            <div class="pane-head">
+              <span class="pane-head__label">待核验事实</span>
+              <span class="pane-head__meta" id="verifier-thread-meta">—</span>
+            </div>
+            <div class="pane-body thread" id="verifier-thread" aria-live="polite"></div>
+        <div class="composer" id="verifier-composer">
+          <div class="composer__inner composer__inner--verifier" id="verifier-composer-inner"></div>
+        </div>
+          </section>
+
+          <aside class="shell-pane shell-pane--trace" aria-label="轨迹区">
+            <div class="pane-head">
+              <span class="pane-head__label">轨迹区</span>
+              <span class="pane-head__meta">证据与门禁</span>
+            </div>
+            <div class="pane-body" id="verifier-trace"></div>
+          </aside>
+        </div>
+
+      </section>
+
+      <section id="formal-owner-view" class="view app-shell-view" data-view data-formal-role="owner" hidden aria-labelledby="formal-owner-title">
+        <h1 id="formal-owner-title" class="visually-hidden" tabindex="-1">一项待决策事项</h1>
+
+        <div class="app-shell">
+          <aside class="shell-pane shell-pane--nav" aria-label="工作区">
+            <div class="pane-head">
+              <span class="pane-head__label">工作区</span>
+              <span class="pane-head__meta" id="owner-nav-meta">—</span>
+            </div>
+            <div class="pane-body">
+              <div class="pane-block">
+                <div class="pane-block__title"><span class="pane-block__icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="4.2" cy="3.6" r="1.7"/><circle cx="11.8" cy="12.4" r="1.7"/><path d="M4.2 5.3v3.1a2 2 0 0 0 2 2h3.6"/></svg></span>流程</div>
+                <ol class="step-rail" id="owner-steps"></ol>
+              </div>
+              <div class="pane-block">
+                <div class="pane-block__title"><span class="pane-block__icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2.6"/><path d="M5.6 8.2l1.7 1.7 3.2-3.5"/></svg></span>我的任务</div>
+                <div id="owner-task"></div>
+              </div>
+              <div class="pane-block" id="owner-nav-note"></div>
+            </div>
+          </aside>
+
+          <section class="shell-pane shell-pane--thread" aria-label="待决策事项">
+            <div class="pane-head">
+              <span class="pane-head__label">待决策事项</span>
+              <span class="pane-head__meta" id="owner-thread-meta">—</span>
+            </div>
+            <div class="pane-body thread" id="owner-thread" aria-live="polite"></div>
+        <div class="composer" id="owner-composer">
+          <div class="composer__inner composer__inner--verifier" id="owner-composer-inner"></div>
+        </div>
+          </section>
+
+          <aside class="shell-pane shell-pane--trace" aria-label="轨迹区">
+            <div class="pane-head">
+              <span class="pane-head__label">轨迹区</span>
+              <span class="pane-head__meta">已确认事实</span>
+            </div>
+            <div class="pane-body" id="owner-trace"></div>
+          </aside>
+        </div>
+
+      </section>
+
+      <section id="employee-workbench-view" class="view" data-view hidden aria-labelledby="employee-workbench-title">
+        <div class="page-heading">
+          <div>
+            <p class="dialog-kicker">参与流程的员工</p>
+            <h1 id="employee-workbench-title" tabindex="-1">员工工作台</h1>
+            <p>用几句话把你实际做过的工作讲清楚，就够了。先从一个具体环节开始，不需要整理成完整报告。</p>
+          </div>
+          <span class="simulation-note">本地模拟任务</span>
+        </div>
+        <div id="employee-workbench"></div>
+      </section>
+      </main>
+    </div>
+
+    <button id="drawer-scrim" class="drawer-scrim" type="button" data-action="close-detail" aria-label="关闭详情" hidden></button>
+    <aside id="detail-drawer" class="detail-drawer" aria-hidden="true" aria-labelledby="detail-drawer-title"></aside>
+    <div id="bulk-action-bar" class="bulk-action-bar" role="region" aria-label="批量操作" hidden></div>
+
+    <dialog id="project-wizard-dialog" aria-labelledby="project-wizard-title">
+      <form method="dialog" class="wizard-dialog">
+        <div class="dialog-heading">
+          <div>
+            <p class="dialog-kicker">创建诊断项目</p>
+            <h2 id="project-wizard-title">先把要诊断的事情说清楚</h2>
+          </div>
+          <button class="icon-button" type="button" data-action="close-project-wizard" aria-label="关闭创建向导">×</button>
+        </div>
+        <ol id="wizard-steps" class="wizard-steps" aria-label="创建步骤">
+          <li>选择流程</li>
+          <li>说明范围</li>
+          <li>选择职责</li>
+          <li>选择材料</li>
+        </ol>
+        <div id="wizard-panel" class="wizard-panel"></div>
+        <div class="action-row">
+          <button id="wizard-back-button" class="secondary-button" type="button" data-action="wizard-back">上一步</button>
+          <button id="wizard-next-button" class="primary-button" type="button" data-action="wizard-next">下一步</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

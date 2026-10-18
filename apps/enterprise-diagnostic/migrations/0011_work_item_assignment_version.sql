@@ -1,0 +1,2 @@
+ALTER TABLE work_items
+ADD COLUMN assignment_version INTEGER NOT NULL DEFAULT 1;

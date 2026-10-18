@@ -1,0 +1,27 @@
+# 让此前被旧构建作为静态资源公开的路径明确返回 404。
+#
+# 为什么需要这个文件
+# ------------------
+# 旧构建以 pages_build_output_dir = "." 部署，这些路径曾作为真实文件返回，
+# 并带有 cache-control: public, s-maxage=604800（7 天）的响应头。
+# 白名单构建不再提供它们，但边缘缓存里那份响应仍在有效期内 ——
+# 实测主域名 /wrangler.toml 返回 cf-cache-status: HIT、age 14798 秒。
+#
+# 这里的规则会让新部署在这些路径上返回 404，且响应不可长期缓存，
+# 从而覆盖掉旧缓存。这是在缓存自然过期前消除暴露的唯一可靠方式。
+#
+# 新增被误发布的路径时，在这里补一条。
+/wrangler.toml                            /__blocked__ 404
+/wrangler.authorization-consumer.toml     /__blocked__ 404
+/wrangler.authorization-dlq.toml          /__blocked__ 404
+/schema.sql                               /__blocked__ 404
+/seed.sql                                 /__blocked__ 404
+/README.md                                /__blocked__ 404
+/AUTHORIZATION_CONFIRMATION_DELIVERY.md   /__blocked__ 404
+/mock-data.js                             /__blocked__ 404
+/agent-adapter.js                         /__blocked__ 404
+/scripts/*                                /__blocked__ 404
+/tests/*                                  /__blocked__ 404
+/migrations/*                             /__blocked__ 404
+/workers/*                                /__blocked__ 404
+/functions/*                              /__blocked__ 404

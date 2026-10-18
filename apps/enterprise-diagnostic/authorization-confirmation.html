@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>企业授权确认</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="confirmation-page">
+  <main class="confirmation-shell" id="authorization-confirmation-app">
+    <p class="eyebrow">企业流程诊断</p>
+    <h1>确认本次诊断授权</h1>
+    <p class="confirmation-lead">请确认改造方是否可以在约定范围内开展流程摸排和材料核验。</p>
+    <dl id="authorization-summary" class="confirmation-summary" hidden></dl>
+    <form id="authorization-confirmation-form" hidden>
+      <label>确认意见
+        <select id="authorization-decision" required>
+          <option value="">请选择</option><option value="authorized">同意授权</option><option value="denied">暂不同意</option>
+        </select>
+      </label>
+      <label>理由（必填）<textarea id="authorization-reason" rows="5" required placeholder="请说明授权范围、限制或暂不同意的原因"></textarea></label>
+      <button type="submit" class="primary-button">提交确认</button>
+      <p id="authorization-confirmation-status" role="status"></p>
+    </form>
+    <p id="authorization-confirmation-error" role="alert"></p>
+  </main>
+  <script src="authorization-confirmation.js"></script>
+</body>
+</html>

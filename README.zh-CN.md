@@ -6,10 +6,18 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml"><img src="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml/badge.svg?branch=main" alt="Local checks · main"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-94a3b8?labelColor=0b1220" alt="License: MIT"></a>
-  <a href="apps/enterprise-diagnostic/LICENSE"><img src="https://img.shields.io/badge/App%20license-Apache--2.0-94a3b8?labelColor=0b1220" alt="App license: Apache-2.0"></a>
-  <a href="#状态与限制"><img src="https://img.shields.io/badge/Status-Prototype-388bfd?labelColor=0b1220" alt="Status: Prototype"></a>
+  <a href="#快速开始"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/toolkit-dark.svg">
+    <img src="assets/readme/toolkit-light.svg" alt="5 Agent Skills" width="260" height="72">
+  </picture></a>
+  <a href="#证据分级"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/evidence-model-dark.svg">
+    <img src="assets/readme/evidence-model-light.svg" alt="E1–E5 evidence model" width="260" height="72">
+  </picture></a>
+  <a href="#应用原型"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/local-prototype-dark.svg">
+    <img src="assets/readme/local-prototype-light.svg" alt="Independent local application prototype" width="260" height="72">
+  </picture></a>
 </p>
 
 <p align="center"><strong>Enterprise AI Diagnostic System</strong></p>
@@ -25,7 +33,17 @@
 **五个 Agent Skill 包 + 一个独立的本地应用原型。** 两者位于同一仓库，目前没有实现 Skills 与应用的运行时集成。
 
 <p align="center">
-  <a href="#快速开始">使用 Skills</a> · <a href="#应用原型">运行本地应用</a> · <a href="#验证状态">查看验证范围</a>
+  <a href="#快速开始"><img src="https://img.shields.io/badge/Quick_Start-Skills-2563eb?style=for-the-badge&amp;labelColor=0b1220" alt="Quick start: use the Skills" height="28"></a>
+  <a href="#应用原型"><img src="https://img.shields.io/badge/Local_App-Prototype-388bfd?style=for-the-badge&amp;labelColor=0b1220" alt="Run the local application prototype" height="28"></a>
+  <a href="#证据分级"><img src="https://img.shields.io/badge/Evidence-E1%E2%80%93E5-64748b?style=for-the-badge&amp;labelColor=0b1220" alt="Read the evidence model" height="28"></a>
+  <a href="#验证状态"><img src="https://img.shields.io/badge/Validation-CI-64748b?style=for-the-badge&amp;labelColor=0b1220" alt="Review validation and CI" height="28"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml"><img src="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml/badge.svg?branch=main" alt="Local checks · main"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-94a3b8?labelColor=0b1220" alt="License: MIT"></a>
+  <a href="apps/enterprise-diagnostic/LICENSE"><img src="https://img.shields.io/badge/App%20license-Apache--2.0-94a3b8?labelColor=0b1220" alt="App license: Apache-2.0"></a>
+  <a href="#状态与限制"><img src="https://img.shields.io/badge/Status-Prototype-388bfd?labelColor=0b1220" alt="Status: Prototype"></a>
 </p>
 
 ---
@@ -59,7 +77,7 @@
 
 ## 功能概览
 
-以下主视觉与功能图均裁自已确认的**概念设计稿**，不是应用运行截图，也不代表已交付的界面。图中标签与布局仅作示意；证据等级以[证据分级](#证据分级)中的定义为准。
+以下主视觉与功能图均为**概念设计**，不是应用运行截图，也不代表已交付的界面。图中标签与布局仅作示意；证据等级以[证据分级](#证据分级)中的定义为准。
 
 ### 01 / AI-ASSISTED INTERVIEW
 

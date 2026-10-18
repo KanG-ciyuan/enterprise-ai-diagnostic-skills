@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="72" viewBox="0 0 260 72" role="img" aria-labelledby="title desc">
+  <title id="title">Independent local application prototype</title>
+  <desc id="desc">Project information. This card is not an external ranking or certification.</desc>
+  <rect x=".5" y=".5" width="259" height="71" rx="10" fill="#0d1625" stroke="#2b3b51"/>
+  <rect x="4.5" y="4.5" width="251" height="63" rx="7" fill="none" stroke="#6ba7ff" stroke-opacity=".12"/>
+  <rect x="14" y="14" width="50" height="48" rx="10" fill="#142641"/>
+  <g fill="#142641" stroke="#6ba7ff" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="20" width="42" height="29" rx="4"/><path d="M30 58h18M39 49v9m-13-23 5 5 9-11m7 2h6m-6 7h6"/></g>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif">
+    <text x="78" y="28" font-size="9" font-weight="600" letter-spacing="1.15" fill="#8fa4c0">APPLICATION STATUS</text>
+    <text x="78" y="52" font-size="18" font-weight="600" fill="#e6edf7">Local Prototype</text>
+  </g>
+</svg>

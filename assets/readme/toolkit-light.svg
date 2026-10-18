@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="72" viewBox="0 0 260 72" role="img" aria-labelledby="title desc">
+  <title id="title">Five agent Skill packages</title>
+  <desc id="desc">Project information. This card is not an external ranking or certification.</desc>
+  <rect x=".5" y=".5" width="259" height="71" rx="10" fill="#f8fafc" stroke="#d5dee9"/>
+  <rect x="4.5" y="4.5" width="251" height="63" rx="7" fill="none" stroke="#2563eb" stroke-opacity=".12"/>
+  <rect x="14" y="14" width="50" height="48" rx="10" fill="#eaf1fc"/>
+  <g fill="#eaf1fc" stroke="#2563eb" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M28 28h22M28 28v21M50 28v21M28 49h22"/><rect x="21" y="21" width="14" height="14" rx="3"/><rect x="43" y="21" width="14" height="14" rx="3"/><rect x="21" y="43" width="14" height="14" rx="3"/><rect x="43" y="43" width="14" height="14" rx="3"/><rect x="32" y="32" width="14" height="14" rx="3"/></g>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif">
+    <text x="78" y="28" font-size="9" font-weight="600" letter-spacing="1.15" fill="#61738c">WORKFLOW TOOLKIT</text>
+    <text x="78" y="52" font-size="18" font-weight="600" fill="#142238">5 Agent Skills</text>
+  </g>
+</svg>

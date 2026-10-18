@@ -6,10 +6,18 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml"><img src="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml/badge.svg?branch=main" alt="Local checks · main"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-94a3b8?labelColor=0b1220" alt="License: MIT"></a>
-  <a href="apps/enterprise-diagnostic/LICENSE"><img src="https://img.shields.io/badge/App%20license-Apache--2.0-94a3b8?labelColor=0b1220" alt="App license: Apache-2.0"></a>
-  <a href="#status-and-limits"><img src="https://img.shields.io/badge/Status-Prototype-388bfd?labelColor=0b1220" alt="Status: Prototype"></a>
+  <a href="#quick-start"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/toolkit-dark.svg">
+    <img src="assets/readme/toolkit-light.svg" alt="5 Agent Skills" width="260" height="72">
+  </picture></a>
+  <a href="#the-evidence-model"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/evidence-model-dark.svg">
+    <img src="assets/readme/evidence-model-light.svg" alt="E1–E5 evidence model" width="260" height="72">
+  </picture></a>
+  <a href="#application-prototype"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/local-prototype-dark.svg">
+    <img src="assets/readme/local-prototype-light.svg" alt="Independent local application prototype" width="260" height="72">
+  </picture></a>
 </p>
 
 <p align="center"><strong>Enterprise AI Diagnostic System</strong></p>
@@ -25,7 +33,17 @@ Start with one real business process: understand the work, verify its claims, an
 **Five agent Skills + one independent local application prototype.** They share this repository; runtime integration between the Skills and the app is not implemented.
 
 <p align="center">
-  <a href="#quick-start">Use the Skills</a> · <a href="#application-prototype">Run the local app</a> · <a href="#validation">Review validation</a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/Quick_Start-Skills-2563eb?style=for-the-badge&amp;labelColor=0b1220" alt="Quick start: use the Skills" height="28"></a>
+  <a href="#application-prototype"><img src="https://img.shields.io/badge/Local_App-Prototype-388bfd?style=for-the-badge&amp;labelColor=0b1220" alt="Run the local application prototype" height="28"></a>
+  <a href="#the-evidence-model"><img src="https://img.shields.io/badge/Evidence-E1%E2%80%93E5-64748b?style=for-the-badge&amp;labelColor=0b1220" alt="Read the evidence model" height="28"></a>
+  <a href="#validation"><img src="https://img.shields.io/badge/Validation-CI-64748b?style=for-the-badge&amp;labelColor=0b1220" alt="Review validation and CI" height="28"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml"><img src="https://github.com/KanG-ciyuan/enterprise-ai-diagnostic-skills/actions/workflows/local-checks.yml/badge.svg?branch=main" alt="Local checks · main"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-94a3b8?labelColor=0b1220" alt="License: MIT"></a>
+  <a href="apps/enterprise-diagnostic/LICENSE"><img src="https://img.shields.io/badge/App%20license-Apache--2.0-94a3b8?labelColor=0b1220" alt="App license: Apache-2.0"></a>
+  <a href="#status-and-limits"><img src="https://img.shields.io/badge/Status-Prototype-388bfd?labelColor=0b1220" alt="Status: Prototype"></a>
 </p>
 
 ---

@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(max-width: 640px)" srcset="assets/readme/hero-mobile.png">
-    <img src="assets/readme/hero.png" alt="Enterprise AI Diagnostic System — concept cover: understand the process, verify evidence, then automate." width="1902">
+    <img src="assets/readme/hero.png" alt="Enterprise AI Diagnostic System — concept cover: understand the process, verify evidence, then automate." width="2172">
   </picture>
 </p>
 
@@ -68,7 +68,7 @@
 Skills 指导有界流程的角色访谈；独立应用原型探索七个证据维度的 AI 辅助访谈。员工确认或更正记录，模型提议不直接成为事实。
 
 <p align="center">
-  <a href="assets/readme/interview.png"><img src="assets/readme/interview.png" alt="概念设计：AI 辅助员工访谈与七维证据导航，非实际运行截图。" width="626"></a>
+  <a href="assets/readme/interview.png"><img src="assets/readme/interview.png" alt="概念设计：AI 辅助员工访谈与七维证据导航，非实际运行截图。" width="800"></a>
 </p>
 
 [了解访谈方法](enterprise-workflow-mapping/SKILL.md) · [查看应用原型](#应用原型)
@@ -80,7 +80,7 @@ Skills 指导有界流程的角色访谈；独立应用原型探索七个证据�
 Skills 区分 E1–E5 的来源和证明范围。应用原型在服务端维护证据版本，并让受影响的跨维度推断失效，要求重新核验。
 
 <p align="center">
-  <a href="assets/readme/evidence.png"><img src="assets/readme/evidence.png" alt="概念设计：证据资料、版本和依赖关系视图，非实际运行截图。" width="626"></a>
+  <a href="assets/readme/evidence.png"><img src="assets/readme/evidence.png" alt="概念设计：证据资料、版本和依赖关系视图，非实际运行截图。" width="800"></a>
 </p>
 
 [阅读证据模型](#证据分级) · [查看应用验收边界](apps/enterprise-diagnostic/ACCEPTANCE.md)
@@ -92,7 +92,7 @@ Skills 区分 E1–E5 的来源和证明范围。应用原型在服务端维护�
 Skills 产出有条件的改造选项与影子试点设计；应用原型提供核验和负责人决策流程。最终决策由人承担，系统不自动修改生产业务。
 
 <p align="center">
-  <a href="assets/readme/diagnosis.png"><img src="assets/readme/diagnosis.png" alt="概念设计：有证据约束的流程发现、改造选项和人工审阅，非实际运行截图。" width="626"></a>
+  <a href="assets/readme/diagnosis.png"><img src="assets/readme/diagnosis.png" alt="概念设计：有证据约束的流程发现、改造选项和人工审阅，非实际运行截图。" width="800"></a>
 </p>
 
 [查看诊断交付物](#你会得到什么) · [阅读人类决策边界](#人--规则--agent-的边界)

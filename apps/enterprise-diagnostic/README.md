@@ -121,9 +121,33 @@ cp wrangler.toml.example wrangler.toml
 ./scripts/dev.sh
 ```
 
-Open `http://127.0.0.1:8788/`. Health check: `http://127.0.0.1:8788/api/health`.
+Open `http://127.0.0.1:8788/`. Health check: `http://127.0.0.1:8788/api/health` (liveness only).
+Schema readiness: `http://127.0.0.1:8788/api/ready` (200 when the D1 schema is at the
+migration head; 503 with a machine-readable code otherwise).
 
-Local runtime data is written under `.wrangler/state/` and is gitignored. Delete that directory to reset the local environment.
+Local runtime data is written under `.wrangler/state/` and is gitignored. **Do not delete
+that directory** unless you intentionally want to discard local data; it is the local D1
+database, not a cache. `scripts/dev.sh` performs a safe, state-aware initialization before
+starting the server.
+
+### Database initialization and readiness (R2A)
+
+- The only schema authority is `migrations/0001…0013`. `schema.sql` is a **generated
+  snapshot** (`node scripts/gen-schema-snapshot.mjs`); do not edit it by hand.
+- `scripts/dev.sh` checks the database state before starting. It applies numbered
+  migrations only for an empty database or an honest partially-migrated database.
+- Manual commands (read-only diagnose first; `init` refuses unknown/historical states):
+
+```bash
+./scripts/db.sh diagnose --state-dir .wrangler/state
+./scripts/db.sh init --state-dir .wrangler/state
+```
+
+- Databases created by the old request-time `ensureSchema` or by the old hand-maintained
+  `schema.sql` are **refused** (`db.sh init` exits 3 and writes nothing). This round does
+  not provide repair/adopt writes; those require a separate authorization.
+- The application never creates tables during a request. A cold or unmanaged database
+  produces `503` with `db_not_initialized` / `db_schema_unmanaged`, not a `500 no such table`.
 
 > The example configuration uses `development` auth mode and a local only test bootstrap path. **Do not use this configuration for a public deployment.** Live agent interviews require a model endpoint and credentials; the UI and demo paths can be inspected without a production model account, while automated tests use a local stub.
 

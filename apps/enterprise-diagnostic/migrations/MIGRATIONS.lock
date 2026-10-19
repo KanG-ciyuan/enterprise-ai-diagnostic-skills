@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "generated_by": "scripts/gen-schema-snapshot.mjs",
+  "files": [
+    {
+      "name": "0001_core_baseline.sql",
+      "sha256": "72d8e21245c26e971f197fcb78b098ba0a6381add285c561bfaedb951aace5f1"
+    },
+    {
+      "name": "0002_evidence_registry.sql",
+      "sha256": "345cb17f3f8b9538d7bfa53e62d91fd902bcc129ea47f887ffd5136c294e2083"
+    },
+    {
+      "name": "0003_evidence_delivery_upgrade.sql",
+      "sha256": "8c4017743ca8380487a3d39ffb246fd044230b1bcc34b7f4fb8bfd25d1e3ae3b"
+    },
+    {
+      "name": "0004_fact_cas_material_versions.sql",
+      "sha256": "a4939e5f6576e564891f22c1b30a48b804698a9e24a8f4c1ff4e1bc523e4d456"
+    },
+    {
+      "name": "0005_authorization_capability.sql",
+      "sha256": "a3cb29ca8520582e829a2d055f73d48f3e3667d4a3845f20bbf7142ae381624a"
+    },
+    {
+      "name": "0006_authorization_notification_outbox.sql",
+      "sha256": "f69b44537298141692dcf87d05322e67f5abe8295ca4abddb1b8c8aa36177fb7"
+    },
+    {
+      "name": "0007_decision_packet_transition_cas.sql",
+      "sha256": "0422d678af2d51d20ecae3a82a93c9933d575ecb8832e8cbdcaf12d8edaabf6e"
+    },
+    {
+      "name": "0008_revision_workflow.sql",
+      "sha256": "43e7b5063ba31656b03fad0fd29c143a46362f2a4b4b0e5416637333f3caaa11"
+    },
+    {
+      "name": "0009_auth_reassignment_project_gate.sql",
+      "sha256": "d722e76f55ef4c65b12ff01972959e44f235a2094b5ddc8de401634f9ac50dc6"
+    },
+    {
+      "name": "0010_member_login_challenges.sql",
+      "sha256": "f728022ecc832e2a62156010c45b1fa9f65dcb9f9a832b07ce6405b4acee4950"
+    },
+    {
+      "name": "0011_work_item_assignment_version.sql",
+      "sha256": "6bab9110e8012a0dc72d892bf8175f0b88fff0ea94205520f8af40ceed56e9da"
+    },
+    {
+      "name": "0012_builder_account_role.sql",
+      "sha256": "30eb6dcd5ce82be3ee5cf302902f6d67344ceba10f89db86c775f91449a9030e"
+    },
+    {
+      "name": "0013_fact_evidence_level.sql",
+      "sha256": "11f723c82eccb7f6fab0c9d5a1b765152611d991eefcef71fa75224a605b8766"
+    }
+  ]
+}

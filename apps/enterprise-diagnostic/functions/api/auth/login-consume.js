@@ -1,4 +1,4 @@
-import { PROVIDER_DELIVERED_MARKER, cors, ensureSchema, httpError, json, requestSessionToken, resolveAuthMode, sessionCookie, sha256, withSessionCookie } from "../../_shared.js";
+import { PROVIDER_DELIVERED_MARKER, cors, assertSchemaReady, httpError, json, requestSessionToken, resolveAuthMode, sessionCookie, sha256, withSessionCookie } from "../../_shared.js";
 
 function accountPayload(row) {
   return { id: row.account_id_value || row.id, email: row.email, name: row.name, enterpriseId: row.enterprise_id, status: row.account_status || row.status };
@@ -7,7 +7,7 @@ function accountPayload(row) {
 export async function onRequestPost({ request, env }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
-    await ensureSchema(env.DB);
+    await assertSchemaReady(env.DB);
     const body = await request.json().catch(() => ({}));
     const token = String(body?.token || "").trim();
     if (!token) return httpError("登录验证链接无效或已失效，请重新请求。", 401, "login_challenge_invalid");

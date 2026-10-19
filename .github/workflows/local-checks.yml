@@ -47,3 +47,37 @@ jobs:
         run: |
           node tests/pilot09c_g14_final_fix_runtime.mjs
           node tests/pilot09c_g14_runtime.mjs
+
+  # R2A database safety: the migration chain is the only schema authority; generated
+  # artifacts must be reproducible; legacy databases must be refused (no auto-migration).
+  # Read-only jobs only (no network, no credentials, no remote D1, no real databases).
+  db-schema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          # Lock append-only check compares the committed lock with its previous revision.
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Pin the exact Node version used for the R2A local evidence. The generated
+          # artifacts embed node:sqlite's canonical DDL formatting, so an unpinned
+          # Node line could drift across bundled SQLite versions.
+          node-version: "22.22.3"
+
+      - name: Generated schema artifacts are up to date
+        working-directory: apps/enterprise-diagnostic
+        run: node scripts/gen-schema-snapshot.mjs --check
+
+      - name: Database safety tests (in-memory / isolated temp dirs only)
+        working-directory: apps/enterprise-diagnostic
+        run: |
+          node tests/db_generated_artifacts_runtime.mjs
+          node tests/db_migration_lock_runtime.mjs
+          node tests/db_state_matrix_runtime.mjs
+          node tests/readiness_runtime.mjs
+          node tests/migration_runtime.mjs

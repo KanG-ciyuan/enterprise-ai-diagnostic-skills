@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
+import { KNOWN_MIGRATIONS } from "../functions/_schema.generated.js";
 
 class D1Statement {
   constructor(owner, sql, values = []) { this.owner = owner; this.sql = sql; this.values = values; }
@@ -10,12 +11,25 @@ class D1Statement {
 }
 
 export class D1Harness {
-  constructor({ loadSchema = true } = {}) {
+  constructor({ loadSchema = true, withLedger = loadSchema } = {}) {
     this.database = new DatabaseSync(":memory:");
     this.failOnEvent = false;
     this.failSqlOncePattern = null;
     this.simulateOldSplitWrites = process.argv.includes("--simulate-old-split-writes");
-    if (loadSchema) this.database.exec(readFileSync(new URL("../schema.sql", import.meta.url), "utf8"));
+    if (loadSchema) {
+      this.database.exec(readFileSync(new URL("../schema.sql", import.meta.url), "utf8"));
+      // R2A: a schema.sql load represents a fully-migrated local D1 database, so seed the
+      // wrangler-compatible ledger by default. Legacy/un-managed fixtures opt out with
+      // { withLedger: false }.
+      if (withLedger) this.seedMigrationLedger();
+    }
+  }
+  seedMigrationLedger(names = KNOWN_MIGRATIONS) {
+    this.database.exec(
+      'CREATE TABLE IF NOT EXISTS "d1_migrations" (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)',
+    );
+    const insert = this.database.prepare("INSERT OR IGNORE INTO d1_migrations(name) VALUES(?)");
+    for (const name of names) insert.run(name);
   }
   prepare(sql) { return new D1Statement(this, sql); }
   runStatement(statement) {

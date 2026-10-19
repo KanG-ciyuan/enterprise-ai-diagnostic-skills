@@ -1,9 +1,9 @@
-import { appendEvent, cors, ensureSchema, httpError, json, sha256 } from "../../../../../_shared.js";
+import { appendEvent, cors, assertSchemaReady, httpError, json, sha256 } from "../../../../../_shared.js";
 
 export async function onRequestGet({ request, env, params }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
-    await ensureSchema(env.DB);
+    await assertSchemaReady(env.DB);
     const capability = String(request.headers.get("X-Authorization-Capability") || "").trim();
     if (!capability) return httpError("确认链接无效或已失效", 401);
     const hash = await sha256(capability);
@@ -17,7 +17,7 @@ export async function onRequestGet({ request, env, params }) {
 export async function onRequestPost({ request, env, params }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
-    await ensureSchema(env.DB);
+    await assertSchemaReady(env.DB);
     const body = await request.json().catch(() => ({}));
     const confirmationToken = String(body.confirmationToken || "").trim();
     if (!confirmationToken) return httpError("企业授权确认凭证无效", 401);

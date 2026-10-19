@@ -1,4 +1,4 @@
-import { cors, ensureSchema, httpError, json, requestSessionToken, requireAuthorizedProject, sessionCookie, withSessionCookie } from "../../../_shared.js";
+import { cors, assertSchemaReady, httpError, json, requestSessionToken, requireAuthorizedProject, sessionCookie, withSessionCookie } from "../../../_shared.js";
 
 function accountPayload(row) {
   return { id: row.id, email: row.email, name: row.name, enterpriseId: row.enterprise_id, status: row.status };
@@ -9,7 +9,7 @@ function sessionPayload(row) { return { expiresAt: row.expires_at, projectId: ro
 export async function onRequestPost({ request, env, params }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
-    await ensureSchema(env.DB);
+    await assertSchemaReady(env.DB);
     const body = await request.json();
     if (!body || typeof body !== "object") return httpError("接受邀请参数格式不正确", 422);
     const email = String(body.email || "").trim().toLowerCase();

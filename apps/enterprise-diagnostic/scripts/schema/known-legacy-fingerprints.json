@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "purpose": "Recognition constants for historical databases. NOT a schema authority; historical shapes are provided by tests/fixtures/legacy only for read-only classification tests.",
+  "fingerprint": {
+    "module": "scripts/lib/schema-fingerprint.mjs",
+    "version": 1
+  },
+  "provenance": {
+    "source_commit": "e172325cd45c0c6db429b90816d1869b58d48b89",
+    "source_shared_sha256": "d69b941d008f204e73937395a7f4c73e0e5d94f602115ccfcc420d25fd257373",
+    "source_schema_sql_sha256": "23cfd7a64b61857a9e39ea5bf49ebd690416f50d98a5620d486afe599c504d97",
+    "derived_by": "PILOT-18B-R2A implementation (node:sqlite + scripts/lib/schema-fingerprint.mjs)",
+    "derived_at": "2026-10-19",
+    "note": "Hashes were computed from fixtures that reproduce the frozen baseline shapes; verified by tests/db_state_matrix_runtime.mjs."
+  },
+  "shapes": {
+    "runtimeV1": {
+      "hash": "5592fe017a015fbaca5b8c739bc1d976aa2ba9509408f72d4766a76e44bfa827",
+      "counts": {
+        "tables": 19,
+        "columns": 259,
+        "fk": 1,
+        "explicitIndexes": 10,
+        "uniqueConstraints": 12,
+        "triggers": 0,
+        "views": 0
+      },
+      "fixture": "tests/fixtures/legacy/runtime-ensureSchema-v1.sql"
+    },
+    "schemaSqlV1": {
+      "hash": "42ffd961e5062e0804a487ab1d51b35c55255140d777f273592adcf02e424152",
+      "counts": {
+        "tables": 19,
+        "columns": 250,
+        "fk": 16,
+        "explicitIndexes": 15,
+        "uniqueConstraints": 12,
+        "triggers": 0,
+        "views": 0
+      },
+      "fixture": "tests/fixtures/legacy/schema-v1.sql"
+    },
+    "schemaSqlBooted": {
+      "hash": "1a45dc0bbdd2b5d2e470ef2ded6e6ed5cfbc78286736153a6e479a9890af3b83",
+      "counts": {
+        "tables": 19,
+        "columns": 259,
+        "fk": 16,
+        "explicitIndexes": 15,
+        "uniqueConstraints": 12,
+        "triggers": 0,
+        "views": 0
+      },
+      "fixture": "tests/fixtures/legacy/schema-v1-booted.sql"
+    }
+  }
+}

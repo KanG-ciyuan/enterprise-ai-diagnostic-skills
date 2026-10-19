@@ -92,6 +92,10 @@ def valid_workflow_handoff() -> dict:
     handoff["records_to_register"] = [
         {"collection": "workflow_cards", "record": indexed_record("CARD-001", "workflow_card")}
     ]
+    handoff["records_to_register"][0]["record"].update(
+        participant_id="PART-001", process_id="PROC-001", employee_confirmed=True,
+        confirmed_at="2026-08-14T15:58:00+08:00",
+    )
     handoff["participant_task_updates"] = [
         {
             "task_id": "TASK-001",

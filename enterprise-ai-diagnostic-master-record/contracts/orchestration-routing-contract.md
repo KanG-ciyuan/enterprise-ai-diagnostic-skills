@@ -309,3 +309,54 @@ S0暂停时必须记录阻断原因、恢复条件和受影响的 `record_id@ver
 - 未验证原始材料授权撤回后，下游流程卡、证据包和诊断记录的完整失效传播；
 - 未验证相似但非完全相同材料的人工去重准确性。
 - 未实现登记提案到总档案的自动写入、并发事务、幂等重试和失败回滚。
+
+## 18. 本地核心契约校验边界（PILOT-18A）
+
+- `validate_master_record.py`先执行已登记Schema的结构约束，再执行语义约束。
+  使用标准库的有界Schema词汇校验器，仅支持当前契约使用的词汇；不宣称通用
+  JSON Schema实现，不读取外部Schema，不引入网络或大型依赖。类型不安全时停止
+  语义遍历；形状安全的无效值同时保留原有业务错误码。
+- `planned_participants: 0`仍是合法结构值，可表示前期尚未规划。进入diagnosis、
+  pilot或completed时，必须有显式P0覆盖计划及相应任务，零人数不能静默跳过。
+  计划人数按不同participant计数；带缺口继续必须保留现有负责人风险接受字段。
+  零人数若要带风险继续，也必须关联档案中已提供的任务及有效风险接受，不能编造人。
+- 风险接受角色限企业项目负责人机器标签、既有project_owner别名或该档案明确的
+  project_owner_role，所有必需依据字段必须齐全；employee、agent及其他非负责人
+  机器角色不能借用职务名获得该权力。这只是文件内角色声明一致性，
+  无法验证现实中签署人的身份或该文本的真实性。
+- participant_tasks严格拒绝Schema未定义的企业/项目额外字段；task引用的卡必须
+  与participant/process一致，卡自身仍受企业/项目范围约束。completed卡必须是
+  当前且获授权版本，并有employee_confirmed与confirmed_at。
+- 本档案没有可信participant身份注册表。任务与卡同时被一致地伪造时，本地文件
+  校验不能识别现实归属；不得声称通过文件校验即通过多租户身份隔离验收。
+- 空覆盖/空任务不能获得诊断准入。但没有可信历史基线时，无法证明某一整组岗位
+  规划及对应任务是否曾被删除。对剩余内容一致的文件可作内部一致性判断，
+  不作跨版本计划完整性证明。未来应由可信调用方提供原计划/版本与身份来源。
+- Skill handoff只允许各producer自己的登记提案和任务状态；工作摸排不能提出
+  completed，材料分析和诊断不能修改员工任务。总控仍可在完整档案中确认completed，
+  但不能冒充第四种Skill producer绕过这些提案限制。
+- chain入口也校验master、记录范围、精确版本引用与task身份。storage_ref仍是索引，
+  本轮未新增正文读取器、注册执行器或真实身份认证，不能将valid解读为这些能力已实现。
+
+## 19. 待补齐提案与虚拟链校验（PILOT-18A R2）
+
+- 单份handoff的valid表示提案符合其声明状态，不等于可登记。needs_registration_context
+  必须显式列出missing_registration_fields，ready_for_registration必须清空该列表并
+  满足完整结构。已知身份始终匹配；不推测缺失身份，不自动升级状态。
+- 可声明的行政上下文字段为routingContext中的企业、项目、流程、参与者、部门、
+  岗位、任务ID，以及authorization_status、storage_ref、upstream_records、review_status。
+  只有明确列名且实际为null的字段可在待补齐记录中暂缓相应字段规则；必需键仍须提供。
+  record_id/type/version、producer、生命周期和员工确认依据不在暂缓范围内。
+- 所有workflow card事件均检查participant/process/project及卡片精确版本引用。
+  declined可无卡或携带本人草稿，不能声称已确认。未知task_id只保留待补齐卡，
+  不编造task_update；chain不接受非ready提案进入虚拟登记。
+- 每个collection复用master对应完整Schema定义，而不是只校验indexedRecord。
+  类型不安全的记录不能进入chain语义遍历；只解释当前collection声明的字段语义。
+- chain保留完整虚拟记录索引，复用master的validate_authorization检查新增current记录
+  的直接及间接withdrawn依赖；不修改upstream_records。已有record_id@version不可
+  被提案覆盖，以免掩盖引用授权状态。此处不执行真实登记或状态推进。
+- chain仍不是完整候选master状态转换器：它不自动更新旧版本生命周期、推进任务为
+  completed或替负责人重新判断覆盖门；material重复hash等全档案业务约束仍由
+  最终候选master校验承担。不能将chain valid解读为所有最终档案门均已通过。
+- Schema定义预检解析所有本地引用，包括if及未取用分支；引用故障显式报错，
+  不作为普通if条件不匹配。仍为当前有界词汇实现，不引入外部Schema或第三方依赖。

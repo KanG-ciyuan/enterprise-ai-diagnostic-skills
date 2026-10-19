@@ -22,7 +22,7 @@
     },
     "enterprise_id": {"type": "string", "minLength": 1},
     "project_id": {"type": "string", "minLength": 1},
-    "actor_role": {"type": "string", "minLength": 1},
+    "actor_role": {"type": "string", "enum": ["enterprise_project_owner", "employee", "agent"]},
     "authorization_status": {"enum": ["pending", "authorized", "restricted", "withdrawn", "not_required"]},
     "source_status": {"enum": ["known", "unknown", "unreadable"]},
     "payload": {"type": "object"},

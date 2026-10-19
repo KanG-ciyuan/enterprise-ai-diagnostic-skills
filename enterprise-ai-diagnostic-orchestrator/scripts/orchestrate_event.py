@@ -3,6 +3,7 @@ import copy
 import json
 import sys
 from pathlib import Path
+from datetime import datetime, timezone
 
 
 ROUTES = {
@@ -11,6 +12,99 @@ ROUTES = {
     "file_uploaded": ("enterprise-material-analysis", "AUTHORIZED_FILE_EVENT"),
     "diagnosis_gate_ready": ("enterprise-ai-process-diagnosis", "DIAGNOSIS_GATE_CONFIRMED"),
 }
+
+
+# These are event-source labels, not authenticated identities. The caller must
+# bind them to a trusted identity before using this local proposal generator.
+ACTOR_ROLES = frozenset({'enterprise_project_owner', 'employee', 'agent'})
+EVENT_ROLES = {
+    'management_problem_submitted': {'enterprise_project_owner'},
+    'interview_plan_submitted': {'enterprise_project_owner', 'agent'},
+    'interview_plan_confirmed': {'enterprise_project_owner'},
+    'participant_task_started': {'enterprise_project_owner', 'employee'},
+    'file_uploaded': {'enterprise_project_owner', 'employee'},
+    'workflow_card_confirmed': {'employee', 'agent'},
+    'material_analysis_completed': {'enterprise_project_owner', 'agent'},
+    'material_analysis_blocked': {'enterprise_project_owner', 'agent'},
+    'diagnosis_gate_ready': {'enterprise_project_owner'},
+    'process_diagnosis_completed': {'enterprise_project_owner', 'agent'},
+    'process_diagnosis_blocked': {'enterprise_project_owner', 'agent'},
+    'h1_required': {'enterprise_project_owner', 'employee', 'agent'},
+    'h2_required': {'enterprise_project_owner', 'employee', 'agent'},
+    'authorization_withdrawn': {'enterprise_project_owner', 'employee', 'agent'},
+    'manual_recovery_confirmed': {'enterprise_project_owner'},
+}
+EVENT_SCHEMA = json.loads((Path(__file__).resolve().parents[1] / 'schema/orchestrator-event.schema.json').read_text(encoding='utf-8'))
+
+# Explicit projections: no recursive copy of caller-controlled dictionaries.
+_ID_FIELDS = {key: str for key in ('task_id', 'participant_id', 'department_id', 'role', 'process_id', 'record_id', 'record_type', 'storage_ref', 'created_at', 'created_by_role', 'evidence_level', 'evidence_label')}
+_ID_FIELDS.update(version=int, source_records=[str], upstream_records=[str], simulation_only=bool, production_write=bool)
+_HUMAN_TASK = {key: str for key in ('task_type', 'responsible_role', 'question', 'reason', 'required_evidence', 'affected_decision', 'expected_return_event')}
+_HUMAN_TASK['recovery_conditions'] = [str]
+_PLAN_ROLE = {key: str for key in ('department_id', 'role', 'process_id', 'priority')}
+_PLAN_ROLE['planned_participants'] = int
+_PARTICIPANT = {key: str for key in ('task_id', 'participant_id', 'department_id', 'role', 'process_id', 'priority', 'authorization_status')}
+_EMPLOYEE_CONTEXT = {key: str for key in ('purpose', 'scope', 'process_name', 'work_name', 'data_use_notice', 'withdrawal_rules')}
+_EMPLOYEE_CONTEXT.update(source_records=[str], version=int)
+PAYLOAD_FIELDS = {
+    'enterprise-interview-preparation': {**_ID_FIELDS, 'problem_statement': str, 'requested_outcome': str},
+    'enterprise-workflow-mapping': {**_ID_FIELDS, 'employee_visible_context_only': bool, 'employee_visible_context': _EMPLOYEE_CONTEXT},
+    'enterprise-material-analysis': {**_ID_FIELDS, **{key: str for key in ('material_id', 'material_type', 'file_type', 'content_hash', 'return_to_event')}, 'missing_evidence': [str]},
+    'enterprise-ai-process-diagnosis': {**_ID_FIELDS, 'evidence_pack_ref': str, 'p0_coverage_checked': bool, 'residual_risk_recorded': bool},
+    'enterprise_project_owner': {**_ID_FIELDS, 'owner_confirmed': bool, 'participant_roles': [_PLAN_ROLE], 'participants': [_PARTICIPANT], 'affected_record': str, 'withdrawal_scope': str, 'recovery_conditions_met': bool, 'recovery_basis': str, 'resume_stage': str, 'reason': str, 'missing_evidence': [str], 'human_task': _HUMAN_TASK},
+    'authorized_reviewer': {**_ID_FIELDS, 'human_task': _HUMAN_TASK},
+    'authorized_management_role': {**_ID_FIELDS, 'human_task': _HUMAN_TASK},
+}
+
+
+def project_fields(value, fields):
+    """Project known field paths; reject mismatched types and unknown nesting."""
+    if not isinstance(value, dict):
+        return {}
+    result = {}
+    for key, rule in fields.items():
+        if key not in value:
+            continue
+        item = value[key]
+        if isinstance(rule, dict):
+            if isinstance(item, dict):
+                result[key] = project_fields(item, rule)
+        elif isinstance(rule, list):
+            if isinstance(item, list):
+                result[key] = [project_fields(entry, rule[0]) for entry in item if isinstance(entry, dict)] if isinstance(rule[0], dict) else [entry for entry in item if type(entry) is rule[0]]
+        elif type(item) is rule:
+            result[key] = copy.deepcopy(item)
+    return result
+
+
+def event_structure_errors(event):
+    if not isinstance(event, dict):
+        return ['EVENT_OBJECT_REQUIRED']
+    errors = [f'EVENT_REQUIRED:{key}' for key in EVENT_SCHEMA['required'] if key not in event]
+    properties = EVENT_SCHEMA['properties']
+    errors.extend(f'EVENT_ADDITIONAL:{key}' for key in event if key not in properties)
+    types = {'string': str, 'object': dict}
+    for key, rule in properties.items():
+        if key not in event:
+            continue
+        value = event[key]
+        if 'type' in rule and type(value) is not types[rule['type']]:
+            errors.append(f'EVENT_TYPE:{key}')
+            continue
+        if 'enum' in rule and value not in rule['enum']:
+            errors.append(f'EVENT_ENUM:{key}')
+        if 'const' in rule and value != rule['const']:
+            errors.append(f'EVENT_CONST:{key}')
+        if rule.get('minLength') and (not isinstance(value, str) or not value.strip()):
+            errors.append(f'EVENT_EMPTY:{key}')
+        if rule.get('format') == 'date-time' and isinstance(value, str):
+            try:
+                parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                if 'T' not in value or parsed.tzinfo is None:
+                    raise ValueError
+            except ValueError:
+                errors.append(f'EVENT_DATE_TIME:{key}')
+    return errors
 
 
 def task(task_type, responsible_role, question, reason, required_evidence, affected_decision, recovery_conditions, expected_return_event):
@@ -39,10 +133,10 @@ def proposal(event, decision, target, reason_codes, summary, *, human_task=None,
             "enterprise_id": event.get("enterprise_id"),
             "project_id": event.get("project_id"),
             "event_type": event.get("event_type"),
-            "actor_role": event.get("actor_role"),
-            "payload": copy.deepcopy(event.get("payload", {})),
+            "actor_role": event.get("actor_role") if isinstance(event.get("actor_role"), str) and event["actor_role"] in ACTOR_ROLES else None,
+            "payload": project_fields(event.get("payload", {}), PAYLOAD_FIELDS.get(target, {})),
         },
-        "human_task": human_task,
+        "human_task": project_fields(human_task, _HUMAN_TASK) if isinstance(human_task, dict) else None,
         "proposed_state_change": state_change or {},
         "next_expected_events": next_events or [],
         "write_authority": "scheduling_proposal",
@@ -113,9 +207,38 @@ def participant_tasks_from_plan(payload: dict) -> list[dict]:
     return tasks
 
 
+def readable_master_state(master):
+    """Validate only state consumed by routing; keep compact master support."""
+    if not isinstance(master, dict) or not isinstance(master.get('current_stage'), dict):
+        return False
+    stage = master['current_stage']
+    if not isinstance(stage.get('stage'), str) or stage['stage'] not in {
+        'interview_preparation', 'workflow_mapping', 'evidence_completion',
+        'diagnosis', 'pilot', 'completed', 'paused'
+    }:
+        return False
+    if 'status' in stage and (not isinstance(stage['status'], str) or stage['status'] not in {
+        'not_started', 'active', 'blocked', 'review_required', 'completed', 'paused'
+    }):
+        return False
+    stops = master.get('stops_and_recoveries', [])
+    return isinstance(stops, list) and all(
+        isinstance(stop, dict) and isinstance(stop.get('status'), str)
+        and stop['status'] in {'active', 'recovered'} for stop in stops)
+
+
 def route_event(master_record: dict, event: dict) -> dict:
     event = copy.deepcopy(event)
     master = copy.deepcopy(master_record)
+    if event_structure_errors(event):
+        safe_event = event if isinstance(event, dict) else {}
+        return pause(safe_event, "EVENT_STRUCTURE_INVALID", "事件结构或角色/授权状态不符合契约，已停止处理。", "请提供符合事件契约的已验证来源。", ["结构校验通过", "身份由可信调用方绑定"])
+    if not readable_master_state(master):
+        return pause(event, "MASTER_STRUCTURE_INVALID", "总档案停止状态不可读取，已停止处理。", "请确认档案和停止记录结构。", ["停止状态可验证"])
+    event_type = event["event_type"]
+    # Recovery retains its existing owner/basis/target-stage rejection response.
+    if event_type != "manual_recovery_confirmed" and event["actor_role"] not in EVENT_ROLES[event_type]:
+        return pause(event, "EVENT_ROLE_FORBIDDEN", "当前来源角色无权发起该事件。", "请由契约指定角色确认来源与授权。", ["来源角色具有该事件权限"])
     if event.get("enterprise_id") != master.get("enterprise_id"):
         return pause(event, "CROSS_ENTERPRISE_SCOPE", "事件与总档案不属于同一企业，已停止处理。", "请确认正确的企业范围。", ["事件与总档案enterprise_id一致", "项目负责人手动恢复"])
     if event.get("project_id") != master.get("project_id"):
@@ -124,10 +247,12 @@ def route_event(master_record: dict, event: dict) -> dict:
         return pause(event, "SOURCE_UNKNOWN", "当前事件来源不明或不可读，不能可靠路由。", "请确认来源身份并提供可读取的最小材料。", ["来源身份可追溯", "材料达到当前任务最小可读范围", "项目负责人手动恢复"])
     if event.get("event_type") == "authorization_withdrawn":
         return pause(event, "AUTHORIZATION_WITHDRAWN", "材料或参与授权已经撤回，相关派生必须暂停。", "请确认撤回范围和受影响记录。", ["授权方重新书面确认或明确终止", "复核所有下游引用", "项目负责人手动恢复"])
-    if event.get("authorization_status") in {"pending", "withdrawn", None}:
+    if event.get("authorization_status") not in {"authorized", "restricted", "not_required"}:
         return pause(event, "AUTHORIZATION_BLOCKED", "当前授权不足或已撤回，不能继续派生记录。", "请由有权角色确认授权状态和适用范围。", ["授权状态恢复为authorized或明确not_required", "复核受影响下游记录", "项目负责人手动恢复"])
 
     event_type = event.get("event_type")
+    event_fields = PAYLOAD_FIELDS.get(ROUTES.get(event_type, ("enterprise_project_owner",))[0], PAYLOAD_FIELDS["enterprise_project_owner"])
+    event["payload"] = project_fields(event["payload"], event_fields)
     if event_type == "manual_recovery_confirmed":
         payload = event.get("payload", {})
         if (
@@ -164,6 +289,10 @@ def route_event(master_record: dict, event: dict) -> dict:
             state_change={"suggested_stage": "evidence_completion", "automatic_write": False},
             next_events=["file_uploaded", "participant_task_started"],
         )
+    if (master["current_stage"].get("stage") == "paused"
+            or master["current_stage"].get("status") == "paused"
+            or any(stop.get("status") == "active" for stop in master.get("stops_and_recoveries", []))):
+        return pause(event, "PROJECT_PAUSED", "项目仍处于暂停或有效停止状态，不能继续普通路由。", "请由项目负责人完成原有手动恢复程序。", ["项目负责人确认恢复条件和依据", "复核受影响记录", "恢复阶段为evidence_completion"])
     if event_type == "diagnosis_gate_ready" and master.get("current_stage", {}).get("stage") != "diagnosis":
         return proposal(
             event,

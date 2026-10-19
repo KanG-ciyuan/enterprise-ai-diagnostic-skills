@@ -68,7 +68,7 @@
       "required": ["task_id", "status", "status_reason"],
       "properties": {
         "task_id": {"type": "string", "minLength": 1},
-        "status": {"enum": ["awaiting_employee_confirmation", "confirmed", "participant_declined", "completed"]},
+        "status": {"enum": ["awaiting_employee_confirmation", "confirmed", "participant_declined"]},
         "current_workflow_card": {"type": "string", "pattern": "^[^@]+@[1-9][0-9]*$"},
         "status_reason": {"type": "string", "minLength": 1}
       },

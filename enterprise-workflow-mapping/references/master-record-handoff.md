@@ -36,3 +36,31 @@ Place task proposals in `participant_task_updates`. The workflow-card reference 
 | Open questions or contradictions | `unresolved_items` with evidence-bound summaries |
 
 The task update must not contain priority, department, role, participant, process ownership, residual-risk acceptance, or approval fields. Those belong to the total controller or authorized project owner.
+
+## Executable confirmation boundary
+
+A `workflow_card_confirmed` proposal must carry `employee_confirmed: true` and
+a valid `confirmed_at` on the exact proposed card version, plus matching routing
+participant/process and task/card references. These are confirmation metadata,
+not a substitute for trustworthy employee identity or the stored source artifact.
+
+`completed` is not a Skill-handoff status. The controller's existing completion
+path is the prospective master record: it must pass full structure and semantic
+validation, including current authorized card, participant/process/scope matching,
+employee confirmation, P0 coverage and existing lineage/authorization gates.
+This validator does not perform the registration/write itself.
+
+## Pending context and declined drafts (PILOT-18A R2)
+
+needs_registration_context is a valid incomplete proposal, never a ready
+registration. List each unknown administrative field by its canonical name in
+missing_registration_fields; use null (or omit an optional record field).
+Known enterprise/project/participant/process values must still agree.
+Confirmation metadata, producer and exact card version are not deferred.
+When task_id is unknown, keep it null in context and omit task updates instead
+of inventing a task. The chain validator rejects all non-ready proposals.
+
+Both confirmed and declined events must bind every proposed card to the same
+participant/process/project and match task references to the exact new card.
+A declined event may omit a card, or retain the employee's own unconfirmed
+draft; it must not claim employee_confirmed=true or a confirmation timestamp.

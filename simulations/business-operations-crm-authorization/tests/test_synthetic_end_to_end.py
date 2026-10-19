@@ -36,7 +36,16 @@ class SyntheticEndToEndTest(unittest.TestCase):
             "event_type": case["event_type"],
             "enterprise_id": self.master["enterprise_id"],
             "project_id": self.master["project_id"],
-            "actor_role": "simulation_agent",
+            # A simulation runner is not an event-source role. Keep all route
+            # expectations; identify the role responsible for each source event.
+            "actor_role": {
+                "management_problem_submitted": "enterprise_project_owner",
+                "participant_task_started": "employee",
+                "file_uploaded": "employee",
+                "material_analysis_blocked": "agent",
+                "diagnosis_gate_ready": "enterprise_project_owner",
+                "authorization_withdrawn": "enterprise_project_owner",
+            }[case["event_type"]],
             "authorization_status": "not_required",
             "source_status": "known",
             "payload": {"simulation_only": True},

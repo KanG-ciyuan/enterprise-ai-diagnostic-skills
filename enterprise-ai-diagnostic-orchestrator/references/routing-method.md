@@ -18,12 +18,16 @@ Handle one current event. Never return multiple primary Skills. A child result i
 
 ## Safety Gates Before Routing
 
+The executable event-source and field-projection rules are in
+[Core Contract Policy](core-contract-policy.md). Event structure and role
+permissions are checked before these scope/content gates.
+
 Apply in this order:
 
 1. event enterprise and project equal the master record;
 2. authorization is `authorized`, `restricted`, or `not_required` for the declared action;
 3. source is known and readable enough for the action;
-4. a paused project does not resume without manual recovery metadata;
+4. a paused stage/status or any active stop blocks ordinary events; recovery requires owner/manual metadata;
 5. diagnosis is not invoked until the master stage is `diagnosis`;
 6. the target is one of four named professional Skills or one responsible human role.
 

@@ -127,6 +127,8 @@ def valid_v02_record() -> dict:
             "status_reason": "employee confirmed and no blocking exception remains",
         }
     ]
+    record["research_coverage"] = [{"department_id": "DEPT-001", "role": "门店客服", "process_id": "PROC-001", "priority": "P0", "planned_participants": 1, "status": "analyzed", "gap": ""}]
+    record["workflow_cards"][0].update(employee_confirmed=True, confirmed_at="2026-08-13T10:30:00+08:00")
     record["stops_and_recoveries"] = []
     record["materials"][0]["content_hash"] = "a" * 64
     record["output_views"][0]["metadata_policy"] = "preserve_source_metadata"

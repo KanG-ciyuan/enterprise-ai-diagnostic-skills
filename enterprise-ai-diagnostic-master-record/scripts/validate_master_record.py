@@ -4,6 +4,13 @@ import re
 import sys
 from pathlib import Path
 
+# Keep direct CLI and importlib callers on the same local stdlib validator.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from diagnostic_contract_schema import validate_schema
+finally:
+    sys.path.pop(0)
+
 
 REQUIRED_TOP_LEVEL = (
     "record_type",
@@ -105,6 +112,54 @@ def validate_structure(record: dict) -> list[str]:
     return errors
 
 
+def _owner_acceptance(record, acceptance):
+    # A display/job label in the same file must not promote a non-owner source.
+    if acceptance.get('accepted_by_role') in {'employee', 'agent', 'authorized_reviewer', 'authorized_management_role'}:
+        return False
+    owner_roles = {'enterprise_project_owner', 'project_owner', record.get('project_identity', {}).get('project_owner_role')}
+    return (all(isinstance(acceptance.get(field), str) and acceptance[field].strip() for field in
+                ('accepted_by_role', 'alternative_evidence', 'residual_risk', 'continue_reason', 'applicable_scope'))
+            and acceptance.get('accepted_by_role') in owner_roles)
+
+
+def validate_task_relationships(record):
+    if record.get('schema_version') != '0.2':
+        return []
+    errors = []
+    cards = {record_ref(card): card for card in record.get('workflow_cards', [])}
+    available = {record_ref(item) for _, item in indexed_records(record)}
+    seen = set()
+    for task in record.get('participant_tasks', []):
+        task_id = task.get('task_id', '?')
+        if task_id in seen:
+            errors.append(f'TASK_DUPLICATE_ID:{task_id}')
+        seen.add(task_id)
+        if 'risk_acceptance' in task and not _owner_acceptance(record, task['risk_acceptance']):
+            errors.append(f'RISK_ACCEPTANCE_ROLE:{task_id}')
+        ref = task.get('current_workflow_card')
+        card = cards.get(ref)
+        if ref and not card and ref in available:
+            errors.append(f'TASK_CARD_NOT_WORKFLOW:{task_id}')
+        if not card:
+            continue
+        if card.get('record_type') != 'workflow_card':
+            errors.append(f'TASK_CARD_NOT_WORKFLOW:{task_id}')
+        for field in ('participant_id', 'process_id'):
+            if not card.get(field) or card.get(field) != task.get(field):
+                errors.append(f'TASK_CARD_{field.upper()}:{task_id}')
+        for field in ('enterprise_id', 'project_id'):
+            if card.get(field) != record.get(field):
+                errors.append(f'TASK_CARD_SCOPE:{task_id}/{field}')
+        if task.get('status') == 'completed':
+            if card.get('lifecycle_status') != 'current':
+                errors.append(f'TASK_CARD_NOT_CURRENT:{task_id}')
+            if card.get('authorization_status') not in {'authorized', 'restricted', 'not_required'}:
+                errors.append(f'TASK_CARD_AUTHORIZATION:{task_id}')
+            if card.get('employee_confirmed') is not True or not card.get('confirmed_at'):
+                errors.append(f'TASK_CARD_CONFIRMATION_MISSING:{task_id}')
+    return errors
+
+
 def validate_v02(record: dict) -> list[str]:
     if record.get("schema_version") != "0.2":
         return []
@@ -132,25 +187,26 @@ def validate_v02(record: dict) -> list[str]:
             errors.append(f"TASK_CARD_NOT_FOUND:{task_id}->{card_ref}")
         if task.get("priority") == "P0" and status != "completed" and current_stage in diagnosis_stages:
             acceptance = task.get("risk_acceptance", {})
-            required = (
-                "accepted_by_role",
-                "alternative_evidence",
-                "residual_risk",
-                "continue_reason",
-                "applicable_scope",
-            )
-            if not all(acceptance.get(field) for field in required):
+            if not _owner_acceptance(record, acceptance):
                 errors.append(f"COVERAGE_P0_UNRESOLVED:{task_id}")
         if task.get("priority") == "P0":
             p0_task_keys.add((task.get("department_id"), task.get("role"), task.get("process_id")))
 
     if current_stage in diagnosis_stages:
-        for coverage in record.get("research_coverage", []):
-            if coverage.get("priority") != "P0" or coverage.get("planned_participants", 0) < 1:
-                continue
+        p0_plan = [coverage for coverage in record.get("research_coverage", []) if coverage.get("priority") == "P0"]
+        if not p0_plan:
+            errors.append("COVERAGE_PLAN_REQUIRED")
+        for coverage in p0_plan:
             key = (coverage.get("department_id"), coverage.get("role"), coverage.get("process_id"))
+            label = '/'.join(str(part) for part in key)
+            matching = [task for task in record.get("participant_tasks", []) if task.get("priority") == "P0" and (task.get("department_id"), task.get("role"), task.get("process_id")) == key]
             if key not in p0_task_keys:
-                errors.append(f"COVERAGE_P0_TASK_MISSING:{'/'.join(str(part) for part in key)}")
+                errors.append(f"COVERAGE_P0_TASK_MISSING:{label}")
+            count = coverage.get("planned_participants", 0)
+            if count == 0 and not (matching and all(_owner_acceptance(record, task.get("risk_acceptance", {})) for task in matching)):
+                errors.append(f"COVERAGE_P0_ZERO_PLANNED:{label}")
+            if len({task.get("participant_id") for task in matching}) < count:
+                errors.append(f"COVERAGE_P0_TASK_COUNT:{label}")
 
     for _, item in indexed_records(record):
         level = item.get("evidence_level")
@@ -324,8 +380,18 @@ def validate_publishability(record: dict) -> list[str]:
 
 
 def validate_master_record(record: dict) -> list[str]:
+    if not isinstance(record, dict):
+        return ["STRUCTURE_TYPE:root"]
+    schema_file = "master-record-v0.2.schema.json" if record.get("schema_version") == "0.2" else "master-record.schema.json"
+    schema = json.loads((Path(__file__).resolve().parents[1] / "schema" / schema_file).read_text(encoding="utf-8"))
+    errors = validate_schema(record, schema)
+    if any(error.startswith(("SCHEMA_TYPE:", "SCHEMA_REF_", "SCHEMA_UNSUPPORTED:")) for error in errors):
+        return errors
+    # Structure is checked first. Safe-shaped invalid values still receive the
+    # established semantic error codes as well, for existing CLI consumers.
     validators = (
         validate_structure,
+        validate_task_relationships,
         validate_v02,
         validate_identity_scope,
         validate_current_versions,
@@ -333,7 +399,6 @@ def validate_master_record(record: dict) -> list[str]:
         validate_authorization,
         validate_publishability,
     )
-    errors = []
     for validator in validators:
         errors.extend(validator(record))
     return sorted(set(errors))

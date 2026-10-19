@@ -73,7 +73,9 @@
         "participant_id": {"type": "string"},
         "process_id": {"type": "string"},
         "evidence_level": {"$ref": "#/$defs/evidenceLevel"},
-        "evidence_label": {"type": "string"}
+        "evidence_label": {"type": "string"},
+        "employee_confirmed": {"type": "boolean"},
+        "confirmed_at": {"type": ["string", "null"], "format": "date-time"}
       },
       "allOf": [
         {

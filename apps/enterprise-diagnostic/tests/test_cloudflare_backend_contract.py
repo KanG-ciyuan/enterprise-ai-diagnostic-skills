@@ -87,8 +87,8 @@ class CloudflareBackendContractTest(unittest.TestCase):
         schema = (ROOT / "schema.sql").read_text(encoding="utf-8")
         shared = self.read("_shared.js")
         for table in ("decision_packets", "owner_decisions"):
-            self.assertIn(f"CREATE TABLE IF NOT EXISTS {table}", schema)
-            self.assertIn(f"CREATE TABLE IF NOT EXISTS {table}", shared)
+            self.assertIn(f"CREATE TABLE {table}", schema)
+        self.assertNotIn("CREATE TABLE", shared)
 
     def test_formal_d4_handlers_enforce_human_gates_and_owner_summary_boundary(self):
         draft = self.read("api/formal/projects/[projectId]/decision-packets/draft.js")
@@ -589,9 +589,13 @@ class CloudflareBackendContractTest(unittest.TestCase):
         schema = (ROOT / "schema.sql").read_text(encoding="utf-8")
         shared = self.read("_shared.js")
         for table in ("enterprises", "accounts", "project_memberships", "invitations", "sessions", "idempotency_records"):
-            self.assertIn(f"CREATE TABLE IF NOT EXISTS {table}", schema)
-            self.assertIn(f"CREATE TABLE IF NOT EXISTS {table}", shared)
-        self.assertIn("数据库结构缺失，请先执行 schema.sql 迁移", shared)
+            # R2A: schema.sql is a generated snapshot of the migration chain (canonical DDL,
+            # no IF NOT EXISTS marker); request-time DDL must be gone from _shared.js.
+            self.assertIn(f"CREATE TABLE {table}", schema)
+        self.assertIn("assertSchemaReady", shared)
+        self.assertNotIn("CREATE TABLE", shared)
+        self.assertNotIn("ensureSchemaInternal", shared)
+        self.assertNotIn("数据库结构缺失，请先执行 schema.sql 迁移", shared)
 
     def test_shared_api_enforces_demo_actor_and_maps_response_fields(self):
         shared = self.read("_shared.js")
@@ -612,7 +616,7 @@ class CloudflareBackendContractTest(unittest.TestCase):
         schema = (ROOT / "schema.sql").read_text(encoding="utf-8")
         seed = (ROOT / "seed.sql").read_text(encoding="utf-8")
         for table in ("projects", "work_items", "events"):
-            self.assertIn(f"CREATE TABLE IF NOT EXISTS {table}", schema)
+            self.assertIn(f"CREATE TABLE {table}", schema)
         self.assertIn("CREATE INDEX", schema)
         self.assertIn("DIA-CRM-001", seed)
         self.assertIn("needs_input", seed)

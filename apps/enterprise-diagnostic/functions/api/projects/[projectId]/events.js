@@ -1,8 +1,10 @@
-import { actor, cors, demoActor, formalActor, httpError, json, requireMembership } from "../../../_shared.js";
+import { actor, assertSchemaReady, cors, demoActor, formalActor, httpError, json, requireMembership } from "../../../_shared.js";
 
 export async function onRequest({ request, env, params }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
+    // R2A F1: readiness before demo/formal branch DB access.
+    await assertSchemaReady(env.DB);
     const formal = params.projectId.startsWith("PRJ-");
     const current = formal ? await formalActor(request, env.DB) : demoActor(request);
     if (!(await env.DB.prepare("SELECT 1 FROM projects WHERE id=?").bind(params.projectId).first())) return httpError("项目不存在", 404);

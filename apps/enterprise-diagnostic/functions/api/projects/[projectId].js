@@ -1,7 +1,9 @@
-import { actor, cors, formalActor, httpError, itemPayload, json, requireMembership } from "../../_shared.js";
+import { actor, assertSchemaReady, cors, formalActor, httpError, itemPayload, json, requireMembership } from "../../_shared.js";
 export async function onRequest({ request, env, params }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
+    // R2A F1: the demo (non-PRJ) branch previously queried projects without a gate.
+    await assertSchemaReady(env.DB);
     const projectId = params.projectId;
     const authorization = request.headers.get("Authorization");
     let current = null;

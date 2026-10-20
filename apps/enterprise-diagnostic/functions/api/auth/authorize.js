@@ -1,10 +1,10 @@
-import { cors, ensureSchema, httpError, json, resolveAuthMode, sessionCookie, withSessionCookie } from "../../_shared.js";
+import { cors, assertSchemaReady, httpError, json, resolveAuthMode, sessionCookie, withSessionCookie } from "../../_shared.js";
 
 export async function onRequestPost({ request, env }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
     if (request.headers.get("X-Demo-Role") || request.headers.get("X-Demo-User")) return httpError("正式接口不接受演示身份", 401);
-    await ensureSchema(env.DB);
+    await assertSchemaReady(env.DB);
     const body = await request.json();
     const supplied = String(body.bootstrapToken || request.headers.get("X-Bootstrap-Token") || "").trim();
 

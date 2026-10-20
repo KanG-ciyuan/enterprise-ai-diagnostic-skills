@@ -1,3 +1,5 @@
+import { BUSINESS_TABLES, EXPECTED_MIGRATION_HEAD, KNOWN_MIGRATIONS } from "./_schema.generated.js";
+
 const roles = new Set(["employee", "verifier", "owner", "external_builder", "it_admin"]);
 
 export function actor(request) {
@@ -7,81 +9,76 @@ export function actor(request) {
   return { role, userId };
 }
 
-const schemaReadyByDatabase = new WeakMap();
+// ── 数据库就绪门（PILOT-18B-R2A）────────────────────────────────────────
+// 唯一 Schema 权威是 numbered migrations（生成物见 functions/_schema.generated.js）。
+// 请求期绝不执行 DDL：这里只只读探测 sqlite_master 与 wrangler 的 d1_migrations 账本，
+// 未就绪时抛出 503 Response（含机器可读 code，绝不 500 no such table）。
+// 历史数据库（runtime ensureSchema / 旧 schema.sql / 污染账本）不会被自动迁移或修复；
+// 它们只会得到 db_schema_unmanaged（fail-closed），由 scripts/db.sh diagnose 人工处置。
+const readinessByDatabase = new WeakMap();
 
-export function ensureSchema(db) {
-  let ready = schemaReadyByDatabase.get(db);
+export const READINESS_ERROR_CODES = Object.freeze({
+  DB_NOT_INITIALIZED: "db_not_initialized",
+  DB_SCHEMA_INCOMPLETE: "db_schema_incomplete",
+  DB_SCHEMA_UNMANAGED: "db_schema_unmanaged",
+  DB_SCHEMA_OUTDATED: "db_schema_outdated",
+  DB_SCHEMA_UNSUPPORTED: "db_schema_unsupported",
+});
+
+const READINESS_ERROR_DETAILS = Object.freeze({
+  db_not_initialized: ["数据库尚未初始化。请运行 scripts/db.sh init（或按 README 启动）。", 503],
+  db_schema_incomplete: ["数据库结构不完整（缺少业务表）。请运行 scripts/db.sh diagnose。", 503],
+  db_schema_unmanaged: ["检测到未经迁移账本管理的旧数据库。请运行 scripts/db.sh diagnose 并按指引处理。", 503],
+  db_schema_outdated: ["数据库版本落后于当前代码。请运行 scripts/db.sh init（或 scripts/db.sh diagnose 先只读检查）。", 503],
+  db_schema_unsupported: ["数据库版本无法识别或高于当前代码。请勿降级，联系维护者。", 503],
+});
+
+function readinessError(code) {
+  const [detail, status] = READINESS_ERROR_DETAILS[code] || ["数据库未就绪。", 503];
+  return httpError(detail, status, code);
+}
+
+export function assertSchemaReady(db) {
+  let ready = readinessByDatabase.get(db);
   if (!ready) {
-    ready = ensureSchemaInternal(db).catch((error) => {
-      schemaReadyByDatabase.delete(db);
+    ready = probeSchemaReadiness(db).catch((error) => {
+      readinessByDatabase.delete(db);
       throw error;
     });
-    schemaReadyByDatabase.set(db, ready);
+    readinessByDatabase.set(db, ready);
   }
   return ready;
 }
 
-async function ensureSchemaInternal(db) {
-  // Fresh preview databases get the complete tables. Existing production
-  // tables must receive evidence/authorization capability columns through the
-  // numbered migrations; runtime ALTERs are reserved for pre-migration core
-  // fields so code startup cannot race or duplicate a D1 migration.
-  const tables = [
-    "CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, name TEXT NOT NULL, scope TEXT NOT NULL, stage TEXT NOT NULL, status TEXT NOT NULL, evidence_level TEXT NOT NULL, created_by_role TEXT NOT NULL, created_by_account_id TEXT, authorization_stage TEXT NOT NULL DEFAULT 'draft')",
-    "CREATE TABLE IF NOT EXISTS enterprises (id TEXT PRIMARY KEY, name TEXT NOT NULL, authorization_status TEXT NOT NULL DEFAULT 'authorized', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
-    "CREATE TABLE IF NOT EXISTS accounts (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL DEFAULT '', enterprise_id TEXT, status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, account_role TEXT NOT NULL DEFAULT 'member')",
-    "CREATE TABLE IF NOT EXISTS project_memberships (project_id TEXT NOT NULL, account_id TEXT NOT NULL, role TEXT NOT NULL, scope TEXT NOT NULL DEFAULT 'project', status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(project_id, account_id))",
-    "CREATE TABLE IF NOT EXISTS invitations (id TEXT PRIMARY KEY, token TEXT NOT NULL UNIQUE, project_id TEXT NOT NULL, inviter_account_id TEXT NOT NULL, email TEXT NOT NULL, role TEXT NOT NULL, scope TEXT NOT NULL DEFAULT 'project', status TEXT NOT NULL DEFAULT 'pending', expires_at TEXT NOT NULL, accepted_account_id TEXT, idempotency_key TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(project_id, inviter_account_id, idempotency_key))",
-    "CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, account_id TEXT NOT NULL, project_id TEXT, expires_at TEXT NOT NULL, refresh_token TEXT NOT NULL UNIQUE, revoked_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
-    "CREATE TABLE IF NOT EXISTS member_login_challenges (id TEXT PRIMARY KEY, account_id TEXT NOT NULL, token_hash TEXT NOT NULL UNIQUE, expires_at TEXT NOT NULL, consumed_at TEXT, consume_claim TEXT UNIQUE, delivery_status TEXT NOT NULL DEFAULT 'pending', delivery_error TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (account_id) REFERENCES accounts(id))",
-    "CREATE TABLE IF NOT EXISTS idempotency_records (account_id TEXT NOT NULL, project_id TEXT, action TEXT NOT NULL, request_key TEXT NOT NULL, response_json TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(account_id, project_id, action, request_key))",
-    "CREATE TABLE IF NOT EXISTS work_items (id TEXT PRIMARY KEY, project_id TEXT NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL, stage TEXT NOT NULL, status TEXT NOT NULL, assignee_role TEXT NOT NULL, assignee_label TEXT NOT NULL, evidence_completeness INTEGER NOT NULL, blocking_reason TEXT NOT NULL, next_action TEXT NOT NULL, employee_description TEXT NOT NULL DEFAULT '', assignee_account_id TEXT, source_employee_account_id TEXT, employee_draft_json TEXT NOT NULL DEFAULT '{}', material_status TEXT NOT NULL DEFAULT 'undecided', workflow_card_json TEXT NOT NULL DEFAULT '{}', candidate_fact_id TEXT, flow_card_version INTEGER NOT NULL DEFAULT 1, evidence_version INTEGER NOT NULL DEFAULT 1, assigned_verifier_id TEXT, assignment_version INTEGER NOT NULL DEFAULT 1, submission_version INTEGER NOT NULL DEFAULT 0, submitted_at TEXT, handoff_status TEXT NOT NULL DEFAULT 'not_submitted', last_submission_key TEXT, evidence_json TEXT NOT NULL DEFAULT '[]', alternative_explanations_json TEXT NOT NULL DEFAULT '[]', judgment_status TEXT NOT NULL DEFAULT 'open', supplement_id TEXT, revision_reason TEXT, revision_from_version INTEGER, revision_packet_id TEXT)",
-    "CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id TEXT NOT NULL UNIQUE, project_id TEXT NOT NULL, work_item_id TEXT, type TEXT NOT NULL, actor_role TEXT NOT NULL, actor_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
-    "CREATE TABLE IF NOT EXISTS fact_judgments (id TEXT PRIMARY KEY, work_item_id TEXT NOT NULL, fact_id TEXT NOT NULL, decision TEXT NOT NULL, reason TEXT NOT NULL, correction TEXT, source_refs TEXT NOT NULL, actor_id TEXT NOT NULL, flow_card_version INTEGER NOT NULL, evidence_version INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
-    "CREATE TABLE IF NOT EXISTS evidence_supplements (id TEXT PRIMARY KEY, work_item_id TEXT NOT NULL, fact_id TEXT NOT NULL, requested_material TEXT NOT NULL, responsible_person TEXT NOT NULL, responsible_account_id TEXT, deadline TEXT NOT NULL, recovery_entry TEXT NOT NULL, authorization_scope TEXT NOT NULL, source_refs TEXT NOT NULL, old_evidence_version INTEGER NOT NULL, new_evidence_version INTEGER NOT NULL, status TEXT NOT NULL, material TEXT, material_id TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, provided_at TEXT)",
-    "CREATE TABLE IF NOT EXISTS enterprise_authorizations (id TEXT PRIMARY KEY, project_id TEXT NOT NULL, name TEXT NOT NULL, authorizer_name TEXT NOT NULL, authorizer_email TEXT NOT NULL, scope TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', reference TEXT NOT NULL, created_by_account_id TEXT NOT NULL, creation_idempotency_key TEXT NOT NULL, confirmation_token_nonce TEXT NOT NULL, confirmation_token_hash TEXT NOT NULL, confirmation_token_expires_at TEXT NOT NULL, token_consumed_at TEXT, confirmation_delivery_status TEXT NOT NULL DEFAULT 'pending', confirmation_delivery_attempts INTEGER NOT NULL DEFAULT 0, confirmation_delivery_last_error TEXT, confirmation_delivery_last_attempt_at TEXT, confirmed_by_identity TEXT, confirmed_at TEXT, confirmation_reason TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
-    "CREATE TABLE IF NOT EXISTS authorization_notification_outbox (notification_id TEXT PRIMARY KEY, authorization_id TEXT NOT NULL, project_id TEXT NOT NULL, token_hash TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', dispatch_attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(authorization_id, token_hash))",
-    "CREATE TABLE IF NOT EXISTS evidence_materials (id TEXT PRIMARY KEY, project_id TEXT NOT NULL, material_key TEXT NOT NULL, version INTEGER NOT NULL, previous_version_id TEXT, source_type TEXT NOT NULL, authorization_record_id TEXT, authorization_status TEXT NOT NULL DEFAULT 'pending', integrity_status TEXT NOT NULL DEFAULT 'pending', visibility TEXT NOT NULL DEFAULT 'project', created_by_account_id TEXT NOT NULL, work_item_id TEXT, label TEXT NOT NULL, reference TEXT NOT NULL, metadata_json TEXT NOT NULL DEFAULT '{}', reviewed_by_account_id TEXT, reviewed_at TEXT, review_reason TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(project_id, material_key, version))",
-    "CREATE TABLE IF NOT EXISTS candidate_facts (id TEXT PRIMARY KEY, project_id TEXT NOT NULL, work_item_id TEXT NOT NULL, fact_type TEXT NOT NULL, claim TEXT NOT NULL, source_field TEXT NOT NULL, required INTEGER NOT NULL DEFAULT 1, impact_level TEXT NOT NULL DEFAULT 'normal', second_confirmation_status TEXT NOT NULL DEFAULT 'not_required', material_status TEXT NOT NULL DEFAULT 'unverified', status TEXT NOT NULL DEFAULT 'open', correction TEXT, source_refs_json TEXT NOT NULL DEFAULT '[]', first_verified_by_account_id TEXT, verified_by_account_id TEXT, last_transition_key TEXT, flow_card_version INTEGER NOT NULL DEFAULT 1, evidence_version INTEGER NOT NULL DEFAULT 1, evidence_level TEXT, evidence_level_source TEXT, evidence_labeled INTEGER NOT NULL DEFAULT 0, evidence_level_updated_at TEXT, evidence_level_updated_by_account_id TEXT, impact_level_updated_at TEXT, impact_level_updated_by_account_id TEXT, impact_level_reason TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, verified_at TEXT)",
-    "CREATE TABLE IF NOT EXISTS fact_second_confirmations (id TEXT PRIMARY KEY, fact_id TEXT NOT NULL UNIQUE, project_id TEXT NOT NULL, work_item_id TEXT NOT NULL, first_verifier_account_id TEXT NOT NULL, confirmer_type TEXT NOT NULL, confirmer_identity TEXT NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
-    "CREATE TABLE IF NOT EXISTS decision_packets (id TEXT PRIMARY KEY, project_id TEXT NOT NULL, version INTEGER NOT NULL, status TEXT NOT NULL, drafted_by_account_id TEXT NOT NULL, verifier_account_id TEXT, fact_refs_json TEXT NOT NULL, risk_summary TEXT NOT NULL, pilot_scope TEXT NOT NULL, constraints_json TEXT NOT NULL, success_metrics_json TEXT NOT NULL, stop_conditions_json TEXT NOT NULL, downstream_owner TEXT NOT NULL, last_transition_key TEXT, revision_reason TEXT, revision_from_version INTEGER, revision_work_item_id TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, verified_at TEXT, published_at TEXT, UNIQUE(project_id, version))",
-    "CREATE TABLE IF NOT EXISTS owner_decisions (id TEXT PRIMARY KEY, packet_id TEXT NOT NULL UNIQUE, project_id TEXT NOT NULL, owner_account_id TEXT NOT NULL, decision TEXT NOT NULL, reason TEXT NOT NULL, scope TEXT NOT NULL, constraints_json TEXT NOT NULL, success_metrics_json TEXT NOT NULL, stop_conditions_json TEXT NOT NULL, downstream_owner TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
-  ];
+async function probeSchemaReadiness(db) {
+  let row;
   try {
-    for (const statement of tables) await db.prepare(statement).run();
-    const additions = {
-      projects: { created_by_account_id: "TEXT", authorization_stage: "TEXT NOT NULL DEFAULT 'draft'" },
-      accounts: { name: "TEXT NOT NULL DEFAULT ''", enterprise_id: "TEXT", status: "TEXT NOT NULL DEFAULT 'active'", created_at: "TEXT", account_role: "TEXT NOT NULL DEFAULT 'member'" },
-      project_memberships: { scope: "TEXT NOT NULL DEFAULT 'project'", status: "TEXT NOT NULL DEFAULT 'active'", created_at: "TEXT" },
-      invitations: { scope: "TEXT NOT NULL DEFAULT 'project'", status: "TEXT NOT NULL DEFAULT 'pending'", accepted_account_id: "TEXT", idempotency_key: "TEXT", created_at: "TEXT" },
-      sessions: { project_id: "TEXT", revoked_at: "TEXT", created_at: "TEXT" },
-      member_login_challenges: { consume_claim: "TEXT", delivery_status: "TEXT NOT NULL DEFAULT 'pending'", delivery_error: "TEXT" },
-      work_items: { employee_description: "TEXT NOT NULL DEFAULT ''", assignee_account_id: "TEXT", source_employee_account_id: "TEXT", employee_draft_json: "TEXT NOT NULL DEFAULT '{}'", material_status: "TEXT NOT NULL DEFAULT 'undecided'", workflow_card_json: "TEXT NOT NULL DEFAULT '{}'", candidate_fact_id: "TEXT", flow_card_version: "INTEGER NOT NULL DEFAULT 1", evidence_version: "INTEGER NOT NULL DEFAULT 1", assigned_verifier_id: "TEXT", assignment_version: "INTEGER NOT NULL DEFAULT 1", submission_version: "INTEGER NOT NULL DEFAULT 0", submitted_at: "TEXT", handoff_status: "TEXT NOT NULL DEFAULT 'not_submitted'", last_submission_key: "TEXT", evidence_json: "TEXT NOT NULL DEFAULT '[]'", alternative_explanations_json: "TEXT NOT NULL DEFAULT '[]'", judgment_status: "TEXT NOT NULL DEFAULT 'open'", supplement_id: "TEXT", revision_reason: "TEXT", revision_from_version: "INTEGER", revision_packet_id: "TEXT" },
-      decision_packets: { last_transition_key: "TEXT", revision_reason: "TEXT", revision_from_version: "INTEGER", revision_work_item_id: "TEXT" },
-      events: { contract_version: "TEXT", run_id: "TEXT", member_id: "TEXT", role: "TEXT", version: "INTEGER", reason: "TEXT", source_refs: "TEXT", authorization: "TEXT", idempotency_key: "TEXT" },
-      evidence_supplements: { responsible_account_id: "TEXT", material_id: "TEXT" },
-      candidate_facts: { evidence_level: "TEXT", evidence_level_source: "TEXT", evidence_labeled: "INTEGER NOT NULL DEFAULT 0", evidence_level_updated_at: "TEXT", evidence_level_updated_by_account_id: "TEXT", impact_level_updated_at: "TEXT", impact_level_updated_by_account_id: "TEXT", impact_level_reason: "TEXT" },
-    };
-    for (const [table, columns] of Object.entries(additions)) {
-      const result = await db.prepare(`PRAGMA table_info(${table})`).all();
-      const present = new Set((result.results || []).map((row) => row.name));
-      for (const [name, type] of Object.entries(columns)) {
-        if (!present.has(name)) await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${name} ${type}`).run();
-      }
-    }
-    await db.prepare("CREATE INDEX IF NOT EXISTS idx_work_items_project_stage ON work_items(project_id, stage)").run();
-    await db.prepare("CREATE INDEX IF NOT EXISTS idx_events_project_created ON events(project_id, id)").run();
-    await db.prepare("CREATE INDEX IF NOT EXISTS idx_decision_packets_project_version ON decision_packets(project_id, version DESC)").run();
-    await db.prepare("CREATE INDEX IF NOT EXISTS idx_authorizations_project_status ON enterprise_authorizations(project_id, status)").run();
-    await db.prepare("CREATE INDEX IF NOT EXISTS idx_materials_project_visibility ON evidence_materials(project_id, visibility, authorization_status, integrity_status)").run();
-    await db.prepare("CREATE INDEX IF NOT EXISTS idx_candidate_facts_item_status ON candidate_facts(work_item_id, status)").run();
-    await db.prepare("CREATE INDEX IF NOT EXISTS idx_second_confirmations_project ON fact_second_confirmations(project_id, created_at)").run();
-    await db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_revision_task_packet ON work_items(revision_packet_id) WHERE revision_packet_id IS NOT NULL").run();
-    await db.prepare("CREATE INDEX IF NOT EXISTS idx_member_login_challenges_account_created ON member_login_challenges(account_id, created_at DESC)").run();
-    await db.prepare("CREATE INDEX IF NOT EXISTS idx_member_login_challenges_expiry ON member_login_challenges(expires_at, consumed_at)").run();
+    const placeholders = BUSINESS_TABLES.map(() => "?").join(",");
+    row = await db
+      .prepare(
+        "SELECT (SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN (" +
+          placeholders +
+          ")) AS business, " +
+          "(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='d1_migrations') AS ledger",
+      )
+      .bind(...BUSINESS_TABLES)
+      .first();
   } catch (error) {
-    throw new Error(`数据库结构缺失，请先执行 schema.sql 迁移：${error.message}`);
+    throw readinessError(READINESS_ERROR_CODES.DB_NOT_INITIALIZED);
   }
+  const business = Number(row && row.business ? row.business : 0);
+  const ledger = Number(row && row.ledger ? row.ledger : 0);
+  if (business === 0) throw readinessError(READINESS_ERROR_CODES.DB_NOT_INITIALIZED);
+  if (business < BUSINESS_TABLES.length) throw readinessError(READINESS_ERROR_CODES.DB_SCHEMA_INCOMPLETE);
+  if (!ledger) throw readinessError(READINESS_ERROR_CODES.DB_SCHEMA_UNMANAGED);
+  const headRow = await db
+    .prepare("SELECT name FROM d1_migrations WHERE name IS NOT NULL ORDER BY id DESC LIMIT 1")
+    .first();
+  const head = headRow && headRow.name ? String(headRow.name) : "";
+  if (!head) throw readinessError(READINESS_ERROR_CODES.DB_SCHEMA_UNMANAGED);
+  if (!KNOWN_MIGRATIONS.includes(head)) throw readinessError(READINESS_ERROR_CODES.DB_SCHEMA_UNSUPPORTED);
+  if (head !== EXPECTED_MIGRATION_HEAD) throw readinessError(READINESS_ERROR_CODES.DB_SCHEMA_OUTDATED);
+  return { head, tables: business };
 }
 
 // ── 运行模式判定（V0.1 第二批 B2-01）──────────────────────────────────
@@ -150,7 +147,7 @@ export function isControlledTestRecipient(email) {
 // Formal routes must derive role and project from the server-side session.
 export async function formalActor(request, db) {
   if (request.headers.get("X-Demo-Role") || request.headers.get("X-Demo-User")) throw httpError("正式接口不接受演示身份。", 401);
-  await ensureSchema(db);
+  await assertSchemaReady(db);
   const token = requestSessionToken(request);
   if (!token) throw httpError("需要正式登录会话。", 401);
   const session = await db.prepare("SELECT s.*, m.role, a.status AS account_status, a.account_role AS account_role FROM sessions s JOIN accounts a ON a.id = s.account_id LEFT JOIN project_memberships m ON m.project_id = s.project_id AND m.account_id = s.account_id AND m.status = 'active' WHERE s.token = ?").bind(token).first();

@@ -1,4 +1,4 @@
-import { cors, httpError, json, resolveAuthMode, sessionCookie, withSessionCookie } from "../../_shared.js";
+import { assertSchemaReady, cors, httpError, json, resolveAuthMode, sessionCookie, withSessionCookie } from "../../_shared.js";
 
 /**
  * POST /api/demo/enter
@@ -40,6 +40,10 @@ export async function onRequestPost({ request, env }) {
     if (!mode.isDevelopment) {
       return httpError("演示入口在生产模式下已关闭", 403, "demo_disabled");
     }
+
+    // R2A：请求期绝不建表。数据库未初始化时返回可操作 503（不再 500 no such table），
+    // 且演示入口不再依赖“先访问另一个页面触发建表”的隐含顺序。
+    await assertSchemaReady(env.DB);
 
     const body = await request.json().catch(() => ({}));
     const requested = String(body.role || "employee").trim();

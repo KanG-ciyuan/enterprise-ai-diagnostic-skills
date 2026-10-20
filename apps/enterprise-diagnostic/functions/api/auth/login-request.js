@@ -1,4 +1,4 @@
-import { DEV_FALLBACK_DELIVERY_MARKER, PROVIDER_DELIVERED_MARKER, cors, ensureSchema, httpError, json, isControlledTestRecipient, mayReturnLoginLinkInResponse, resolveAuthMode, sha256 } from "../../_shared.js";
+import { DEV_FALLBACK_DELIVERY_MARKER, PROVIDER_DELIVERED_MARKER, cors, assertSchemaReady, httpError, json, isControlledTestRecipient, mayReturnLoginLinkInResponse, resolveAuthMode, sha256 } from "../../_shared.js";
 
 const RESPONSE = { accepted: true, detail: "如果该邮箱已登记且仍有有效项目成员权限，验证链接会发送到邮箱。" };
 
@@ -40,7 +40,7 @@ async function markDeliverySource(env, challengeId, tokenHash, marker) {
 export async function onRequestPost({ request, env }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
-    await ensureSchema(env.DB);
+    await assertSchemaReady(env.DB);
     // B2-01：模式判定唯一来源（_shared.js），本端点不自行比较 FORMAL_AUTH_MODE。
     const mode = resolveAuthMode(env);
     const body = await request.json().catch(() => ({}));

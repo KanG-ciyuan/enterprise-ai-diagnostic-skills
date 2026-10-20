@@ -1,134 +1,101 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { ensureSchema } from "../functions/_shared.js";
-import { D1Harness } from "./d1_harness.mjs";
+import { readFileSync, readdirSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
+import { BUSINESS_TABLES, fingerprintOf } from "../scripts/lib/schema-fingerprint.mjs";
+import {
+  EXPECTED_MIGRATION_HEAD,
+  KNOWN_MIGRATIONS,
+  SCHEMA_FINGERPRINTS,
+} from "../functions/_schema.generated.js";
 
-const migrations = [
-  "0001_core_baseline.sql",
-  "0002_evidence_registry.sql",
-  "0003_evidence_delivery_upgrade.sql",
-  "0004_fact_cas_material_versions.sql",
-  "0005_authorization_capability.sql",
-  "0006_authorization_notification_outbox.sql",
-  "0007_decision_packet_transition_cas.sql",
-  "0008_revision_workflow.sql",
-  "0009_auth_reassignment_project_gate.sql",
-  "0010_member_login_challenges.sql",
-  "0011_work_item_assignment_version.sql",
-  "0012_builder_account_role.sql",
-  "0013_fact_evidence_level.sql",
-];
+// R2A: migrations/0001..0013 are the ONLY schema authority. schema.sql is a
+// generated snapshot and must be structurally identical to the migration chain.
+// This test is read-only (in-memory databases only).
 
-const db = new D1Harness({ loadSchema: false });
-for (const migration of migrations) {
-  db.exec(readFileSync(new URL(`../migrations/${migration}`, import.meta.url), "utf8"));
+const migrationsDir = new URL("../migrations/", import.meta.url);
+const files = readdirSync(migrationsDir)
+  .filter((name) => name.endsWith(".sql"))
+  .sort();
+
+assert.deepEqual(files, [...KNOWN_MIGRATIONS], "migrations directory and generated KNOWN_MIGRATIONS differ");
+assert.equal(files.at(-1), EXPECTED_MIGRATION_HEAD, "generated EXPECTED_MIGRATION_HEAD is stale");
+
+function replayMigrations() {
+  const db = new DatabaseSync(":memory:");
+  db.exec("PRAGMA foreign_keys = ON");
+  for (const file of files) db.exec(readFileSync(new URL(file, migrationsDir), "utf8"));
+  return db;
 }
 
-const requiredTables = [
-  "projects",
-  "enterprises",
-  "accounts",
-  "project_memberships",
-  "invitations",
-  "sessions",
-  "idempotency_records",
-  "work_items",
-  "events",
-  "fact_judgments",
-  "evidence_supplements",
-  "decision_packets",
-  "owner_decisions",
-  "enterprise_authorizations",
-  "evidence_materials",
-  "candidate_facts",
-  "fact_second_confirmations",
-  "authorization_notification_outbox",
-  "member_login_challenges",
-];
-const actualTables = new Set(db.all("SELECT name FROM sqlite_master WHERE type='table'").map((row) => row.name));
-for (const table of requiredTables) assert(actualTables.has(table), `missing table: ${table}`);
+const migrated = replayMigrations();
+const migratedFingerprint = fingerprintOf(migrated);
 
-const requiredColumns = {
-  projects: ["created_by_account_id", "authorization_stage"],
-  accounts: ["name", "enterprise_id", "status", "created_at", "account_role"],
-  project_memberships: ["scope", "status", "created_at"],
-  invitations: ["scope", "status", "accepted_account_id", "idempotency_key", "created_at"],
-  sessions: ["project_id", "revoked_at", "created_at"],
-  work_items: ["employee_draft_json", "workflow_card_json", "assigned_verifier_id", "assignment_version", "last_submission_key", "supplement_id", "revision_reason", "revision_from_version", "revision_packet_id"],
-  events: ["contract_version", "run_id", "member_id", "role", "version", "reason", "source_refs", "authorization", "idempotency_key"],
-  evidence_supplements: ["responsible_account_id", "material_id"],
-  enterprise_authorizations: ["authorizer_name", "authorizer_email", "creation_idempotency_key", "confirmation_token_nonce", "confirmation_token_expires_at", "confirmation_delivery_status"],
-  evidence_materials: ["material_key", "previous_version_id"],
-  candidate_facts: ["last_transition_key"],
-  decision_packets: ["last_transition_key", "revision_reason", "revision_from_version", "revision_work_item_id"],
-  authorization_notification_outbox: ["notification_id", "token_hash", "dispatch_attempts"],
-  member_login_challenges: ["account_id", "token_hash", "expires_at", "consumed_at", "consume_claim", "delivery_status", "delivery_error", "created_at"],
-};
-for (const [table, required] of Object.entries(requiredColumns)) {
-  const actual = new Set(db.all(`PRAGMA table_info(${table})`).map((row) => row.name));
-  for (const column of required) assert(actual.has(column), `missing column: ${table}.${column}`);
-}
-const assignmentVersionColumn = db.all("PRAGMA table_info(work_items)").find((row) => row.name === "assignment_version");
-assert.equal(Number(assignmentVersionColumn.notnull), 1);
-assert.equal(String(assignmentVersionColumn.dflt_value), "1");
+const schemaDb = new DatabaseSync(":memory:");
+schemaDb.exec("PRAGMA foreign_keys = ON");
+schemaDb.exec(readFileSync(new URL("../schema.sql", import.meta.url), "utf8"));
+const schemaFingerprint = fingerprintOf(schemaDb);
 
-const requiredIndexes = [
-  "idx_work_items_project_stage",
-  "idx_events_project_created",
-  "idx_decision_packets_project_version",
-  "idx_authorizations_project_status",
-  "idx_materials_project_visibility",
-  "idx_candidate_facts_item_status",
-  "idx_second_confirmations_project",
-  "idx_material_versions_unique",
-  "idx_candidate_transition_key",
-  "idx_authorization_creation_idempotency",
-  "idx_authorization_outbox_status",
-  "idx_decision_packet_transition_key",
-  "idx_revision_task_packet",
-  "idx_member_login_challenges_account_created",
-  "idx_member_login_challenges_expiry",
-];
-const actualIndexes = new Set(db.all("SELECT name FROM sqlite_master WHERE type='index'").map((row) => row.name));
-for (const index of requiredIndexes) assert(actualIndexes.has(index), `missing index: ${index}`);
+assert.equal(
+  migratedFingerprint.hash,
+  schemaFingerprint.hash,
+  "numbered migrations and generated schema.sql are not structurally equivalent",
+);
+assert.equal(
+  migratedFingerprint.hash,
+  SCHEMA_FINGERPRINTS.terminal.hash,
+  "migration chain fingerprint differs from generated SCHEMA_FINGERPRINTS.terminal",
+);
+assert.deepEqual(
+  migratedFingerprint.counts,
+  { tables: 19, columns: 259, fk: 16, explicitIndexes: 17, uniqueConstraints: 12, triggers: 0, views: 0 },
+  "unexpected terminal schema counts",
+);
+assert.equal(migratedFingerprint.counts.tables, BUSINESS_TABLES.length);
 
-function foreignKeyMappings(database) {
-  return requiredTables.flatMap((table) => database.all(`PRAGMA foreign_key_list(${table})`).map((row) => `${table}.${row.from}->${row.table}.${row.to}`)).sort();
-}
+// Deterministic replay: same SQL input must produce the same fingerprint.
+const replayAgain = replayMigrations();
+assert.equal(fingerprintOf(replayAgain).hash, migratedFingerprint.hash, "migration replay is not deterministic");
+replayAgain.close();
 
-const requiredForeignKeys = [
-  "authorization_notification_outbox.authorization_id->enterprise_authorizations.id",
-  "member_login_challenges.account_id->accounts.id",
-  "candidate_facts.project_id->projects.id",
-  "candidate_facts.work_item_id->work_items.id",
-  "decision_packets.project_id->projects.id",
-  "enterprise_authorizations.project_id->projects.id",
-  "events.project_id->projects.id",
-  "evidence_materials.authorization_record_id->enterprise_authorizations.id",
-  "evidence_materials.previous_version_id->evidence_materials.id",
-  "evidence_materials.project_id->projects.id",
-  "fact_second_confirmations.fact_id->candidate_facts.id",
-  "fact_second_confirmations.project_id->projects.id",
-  "fact_second_confirmations.work_item_id->work_items.id",
-  "owner_decisions.packet_id->decision_packets.id",
-  "owner_decisions.project_id->projects.id",
-  "work_items.project_id->projects.id",
-].sort();
-const migratedForeignKeys = foreignKeyMappings(db);
-assert.deepEqual(migratedForeignKeys, requiredForeignKeys, "numbered migrations have incorrect foreign keys");
-assert.deepEqual(db.all("PRAGMA foreign_key_check"), [], "numbered migrations violate a foreign key");
+// Generated schema.sql must be marked generated and carry the FK pragma.
+const schemaSql = readFileSync(new URL("../schema.sql", import.meta.url), "utf8");
+assert.match(schemaSql, /GENERATED[\s\S]*DO NOT EDIT/i, "schema.sql is missing the GENERATED header");
+assert.match(schemaSql, /PRAGMA foreign_keys = ON;/i, "schema.sql must enable foreign keys for CLI/test execution");
+assert.doesNotMatch(schemaSql, /d1_migrations/, "schema.sql must not contain wrangler bookkeeping tables");
 
-const schemaDb = new D1Harness();
-const schemaForeignKeys = foreignKeyMappings(schemaDb);
-assert.deepEqual(schemaForeignKeys, requiredForeignKeys, "schema.sql has unexpected foreign keys");
-assert.deepEqual(migratedForeignKeys, schemaForeignKeys, "numbered migrations and schema.sql have different foreign keys");
+// Foreign keys are enforced within the test connection: an orphan row is rejected.
+assert.throws(
+  () =>
+    migrated
+      .prepare(
+        "INSERT INTO events(event_id,project_id,type,actor_role,actor_id,payload) VALUES('e_orphan','missing-project','t','system','s','{}')",
+      )
+      .run(),
+  /FOREIGN KEY/i,
+  "foreign keys are not enforced on the migrated schema",
+);
+
+// Unique constraints are enforced: duplicate account email is rejected.
+migrated.prepare("INSERT INTO accounts(id,email) VALUES('acct-1','dup@example.test')").run();
+assert.throws(
+  () => migrated.prepare("INSERT INTO accounts(id,email) VALUES('acct-2','dup@example.test')").run(),
+  /UNIQUE/i,
+  "unique constraints are not enforced on the migrated schema",
+);
+
+// The request-time DDL escape hatch must be gone: no ensureSchema export remains,
+// and the ready gate must not perform DDL.
+const shared = await import("../functions/_shared.js");
+assert.equal(typeof shared.assertSchemaReady, "function", "_shared.js must export assertSchemaReady");
+assert.equal(shared.ensureSchema, undefined, "request-time ensureSchema must be removed");
+assert.equal(shared.ensureSchemaInternal, undefined, "request-time ensureSchemaInternal must be removed");
+const sharedSource = readFileSync(new URL("../functions/_shared.js", import.meta.url), "utf8");
+assert.doesNotMatch(sharedSource, /CREATE\s+TABLE/i, "_shared.js must not contain request-time CREATE TABLE DDL");
+assert.doesNotMatch(sharedSource, /ALTER\s+TABLE/i, "_shared.js must not contain request-time ALTER TABLE DDL");
+assert.doesNotMatch(sharedSource, /CREATE\s+(UNIQUE\s+)?INDEX/i, "_shared.js must not contain request-time CREATE INDEX DDL");
+
+migrated.close();
 schemaDb.close();
-
-const snapshotSql = "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table','index') AND name NOT LIKE 'sqlite_%' ORDER BY type, name";
-const beforeEnsureSchema = db.all(snapshotSql);
-const binding = { prepare: (...args) => db.prepare(...args), batch: (...args) => db.batch(...args) };
-await ensureSchema(binding);
-assert.deepEqual(db.all(snapshotSql), beforeEnsureSchema, "ensureSchema changed the fully migrated schema");
-
-db.close();
-console.log("raw migration chain and runtime schema compatibility: ok");
+console.log(
+  `raw migration chain and generated schema.sql are equivalent: ok (fingerprint ${migratedFingerprint.hash.slice(0, 12)}…)`,
+);

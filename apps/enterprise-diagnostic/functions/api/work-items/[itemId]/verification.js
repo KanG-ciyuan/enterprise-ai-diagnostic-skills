@@ -1,4 +1,4 @@
-import { actor, cors, formalActor, httpError, itemPayload, json, requireAuthorizedProject, requireItem, requireMembership } from "../../../_shared.js";
+import { actor, assertSchemaReady, cors, formalActor, httpError, itemPayload, json, requireAuthorizedProject, requireItem, requireMembership } from "../../../_shared.js";
 import { findInvalidatablePacketsReferencing, stalePacketStatements } from "../../formal/decision-packets/_facts.js";
 
 const normalizedRefs = (value) => Array.isArray(value) ? [...new Set(value.map(String).map((entry) => entry.trim()).filter(Boolean))] : [];
@@ -77,6 +77,8 @@ async function conflictResponse(db, itemId, factId) {
 export async function onRequestPost({ request, env, params }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
+    // R2A F1: readiness before the first business-table query.
+    await assertSchemaReady(env.DB);
     const item = await requireItem(env.DB, params.itemId);
     const assignmentVersion = Number(item.assignment_version || 1);
     const formal = item.project_id.startsWith("PRJ-");

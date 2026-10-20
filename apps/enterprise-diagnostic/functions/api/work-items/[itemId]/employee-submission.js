@@ -1,6 +1,6 @@
 import { canonicalVerdict, resolveInferenceJudgment, VERDICT_UNJUDGED } from "../../agent/_adapter.js";
 import { submissionEvidenceSummary, validateSubmissionEvidence } from "../../agent/_evidence.js";
-import { cors, demoActor, findIdempotent, formalActor, httpError, idempotencyKey, itemPayload, json, normalizeEmployeeDraft, receiptPayload, requireAuthorizedProject, requireItem, requireMembership, serializeEmployeeDraft } from "../../../_shared.js";
+import { assertSchemaReady, cors, demoActor, findIdempotent, formalActor, httpError, idempotencyKey, itemPayload, json, normalizeEmployeeDraft, receiptPayload, requireAuthorizedProject, requireItem, requireMembership, serializeEmployeeDraft } from "../../../_shared.js";
 
 // PILOT-04/N1：流程卡必须包含"交给谁"(handoff) 与"大约耗时"(burden)。
 // 这两个维度是报价依据与交接责任的来源，此前只存在于前端答案里，
@@ -133,6 +133,8 @@ function candidateFactsFromWorkflowCard(card, item, flowCardVersion) {
 export async function onRequestPost({ request, env, params }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
+    // R2A F1: readiness before the first business-table query.
+    await assertSchemaReady(env.DB);
     const item = await requireItem(env.DB, params.itemId);
     const formal = item.project_id.startsWith("PRJ-");
     const current = formal ? await formalActor(request, env.DB) : demoActor(request);

@@ -13,8 +13,10 @@
 //   * This CLI is cwd-independent: the application root comes from the module
 //     location, and the real wrangler runner always executes with cwd=app root.
 import { spawn } from "node:child_process";
-import { existsSync, statSync } from "node:fs";
-import { basename, join } from "node:path";
+import { existsSync, mkdtempSync, readdirSync, realpathSync, rmSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { canonicalize } from "./lib/schema-fingerprint.mjs";
 import {
   DEFAULT_APP_ROOT,
@@ -24,6 +26,7 @@ import {
   KNOWN_STATES,
   TOOL_VERSION,
   asDbSafetyError,
+  assertTargetIdentity,
   diagnose,
   expectedSummary,
   loadExpectedModel,
@@ -34,6 +37,8 @@ import {
 const COMMANDS = Object.freeze(["diagnose", "init", "version", "help"]);
 const WRANGLER_CONFIG_FILES = Object.freeze(["wrangler.toml", "wrangler.jsonc", "wrangler.json"]);
 const MIGRATION_TIMEOUT_MS = 10 * 60 * 1000;
+/** R2A F2: the read-only target-identity probe must not hang. */
+const TARGET_PROBE_TIMEOUT_MS = 2 * 60 * 1000;
 const CHILD_OUTPUT_TAIL_BYTES = 256 * 1024;
 
 // Environment variables passed through to the wrangler child process. Deliberately
@@ -219,6 +224,135 @@ function buildChildEnvironment() {
   return env;
 }
 
+/** Recursively list D1 data SQLite files (miniflare bookkeeping metadata.sqlite is not data). */
+function listSqliteDataFiles(root) {
+  const out = [];
+  const walk = (dir) => {
+    let entries;
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const entryPath = join(dir, entry.name);
+      if (entry.isDirectory()) walk(entryPath);
+      else if (entry.isFile() && entry.name.endsWith(".sqlite") && entry.name !== "metadata.sqlite") out.push(entryPath);
+    }
+  };
+  walk(root);
+  return out.sort();
+}
+
+/**
+ * R2A F2: ask wrangler itself which local D1 file it will migrate, without
+ * touching the real state directory.
+ *
+ * `wrangler d1 migrations list DB --local --persist-to <fresh-temp-dir>` opens
+ * the same D1 binding in a throwaway state dir and creates that binding's data
+ * file there. That file name/layout is exactly what `migrations apply` will use
+ * for the real state dir. The probe never runs the migration executor, never
+ * passes `--remote`, and uses the same minimal child environment. The scratch
+ * directory is always removed.
+ *
+ * @returns {Promise<{relativePath:string, probedFile:string}>}
+ */
+async function probeWranglerDatabaseTarget({ appRoot, wranglerBin }) {
+  const scratch = mkdtempSync(join(tmpdir(), "r2a-wrangler-target-"));
+  try {
+    const args = ["d1", "migrations", "list", "DB", "--local", "--persist-to", scratch];
+    let child;
+    try {
+      child = spawn(wranglerBin, args, {
+        cwd: appRoot,
+        env: buildChildEnvironment(),
+        stdio: ["ignore", "pipe", "pipe"],
+        windowsHide: true,
+      });
+    } catch (error) {
+      throw new DbSafetyError(
+        EXIT_CODES.REFUSED,
+        "WRANGLER_NOT_FOUND",
+        `无法启动 wrangler 进行目标识别探针（${wranglerBin}）：${error.message}。已拒绝初始化，未启动迁移执行器。`,
+        { invoked: false, wranglerBin },
+      );
+    }
+
+    const stdout = { value: "" };
+    const stderr = { value: "" };
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => { stdout.value = appendTail(stdout.value, chunk); });
+    child.stderr.on("data", (chunk) => { stderr.value = appendTail(stderr.value, chunk); });
+
+    await new Promise((resolvePromise, rejectPromise) => {
+      let settled = false;
+      const finish = (callback) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        callback();
+      };
+      const timer = setTimeout(() => {
+        try { child.kill("SIGTERM"); } catch { /* ignore */ }
+        setTimeout(() => { try { child.kill("SIGKILL"); } catch { /* ignore */ } }, 2000).unref?.();
+        finish(() => rejectPromise(new DbSafetyError(
+          EXIT_CODES.REFUSED,
+          "TARGET_PROBE_TIMEOUT",
+          `wrangler 目标识别探针超时（${TARGET_PROBE_TIMEOUT_MS} ms）。已拒绝初始化，未启动迁移执行器。`,
+          { invoked: false },
+        )));
+      }, TARGET_PROBE_TIMEOUT_MS);
+
+      child.on("error", (error) => {
+        if (error && error.code === "ENOENT") {
+          finish(() => rejectPromise(new DbSafetyError(
+            EXIT_CODES.REFUSED,
+            "WRANGLER_NOT_FOUND",
+            `找不到 wrangler 可执行文件（${wranglerBin}），无法在写入前确认迁移目标。已拒绝初始化，未启动迁移执行器。请安装 wrangler 或用 WRANGLER_BIN 指定路径后重试。`,
+            { invoked: false, wranglerBin },
+          )));
+          return;
+        }
+        finish(() => rejectPromise(new DbSafetyError(
+          EXIT_CODES.REFUSED,
+          "TARGET_PROBE_FAILED",
+          `wrangler 目标识别探针启动失败：${error.message}。已拒绝初始化，未启动迁移执行器。`,
+          { invoked: false },
+        )));
+      });
+
+      child.on("close", (code, signal) => {
+        if (code === 0) {
+          finish(() => resolvePromise());
+          return;
+        }
+        const outputTail = tail(stderr.value) || tail(stdout.value);
+        finish(() => rejectPromise(new DbSafetyError(
+          EXIT_CODES.REFUSED,
+          "TARGET_PROBE_FAILED",
+          `wrangler 目标识别探针失败（exit=${code}${signal ? `，signal=${signal}` : ""}），无法在写入前确认迁移目标。已拒绝初始化，未启动迁移执行器。${outputTail ? `输出尾部：${outputTail}` : ""}`,
+          { invoked: false },
+        )));
+      });
+    });
+
+    const files = listSqliteDataFiles(scratch);
+    if (files.length !== 1) {
+      throw new DbSafetyError(
+        EXIT_CODES.REFUSED,
+        "TARGET_IDENTITY_UNCONFIRMED",
+        `wrangler 目标识别探针未返回唯一 D1 数据文件（实际 ${files.length} 个：${files.map((file) => relative(scratch, file)).join(", ") || "无"}）。` +
+          "已拒绝初始化，未启动迁移执行器，未创建/移动/删除任何数据库。",
+        { invoked: false, probeFiles: files.map((file) => relative(scratch, file)) },
+      );
+    }
+    return { relativePath: relative(scratch, files[0]), probedFile: files[0] };
+  } finally {
+    try { rmSync(scratch, { recursive: true, force: true }); } catch { /* best effort */ }
+  }
+}
+
 /**
  * Run the real local migration command:
  *   wrangler d1 migrations apply DB --local --persist-to <stateDir>
@@ -227,7 +361,7 @@ function buildChildEnvironment() {
  * orchestrator can distinguish "environment not ready" (exit 3) from execution
  * failures (exit 1).
  */
-async function runRealMigrations({ appRoot, stateDir }) {
+async function runRealMigrations({ appRoot, stateDir, dbFile }) {
   const configPath = findWranglerConfig(appRoot);
   if (!configPath) {
     throw new DbSafetyError(
@@ -239,6 +373,17 @@ async function runRealMigrations({ appRoot, stateDir }) {
   }
 
   const wranglerBin = process.env.WRANGLER_BIN && process.env.WRANGLER_BIN.trim() ? process.env.WRANGLER_BIN.trim() : "wrangler";
+
+  // R2A F2: before spawning any migration write, prove that the classified
+  // database is the same file wrangler will migrate. The probe runs against a
+  // fresh scratch state dir only; the real state dir is not touched.
+  const probed = await probeWranglerDatabaseTarget({ appRoot, wranglerBin });
+  assertTargetIdentity({
+    classifiedStateDir: stateDir,
+    classifiedDbFile: dbFile,
+    expectedRelativePath: probed.relativePath,
+  });
+
   const args = ["d1", "migrations", "apply", "DB", "--local", "--persist-to", stateDir];
   let child;
   try {
@@ -608,11 +753,24 @@ async function main(argv) {
   return handleVersion(parsed.flags);
 }
 
-main(process.argv.slice(2))
-  .then((code) => {
-    process.exitCode = code;
-  })
-  .catch((error) => {
-    process.stderr.write(`db-maintenance 内部错误: ${error && error.stack ? error.stack : String(error)}\n`);
-    process.exitCode = EXIT_CODES.ERROR;
-  });
+export { probeWranglerDatabaseTarget, runRealMigrations };
+
+function isMainModule() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+const invokedAsScript = isMainModule();
+if (invokedAsScript) {
+  main(process.argv.slice(2))
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch((error) => {
+      process.stderr.write(`db-maintenance 内部错误: ${error && error.stack ? error.stack : String(error)}\n`);
+      process.exitCode = EXIT_CODES.ERROR;
+    });
+}

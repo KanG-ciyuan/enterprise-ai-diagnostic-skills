@@ -136,6 +136,10 @@ starting the server.
   snapshot** (`node scripts/gen-schema-snapshot.mjs`); do not edit it by hand.
 - `scripts/dev.sh` checks the database state before starting. It applies numbered
   migrations only for an empty database or an honest partially-migrated database.
+- Before `init` spawns any migration write, it proves the database it classified is the
+  same file wrangler will migrate (via a read-only `wrangler d1 migrations list --local`
+  probe in a throwaway state directory). Abnormal/multi-target state layouts are refused
+  with exit 3 and zero writes.
 - Manual commands (read-only diagnose first; `init` refuses unknown/historical states):
 
 ```bash
@@ -146,8 +150,11 @@ starting the server.
 - Databases created by the old request-time `ensureSchema` or by the old hand-maintained
   `schema.sql` are **refused** (`db.sh init` exits 3 and writes nothing). This round does
   not provide repair/adopt writes; those require a separate authorization.
-- The application never creates tables during a request. A cold or unmanaged database
-  produces `503` with `db_not_initialized` / `db_schema_unmanaged`, not a `500 no such table`.
+- Request handlers never create tables or apply migrations. DB-backed API routes run the
+  schema-readiness gate before their first business-table query; a cold or unmanaged
+  database returns `503` with `db_not_initialized` / `db_schema_unmanaged` instead of an
+  unhandled `500 no such table`. `GET /api/health` remains a storage liveness probe
+  (`SELECT 1`) and may return 200 before the schema is initialized.
 
 > The example configuration uses `development` auth mode and a local only test bootstrap path. **Do not use this configuration for a public deployment.** Live agent interviews require a model endpoint and credentials; the UI and demo paths can be inspected without a production model account, while automated tests use a local stub.
 

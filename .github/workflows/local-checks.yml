@@ -79,5 +79,6 @@ jobs:
           node tests/db_generated_artifacts_runtime.mjs
           node tests/db_migration_lock_runtime.mjs
           node tests/db_state_matrix_runtime.mjs
+          node tests/db_target_identity_runtime.mjs
           node tests/readiness_runtime.mjs
           node tests/migration_runtime.mjs

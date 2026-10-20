@@ -7,6 +7,13 @@ import { onRequestGet as readyGet } from "../functions/api/ready.js";
 import { onRequestGet as healthGet } from "../functions/api/health.js";
 import { onRequestGet as sessionGet } from "../functions/api/auth/session.js";
 import { onRequestPost as demoEnterPost } from "../functions/api/demo/enter.js";
+import { onRequest as ownerDecisionRoute } from "../functions/api/work-items/[itemId]/owner-decision.js";
+import { onRequestPost as reassignmentRoute } from "../functions/api/work-items/[itemId]/reassignment.js";
+import { onRequestPost as submissionRoute } from "../functions/api/work-items/[itemId]/employee-submission.js";
+import { onRequestPost as verificationRoute } from "../functions/api/work-items/[itemId]/verification.js";
+import { onRequest as projectDetailRoute } from "../functions/api/projects/[projectId].js";
+import { onRequest as projectWorkItemsRoute } from "../functions/api/projects/[projectId]/work-items.js";
+import { onRequest as projectEventsRoute } from "../functions/api/projects/[projectId]/events.js";
 
 // R2A readiness gate: read-only, 503 with codes when not ready, never DDL.
 // All databases here are in-memory; no network, no real DB, no writes besides the
@@ -221,6 +228,69 @@ function ok(name) {
   assert.equal(schemaSignature(ready), beforeReady, "formal route performed DDL on a ready DB");
   ready.close();
   ok("formal route -> 503 before auth on cold DB / 401 after init, no DDL");
+}
+
+// 11) R2A F1: demo/legacy/DB-first sub-routes must gate before their first
+// business-table query (cold DB -> controlled 503; zero rows written).
+{
+  const demoHeaders = { "content-type": "application/json", "X-Demo-Role": "owner", "X-Demo-User": "u1" };
+  const demoGetHeaders = { "content-type": "application/json", "X-Demo-Role": "employee", "X-Demo-User": "u1" };
+  const demoEnv = { FORMAL_AUTH_MODE: "development", FORMAL_AUTH_TEST_MODE: "1" };
+  async function postRoute(handler, db, itemId) {
+    const request = new Request("http://127.0.0.1/api", {
+      method: "POST",
+      headers: demoHeaders,
+      body: JSON.stringify({ decision: "continue_pilot", action: "confirm", text: "x", baseRevision: 0 }),
+    });
+    return handler({ request, env: { ...demoEnv, DB: db }, params: { itemId } });
+  }
+  async function getDemoRoute(handler, db) {
+    const request = new Request("http://127.0.0.1/api", { method: "GET", headers: demoGetHeaders });
+    return handler({ request, env: { DB: db }, params: { projectId: "DIA-DEMO" } });
+  }
+  const cases = [
+    ["owner-decision", ownerDecisionRoute, "post", "db_not_initialized"],
+    ["reassignment", reassignmentRoute, "post", "db_not_initialized"],
+    ["employee-submission", submissionRoute, "post", "db_not_initialized"],
+    ["verification", verificationRoute, "post", "db_not_initialized"],
+    ["demo project-detail", projectDetailRoute, "get", "db_not_initialized"],
+    ["demo work-items", projectWorkItemsRoute, "get", "db_not_initialized"],
+    ["demo events", projectEventsRoute, "get", "db_not_initialized"],
+  ];
+  for (const [label, handler, method, expectedCode] of cases) {
+    const db = emptyDb();
+    const before = schemaSignature(db);
+    const res = method === "post" ? await postRoute(handler, db, "ITEM-1") : await getDemoRoute(handler, db);
+    assert.equal(res.status, 503, `${label}: expected 503 on a cold DB, got ${res.status}`);
+    const body = await res.json();
+    assert.equal(body.code, expectedCode, `${label}: unexpected readiness code`);
+    assert.equal(schemaSignature(db), before, `${label}: readiness gate must not write/DDL`);
+    assert.equal(db.all("SELECT name FROM sqlite_master WHERE type='table'").length, 0, `${label}: no tables may be created`);
+    db.close();
+  }
+  // A structurally incomplete (0001-only) DB also gets a controlled 503 before writes.
+  const incomplete = incompleteDb();
+  const beforeIncomplete = schemaSignature(incomplete);
+  const incompleteRes = await postRoute(ownerDecisionRoute, incomplete, "ITEM-1");
+  assert.equal(incompleteRes.status, 503);
+  assert.equal((await incompleteRes.json()).code, "db_schema_incomplete");
+  assert.equal(schemaSignature(incomplete), beforeIncomplete, "incomplete DB must not be written");
+  incomplete.close();
+  ok("demo/legacy/DB-first sub-routes -> 503 before business queries (cold/incomplete, no DDL/writes)");
+
+  // On a ready DB, the same demo routes must keep working (no auth/business regression).
+  const ready = readyDb();
+  ready.exec("INSERT INTO projects(id,name,scope,stage,status,evidence_level,created_by_role) VALUES('DIA-DEMO','Demo','demo','scope','active','unknown','external_builder')");
+  const readyDetail = await getDemoRoute(projectDetailRoute, ready);
+  assert.equal(readyDetail.status, 200, "demo project-detail on a ready DB must not regress");
+  const readyItems = await getDemoRoute(projectWorkItemsRoute, ready);
+  assert.equal(readyItems.status, 200, "demo work-items on a ready DB must not regress");
+  const readyEvents = await getDemoRoute(projectEventsRoute, ready);
+  assert.equal(readyEvents.status, 200, "demo events on a ready DB must not regress");
+  const readyOwner = await postRoute(ownerDecisionRoute, ready, "ITEM-DOES-NOT-EXIST");
+  assert.equal(readyOwner.status, 404, "owner-decision on a ready DB must reach the business 404, not 503");
+  ready.close();
+  ok("demo/legacy sub-routes on a ready DB keep their business behavior (no gate regression)");
 }
 
 console.log(`readiness gate: ok (${results.length} groups)`);

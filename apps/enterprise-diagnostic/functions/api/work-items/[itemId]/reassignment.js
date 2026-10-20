@@ -1,4 +1,4 @@
-import { cors, findIdempotent, formalActor, httpError, idempotencyKey, itemPayload, json, requireAuthorizedProject, requireItem, requireMembership } from "../../../_shared.js";
+import { assertSchemaReady, cors, findIdempotent, formalActor, httpError, idempotencyKey, itemPayload, json, requireAuthorizedProject, requireItem, requireMembership } from "../../../_shared.js";
 
 const ACTION = "work-item-reassignment";
 const ELIGIBLE_STATUSES = new Set(["awaiting_verification", "blocked"]);
@@ -29,6 +29,8 @@ async function assignmentConflict(db, itemId) {
 export async function onRequestPost({ request, env, params }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
+    // R2A F1: readiness before the first business-table query (even before auth).
+    await assertSchemaReady(env.DB);
     const item = await requireItem(env.DB, params.itemId);
     if (!item.project_id.startsWith("PRJ-")) return httpError("具名重新分配只支持正式项目", 401);
     const current = await formalActor(request, env.DB);

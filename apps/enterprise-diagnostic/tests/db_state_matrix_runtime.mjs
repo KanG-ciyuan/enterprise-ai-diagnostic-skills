@@ -676,6 +676,96 @@ await testAsync("A4 only metadata.sqlite -> EMPTY virtual, init allowed -> COMPL
 });
 
 // ===========================================================================
+// F3. Anomalous ledger without business tables must never be classified EMPTY
+// ===========================================================================
+
+await testAsync("F3 ledger-only DB (migrations recorded, no business tables) -> LEDGER_SCHEMA_CONFLICT; init refused with zero writes/runner calls", async () => {
+  const stateDir = mkTemp("F3-ledger-only");
+  const dbFile = createDbInStateDir(stateDir, "ledger-only.sqlite", {
+    callback: (db) => writeLedger(db, MIGRATION_FILES),
+  });
+  const hashBefore = sha256File(dbFile);
+  const treeBefore = snapshotTree(stateDir);
+
+  const before = diagnose({ stateDir, appRoot: APP_ROOT });
+  assert.equal(before.classification.state, "LEDGER_SCHEMA_CONFLICT");
+  assert.equal(before.classification.state, "LEDGER_SCHEMA_CONFLICT", "ledger rows without business tables must not be EMPTY");
+  assert.equal(before.classification.ledger.rowCount, 13);
+  assert.equal(before.allowedForInit, false);
+
+  const fake = makeFakeRunner();
+  const result = await runInit({ stateDir, appRoot: APP_ROOT, runMigrations: fake.runner });
+  assertInitResultShape(result);
+  assert.equal(result.code, EXIT_CODES.REFUSED);
+  assert.equal(result.stateBefore, "LEDGER_SCHEMA_CONFLICT");
+  assert.equal(result.applied, false);
+  assert.equal(result.wranglerInvoked, false);
+  assert.equal(fake.calls.length, 0, "init must not invoke the migration runner for an anomalous ledger");
+  assert.equal(sha256File(dbFile), hashBefore, "refused init must not modify the ledger-only DB");
+  assert.deepEqual(snapshotTree(stateDir), treeBefore, "refused init must not create/delete files");
+});
+
+await testAsync("F3 empty ledger table without business tables -> EMPTY (truly empty state remains initializable)", async () => {
+  const stateDir = mkTemp("F3-empty-ledger");
+  createDbInStateDir(stateDir, "empty-ledger.sqlite", {
+    callback: (db) => db.exec(LEDGER_DDL),
+  });
+  const before = diagnose({ stateDir, appRoot: APP_ROOT });
+  assert.equal(before.classification.state, "EMPTY");
+  assert.equal(before.classification.ledger.rowCount, 0);
+  assert.equal(before.allowedForInit, true);
+
+  const fake = makeFakeRunner();
+  const result = await runInit({ stateDir, appRoot: APP_ROOT, runMigrations: fake.runner });
+  assert.equal(result.code, EXIT_CODES.OK);
+  assert.equal(result.stateAfter, "MIGRATION_COMPLETE");
+  assert.equal(fake.calls.length, 1);
+});
+
+await testAsync("F3 ledger-only DB with unknown/future migration -> TOO_NEW; refused, runner not called", async () => {
+  const stateDir = mkTemp("F3-ledger-too-new");
+  createDbInStateDir(stateDir, "ledger-future.sqlite", {
+    callback: (db) => writeLedger(db, ["9999_future_migration.sql"]),
+  });
+  const before = diagnose({ stateDir, appRoot: APP_ROOT });
+  assert.equal(before.classification.state, "TOO_NEW");
+  assert.equal(before.allowedForInit, false);
+  const fake = makeFakeRunner();
+  const result = await runInit({ stateDir, appRoot: APP_ROOT, runMigrations: fake.runner });
+  assert.equal(result.code, EXIT_CODES.REFUSED);
+  assert.equal(fake.calls.length, 0);
+});
+
+await testAsync("F3 ledger-only DB with non-contiguous known migrations -> UNKNOWN; refused, runner not called", async () => {
+  const stateDir = mkTemp("F3-ledger-gap");
+  createDbInStateDir(stateDir, "ledger-gap.sqlite", {
+    callback: (db) => writeLedger(db, [MIGRATION_FILES[0], MIGRATION_FILES[2]]),
+  });
+  const before = diagnose({ stateDir, appRoot: APP_ROOT });
+  assert.equal(before.classification.state, "UNKNOWN");
+  assert.equal(before.allowedForInit, false);
+  const fake = makeFakeRunner();
+  const result = await runInit({ stateDir, appRoot: APP_ROOT, runMigrations: fake.runner });
+  assert.equal(result.code, EXIT_CODES.REFUSED);
+  assert.equal(fake.calls.length, 0);
+});
+
+await testAsync("F3 damaged d1_migrations schema without business tables -> UNKNOWN; refused, runner not called", async () => {
+  const stateDir = mkTemp("F3-ledger-damaged");
+  createDbInStateDir(stateDir, "ledger-damaged.sqlite", {
+    callback: (db) => db.exec("CREATE TABLE d1_migrations (id INTEGER PRIMARY KEY)"),
+  });
+  const before = diagnose({ stateDir, appRoot: APP_ROOT });
+  assert.equal(before.classification.state, "UNKNOWN");
+  assert.match(before.classification.reason, /ledger/i);
+  assert.equal(before.allowedForInit, false);
+  const fake = makeFakeRunner();
+  const result = await runInit({ stateDir, appRoot: APP_ROOT, runMigrations: fake.runner });
+  assert.equal(result.code, EXIT_CODES.REFUSED);
+  assert.equal(fake.calls.length, 0);
+});
+
+// ===========================================================================
 // D. Fully migrated + complete ledger -> MIGRATION_COMPLETE; repeat init no-op
 // ===========================================================================
 
@@ -1573,6 +1663,6 @@ if (failed > 0) {
   console.error(`FAILED CASES: ${failures.map((item) => item.name).join(" | ")}`);
   process.exitCode = 1;
 } else {
-  console.log("ALL PASS: A/A2/A3/A4(cold-start metadata)/D/partial(2,5,12)/B/C/E/F/G/G2/H/I/J + EXEC, legacy+partial init, idempotent init, refusal zero-write, CLI JSON (0/3/1-shaped)/--json, ambiguous targets, no write entry points");
+  console.log("ALL PASS: A/A2/A3/A4(cold-start metadata)/F3(ledger anomalies)/D/partial(2,5,12)/B/C/E/F/G/G2/H/I/J + EXEC, legacy+partial init, idempotent init, refusal zero-write, CLI JSON (0/3/1-shaped)/--json, ambiguous targets, no write entry points");
   process.exitCode = 0;
 }

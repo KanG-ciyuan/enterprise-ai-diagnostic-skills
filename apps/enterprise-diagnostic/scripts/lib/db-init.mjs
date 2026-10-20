@@ -18,7 +18,7 @@
 // does not depend on generated artifacts.
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, isAbsolute, join, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import {
@@ -251,6 +251,78 @@ function scanStateDir(stateDir) {
  */
 export function scanDatabaseFiles(stateDir) {
   return scanStateDir(stateDir).candidates;
+}
+
+/**
+ * R2A F2: pre-write target identity guard.
+ *
+ * The classification target and the file wrangler will migrate must be the same
+ * file. The CLI derives the wrangler target by running a read-only
+ * `wrangler d1 migrations list DB --local --persist-to <fresh-temp-dir>` probe in
+ * an isolated scratch directory (never the real state dir), then passes the
+ * relative D1 object path here. This function maps that relative path into the
+ * classified state dir and requires it to equal the classified target.
+ *
+ * Rules (all failures throw exit-3 DbSafetyError, so no migration executor is
+ * spawned and no file is created/deleted/renamed):
+ *   * the probe path must be a relative path inside the state dir (no traversal);
+ *   * if a database was classified, the expected wrangler path must equal it;
+ *   * if the classification is virtual EMPTY (dbFile=null), the expected wrangler
+ *     path must not already exist (it will be created by wrangler);
+ *   * otherwise the target identity cannot be confirmed -> refuse.
+ *
+ * @param {{ classifiedStateDir?: string, classifiedDbFile?: string|null,
+ *           expectedRelativePath?: string }} options
+ * @returns {{ expectedDbFile: string, relativePath: string }}
+ */
+export function assertTargetIdentity({ classifiedStateDir, classifiedDbFile, expectedRelativePath } = {}) {
+  const stateDir = resolve(String(classifiedStateDir || ""));
+  const rel = String(expectedRelativePath || "");
+  const segments = rel.split(/[\\/]+/).filter(Boolean);
+  if (!rel || isAbsolute(rel) || segments.length === 0 || segments.includes("..")) {
+    throw new DbSafetyError(
+      EXIT_CODES.REFUSED,
+      "TARGET_IDENTITY_UNCONFIRMED",
+      `无法确认 wrangler 将写入哪个数据库文件：探针返回的路径不合法（${rel || "(empty)"}）。已拒绝初始化，未启动迁移执行器。`,
+      { classifiedStateDir: stateDir, classifiedDbFile: classifiedDbFile || null, expectedRelativePath: rel, invoked: false },
+    );
+  }
+  const expectedDbFile = resolve(stateDir, ...segments);
+  const inside = relative(stateDir, expectedDbFile);
+  if (!inside || inside.startsWith("..") || isAbsolute(inside)) {
+    throw new DbSafetyError(
+      EXIT_CODES.REFUSED,
+      "TARGET_IDENTITY_UNCONFIRMED",
+      `无法确认 wrangler 将写入哪个数据库文件：探针路径会逃出 state 目录（${rel}）。已拒绝初始化，未启动迁移执行器。`,
+      { classifiedStateDir: stateDir, classifiedDbFile: classifiedDbFile || null, expectedRelativePath: rel, invoked: false },
+    );
+  }
+  if (classifiedDbFile) {
+    const classified = resolve(String(classifiedDbFile));
+    if (classified !== expectedDbFile) {
+      throw new DbSafetyError(
+        EXIT_CODES.REFUSED,
+        "TARGET_IDENTITY_MISMATCH",
+        `分类目标与 wrangler 迁移目标不一致：分类目标=${classified}，wrangler 将写入=${expectedDbFile}。` +
+          "已拒绝初始化，未启动迁移执行器；不会创建第二个数据库文件，也不会移动/删除任何数据库。请先用 scripts/db.sh diagnose 检查 state 布局。",
+        {
+          classifiedStateDir: stateDir,
+          classifiedDbFile: classified,
+          expected_wrangler_target: expectedDbFile,
+          expectedRelativePath: segments.join("/"),
+          invoked: false,
+        },
+      );
+    }
+  } else if (existsSync(expectedDbFile)) {
+    throw new DbSafetyError(
+      EXIT_CODES.REFUSED,
+      "TARGET_IDENTITY_CHANGED",
+      `分类为 EMPTY 后，在初始化前出现了 wrangler 目标文件：${expectedDbFile}。已拒绝初始化，未启动迁移执行器，未覆盖任何文件。`,
+      { classifiedStateDir: stateDir, expected_wrangler_target: expectedDbFile, expectedRelativePath: segments.join("/"), invoked: false },
+    );
+  }
+  return { expectedDbFile, relativePath: segments.join("/") };
 }
 
 /**

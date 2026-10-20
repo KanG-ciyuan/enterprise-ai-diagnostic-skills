@@ -3,8 +3,11 @@
 # R2A B: thin, cwd-independent wrapper around scripts/db-maintenance.mjs.
 #
 #   scripts/db.sh diagnose [--json] [--state-dir DIR] [--db-file FILE]
-#   scripts/db.sh init     [--json] [--state-dir DIR] [--db-file FILE]
+#   scripts/db.sh init     [--json] [--state-dir DIR]
 #   scripts/db.sh version  [--json]
+#
+# `init` intentionally rejects --db-file: it must classify exactly the database
+# that wrangler will migrate (only --state-dir is used for init).
 #
 # The application root is resolved from this script's location, so the wrapper
 # works from any current working directory. It never creates or edits

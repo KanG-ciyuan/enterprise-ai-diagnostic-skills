@@ -466,7 +466,53 @@ export function classifyDatabase(db, { contract, fingerprints, knownMigrations, 
         extraTables,
       };
     }
-    return { state: "EMPTY", reason: "no business tables" };
+    // R2A F3: never call a database EMPTY before inspecting the migration ledger.
+    // A non-empty (or unknown/damaged) d1_migrations without business tables is an
+    // anomalous state that must be refused, not silently initialized. Only a truly
+    // empty database (no ledger, or an empty ledger created but nothing applied)
+    // stays EMPTY.
+    let ledger;
+    try {
+      ledger = readLedger(db, knownMigrations);
+    } catch (error) {
+      return {
+        state: "UNKNOWN",
+        reason: `migration ledger (d1_migrations) is unreadable or damaged: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+    const ledgerSummary = {
+      present: ledger.present,
+      rowCount: ledger.names.length,
+      prefixLength: ledger.prefixLength,
+      head: ledger.head,
+      unknown: ledger.unknown,
+    };
+    if (!ledger.present || ledger.names.length === 0) {
+      return {
+        state: "EMPTY",
+        reason: ledger.present ? "no business tables (migration ledger exists but is empty)" : "no business tables",
+        ledger: ledgerSummary,
+      };
+    }
+    if (ledger.unknown.length > 0 || ledger.tooNew) {
+      return {
+        state: "TOO_NEW",
+        reason: `migration ledger has rows but no business tables: ${ledger.unknown.join(", ") || "(too many rows)"}`,
+        ledger: ledgerSummary,
+      };
+    }
+    if (!ledger.contiguous) {
+      return {
+        state: "UNKNOWN",
+        reason: "migration ledger has rows but no business tables and is not a contiguous known prefix",
+        ledger: ledgerSummary,
+      };
+    }
+    return {
+      state: "LEDGER_SCHEMA_CONFLICT",
+      reason: "d1_migrations records applied migrations but no business tables exist",
+      ledger: ledgerSummary,
+    };
   }
 
   const fingerprint = fingerprintOf(db, { businessTables });

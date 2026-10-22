@@ -1,4 +1,4 @@
-import { appendEvent, cors, formalActor, httpError, idempotencyKey, json, requireAuthorizedProject, requireMembership } from "../../../_shared.js";
+import { cors, formalActor, httpError, idempotencyKey, json, requireAuthorizedProject, requireMembership } from "../../../_shared.js";
 
 const roles = new Set(["employee", "verifier", "owner", "external_builder", "it_admin"]);
 
@@ -67,9 +67,24 @@ export async function onRequestPost({ request, env, params }) {
       status: "pending",
       expires_at: new Date(Date.now() + expiresInSeconds * 1000).toISOString(),
     };
-    await env.DB.prepare("INSERT INTO invitations(id,token,project_id,inviter_account_id,email,role,scope,status,expires_at,idempotency_key) VALUES (?,?,?,?,?,?,?,?,?,?)")
-      .bind(invitation.id, invitation.token, projectId, current.accountId, email, role, "project", "pending", invitation.expires_at, key).run();
-    await appendEvent(env.DB, projectId, null, "invitation_created", current, { invitationId: invitation.id, status: "pending", role, reason: "project invitation" });
+    // ── B2-R2：邀请行与审计事件必须同批提交 ────────────────────────────────
+    // 旧实现先 INSERT invitations（独立 run）再 appendEvent（独立 run）：审计失败时
+    // 邀请已可用、事件缺失，客户端只看到 500。现在同批 ⇒ 审计失败整笔回滚。
+    // INSERT…WHERE NOT EXISTS 由数据库原子判定同一幂等键：并发重复请求只会插入一次、
+    // 只产生一条事件；后到请求读到既有邀请并按幂等语义返回 201。
+    const invitationEventPayload = JSON.stringify({ invitationId: invitation.id, status: "pending", role, reason: "project invitation" });
+    const invitationBatch = await env.DB.batch([
+      env.DB.prepare("INSERT INTO invitations(id,token,project_id,inviter_account_id,email,role,scope,status,expires_at,idempotency_key) SELECT ?,?,?,?,?,?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM invitations WHERE project_id=? AND inviter_account_id=? AND idempotency_key=?)")
+        .bind(invitation.id, invitation.token, projectId, current.accountId, email, role, "project", "pending", invitation.expires_at, key, projectId, current.accountId, key),
+      env.DB.prepare("INSERT INTO events (event_id,project_id,work_item_id,type,actor_role,actor_id,payload) SELECT ?,?,?,?,?,?,? WHERE changes()=1 AND EXISTS (SELECT 1 FROM invitations WHERE id=? AND status='pending')")
+        .bind(`EVT-INV-CREATED-${invitation.id}`, projectId, null, "invitation_created", current.role, current.userId || current.accountId, invitationEventPayload, invitation.id),
+    ]);
+    if (Number(invitationBatch?.[0]?.meta?.changes || 0) !== 1) {
+      const existing = await env.DB.prepare("SELECT * FROM invitations WHERE project_id=? AND inviter_account_id=? AND idempotency_key=?")
+        .bind(projectId, current.accountId, key).first();
+      if (existing) return json({ invitation: invitationPayload(existing) }, 201);
+      return httpError("邀请创建未写入，请重试", 409);
+    }
     return json({ invitation: invitationPayload(invitation) }, 201);
   } catch (error) { return error instanceof Response ? error : httpError(error.message, 500); }
 }

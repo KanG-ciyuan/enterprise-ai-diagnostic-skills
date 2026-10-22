@@ -1,4 +1,4 @@
-import { DRAFT_SCHEMA_VERSION, appendEvent, casWriteEmployeeDraft, cors, draftRevisionOf, formalActor, httpError, itemPayload, json, normalizeEmployeeDraft, requireAuthorizedProject, requireItem, requireMembership, serializeEmployeeDraft } from "../../../_shared.js";
+import { DRAFT_SCHEMA_VERSION, casWriteEmployeeDraft, cors, draftRevisionOf, formalActor, httpError, itemPayload, json, normalizeEmployeeDraft, requireAuthorizedProject, requireItem, requireMembership } from "../../../_shared.js";
 import { canonicalDimension, canonicalVerdict, VERDICT_CORRECTED } from "../../agent/_adapter.js";
 import { applyAnswerEvidence, applyEvidenceMutation } from "../../agent/_evidence.js";
 
@@ -294,34 +294,13 @@ export async function onRequestPut({ request, env, params }) {
     // 因此这里显式声明写入者与可编辑要求，由共享 CAS 在同一条 UPDATE 内原子判定。
     const writeGuard = { assigneeAccountId: current.accountId, requireEditable: true };
     // F03：统一证据写入入口（employee-turn 也调用 applyEvidenceMutation，避免两套规则漂移）。
-    const cas = await applyEvidenceMutation({
-      db: env.DB,
-      itemId: params.itemId,
-      expectedRevision: baseRevision,
-      writeGuard,
-      materialStatus,
-      answers,
-      ledger: ledgerState,
-      inferenceVerdicts,
-      submissionText: existing.submissionText,
-      revision: nextRevision,
-    });
-    if (!cas.ok) {
-      // 明确冲突：不静默覆盖，交回当前版本供客户端刷新后重试。
-      // reason 仅作分类（stale_revision / not_editable / assignee_mismatch / conflict），
-      // 既有字段 code / currentRevision / expectedRevision / task 语义不变。
-      const current = await requireItem(env.DB, params.itemId);
-      return json({
-        code: "draft_conflict",
-        reason: cas.reason,
-        detail: "访谈状态已在别处更新（或任务已提交/已结束），已放弃本次保存以免覆盖较新的回答。请刷新后继续。",
-        currentRevision: cas.currentRevision,
-        expectedRevision: baseRevision,
-        task: itemPayload(current),
-      }, 409);
-    }
-    const updated = await requireItem(env.DB, params.itemId);
-    await appendEvent(env.DB, item.project_id, params.itemId, "employee_draft_saved", current, {
+    // ── B2-R2：草稿 CAS 与审计事件必须在**同一次 batch** 内提交 ─────────────────
+    // 旧实现先 CAS（独立 run）再 appendEvent（独立 run）：审计写入失败时草稿 revision
+    // 已推进、事件却永久缺失，且客户端只看到 500 —— "用户以为失败、业务已成功"。
+    // 现在两者同批：审计失败 ⇒ 整笔回滚 ⇒ revision/答案/事件全部保持原样。
+    // 事件守卫用 changes()=1：只有本请求的 CAS 真正命中（恰好 1 行）才写事件，
+    // 过期请求即使 revision 数值恰好等于 nextRevision 也不会伪造出一条审计。
+    const draftEventPayload = JSON.stringify({
       reason: "employee saved draft",
       materialStatus,
       answeredCount: Object.keys(answers).length,
@@ -334,6 +313,35 @@ export async function onRequestPut({ request, env, params }) {
       invalidatedInferences: evidenceResult.invalidatedInferenceIds,
       reestablishedInferences: evidenceResult.reestablishedInferenceIds || [],
     });
+    const draftEventStatement = env.DB.prepare(
+      "INSERT INTO events (event_id,project_id,work_item_id,type,actor_role,actor_id,payload) SELECT ?,?,?,?,?,?,? WHERE changes()=1 AND EXISTS (SELECT 1 FROM work_items WHERE id=? AND COALESCE(json_extract(employee_draft_json,'$.revision'),0)=?)",
+    ).bind(`EVT-DRAFT-${params.itemId}-R${nextRevision}`, item.project_id, params.itemId, "employee_draft_saved", current.role, current.userId || current.accountId, draftEventPayload, params.itemId, nextRevision);
+    const cas = await applyEvidenceMutation({
+      db: env.DB,
+      itemId: params.itemId,
+      expectedRevision: baseRevision,
+      writeGuard: { ...writeGuard, extraStatements: [draftEventStatement] },
+      materialStatus,
+      answers,
+      ledger: ledgerState,
+      inferenceVerdicts,
+      submissionText: existing.submissionText,
+      revision: nextRevision,
+    });
+    if (!cas.ok) {
+      // 真实写入失败（含审计写入失败）⇒ 上抛 500；整批已回滚，可用同一 baseRevision 重试。
+      if (cas.batchError) throw cas.batchError;
+      const current = await requireItem(env.DB, params.itemId);
+      return json({
+        code: "draft_conflict",
+        reason: cas.reason,
+        detail: "访谈状态已在别处更新（或任务已提交/已结束），已放弃本次保存以免覆盖较新的回答。请刷新后继续。",
+        currentRevision: cas.currentRevision,
+        expectedRevision: baseRevision,
+        task: itemPayload(current),
+      }, 409);
+    }
+    const updated = await requireItem(env.DB, params.itemId);
     // PILOT-09C/FIX-3B：逐项反馈判定结果，禁止"静默部分成功"。
     return json({
       task: itemPayload(updated),

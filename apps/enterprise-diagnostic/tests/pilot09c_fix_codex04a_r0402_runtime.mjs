@@ -297,30 +297,52 @@ const Q = (key) => JSON.stringify({ turnKind: "question", question: { key, label
 /**
  * 受控 DB 包装：在 employee-draft 真正执行 CAS UPDATE（shared 写入函数）的那一刻，
  * 先执行一次正式提交，再继续执行原 UPDATE —— 精确模拟"保存请求已通过前置检查、
- * 但恢复执行时正式提交已完成"的在途窗口，且对修复前后的 SQL 都成立。
+ * 但恢复执行时正式提交已完成"的在途窗口。
+ *
+ * B2-R2：草稿 CAS 与审计事件已并入同一次 db.batch()（原子修复），因此挂钩同时支持：
+ *   · batch()：批次执行前触发（当前执行形态）；
+ *   · prepare().run()：单条执行时触发（修复前形态，保留兼容，场景与断言不变）。
+ * 触发时打印 [注入] 标记，用于确认并发注入确实发生（不以退出码代替证据）。
  */
 function withInterleavedSubmission(db, interleave) {
   let fired = false;
+  const isDraftCas = (sql) => /UPDATE\s+work_items\s+SET\s+employee_draft_json/i.test(String(sql || ""));
+  const fire = async () => {
+    if (fired) return;
+    fired = true;
+    console.log("  ↪ [注入] 在途正式提交已触发（草稿 CAS 执行前）");
+    await interleave();
+  };
   return new Proxy(db, {
     get(target, prop) {
+      if (prop === "batch") {
+        return async (statements) => {
+          if (Array.isArray(statements) && statements.some((statement) => isDraftCas(statement && statement.sql))) await fire();
+          return target.batch(statements);
+        };
+      }
       if (prop !== "prepare") {
         const value = Reflect.get(target, prop, target);
         return typeof value === "function" ? value.bind(target) : value;
       }
       return (sql) => {
-        const text = String(sql);
-        if (!fired && /UPDATE\s+work_items\s+SET\s+employee_draft_json/i.test(text)) {
-          return {
-            bind: (...values) => ({
-              run: async () => {
-                if (!fired) { fired = true; await interleave(); }
-                return target.prepare(sql).bind(...values).run();
-              },
-              first: () => target.prepare(sql).bind(...values).first(),
-            }),
-          };
-        }
-        return target.prepare(sql);
+        if (!isDraftCas(sql)) return target.prepare(sql);
+        // 兼容"单条 run()"的旧执行形态；batch 路径直接使用 statement.sql / values 执行。
+        const real = target.prepare(sql);
+        return {
+          sql: real.sql,
+          values: real.values,
+          bind: (...values) => ({
+            sql: real.sql,
+            values,
+            run: async () => { await fire(); return target.prepare(sql).bind(...values).run(); },
+            first: () => target.prepare(sql).bind(...values).first(),
+            all: () => target.prepare(sql).bind(...values).all(),
+          }),
+          run: async () => { await fire(); return real.run(); },
+          first: () => real.first(),
+          all: () => real.all(),
+        };
       };
     },
   });

@@ -462,12 +462,47 @@ export function serializeEmployeeDraft({ answers, ledger, inferenceVerdicts, sub
  * @param {{ assigneeAccountId?: string, requireEditable?: boolean }} [writeGuard]
  * @returns {{ ok: true } | { ok: false, currentRevision: number, reason: string }}
  */
+const draftWriteGuardProvided = (writeGuard) => writeGuard !== undefined && writeGuard !== null && writeGuard !== false;
+const draftWriteGuardValid = (writeGuard) => typeof writeGuard === "object" && !Array.isArray(writeGuard)
+  && typeof writeGuard.assigneeAccountId === "string" && Boolean(writeGuard.assigneeAccountId);
+
 export async function casWriteEmployeeDraft(db, itemId, expectedRevision, draftJson, materialStatus = null, writeGuard = null) {
   // fail-closed：声明要守卫却没有合法写入者身份 → 拒绝写入（禁止退化为"只按版本写"）。
-  const guardProvided = writeGuard !== undefined && writeGuard !== null && writeGuard !== false;
-  if (guardProvided && (typeof writeGuard !== "object" || Array.isArray(writeGuard) || typeof writeGuard.assigneeAccountId !== "string" || !writeGuard.assigneeAccountId)) {
+  const guardProvided = draftWriteGuardProvided(writeGuard);
+  if (guardProvided && !draftWriteGuardValid(writeGuard)) {
     return { ok: false, currentRevision: await readDraftRevision(db, itemId), reason: "write_guard_invalid" };
   }
+  const statement = employeeDraftCasStatement(db, itemId, expectedRevision, draftJson, materialStatus, writeGuard);
+  // B2-R2：统一入口的签名保持不变（既有调用方零改动）。需要"草稿 + 附加事件"原子提交的
+  // 调用方把附加语句随 writeGuard 一起传入；二者在同一次 batch 内提交，任一失败整体回滚。
+  const extraStatements = guardProvided && Array.isArray(writeGuard.extraStatements) ? writeGuard.extraStatements : [];
+  if (extraStatements.length) {
+    let results;
+    try {
+      results = await db.batch([statement, ...extraStatements]);
+    } catch (batchError) {
+      // 真实写入失败（含审计写入失败）：整批已回滚，交调用方上抛 500。
+      return { ok: false, batchError, ...(await classifyEmployeeDraftConflict(db, itemId, expectedRevision, writeGuard)) };
+    }
+    if (Number(results?.[0]?.meta?.changes || 0) !== 1) {
+      return { ok: false, ...(await classifyEmployeeDraftConflict(db, itemId, expectedRevision, writeGuard)) };
+    }
+    return { ok: true };
+  }
+  const result = await statement.run();
+  if (Number(result?.meta?.changes || 0) !== 1) {
+    return { ok: false, ...(await classifyEmployeeDraftConflict(db, itemId, expectedRevision, writeGuard)) };
+  }
+  return { ok: true };
+}
+
+/**
+ * 只**构造**草稿 CAS 语句，不执行 —— 供批处理把草稿写入与审计事件放进同一次事务。
+ * 守卫非法时返回 null（调用方 fail-closed，绝不退化为"只按版本写"）。
+ */
+function employeeDraftCasStatement(db, itemId, expectedRevision, draftJson, materialStatus = null, writeGuard = null) {
+  const guardProvided = draftWriteGuardProvided(writeGuard);
+  if (guardProvided && !draftWriteGuardValid(writeGuard)) return null;
   const requireEditable = guardProvided && writeGuard.requireEditable !== false;
   // 守卫 SQL 写在最前：保证"可编辑条件"与 id/revision 处在**同一条** UPDATE 语句中。
   const sql = requireEditable
@@ -491,27 +526,28 @@ export async function casWriteEmployeeDraft(db, itemId, expectedRevision, draftJ
                material_status = COALESCE(?, material_status)
          WHERE id = ?
            AND COALESCE(json_extract(employee_draft_json, '$.revision'), 0) = ?`;
-  const statement = guardProvided
+  return guardProvided
     ? db.prepare(sql).bind(draftJson, materialStatus, itemId, expectedRevision, writeGuard.assigneeAccountId)
     : db.prepare(sql).bind(draftJson, materialStatus, itemId, expectedRevision);
-  const result = await statement.run();
-  if (Number(result?.meta?.changes || 0) !== 1) {
-    const fresh = await db.prepare("SELECT employee_draft_json, stage, status, assignee_account_id FROM work_items WHERE id=?").bind(itemId).first();
-    if (!fresh) return { ok: false, currentRevision: 0, reason: "item_not_found" };
-    let parsed = {};
-    try { parsed = fresh.employee_draft_json ? JSON.parse(fresh.employee_draft_json) : {}; } catch (_error) { parsed = {}; }
-    const currentRevision = draftRevisionOf(parsed);
-    // 冲突分类：只用于给调用方/客户端更明确的原因，不改变"未命中即拒绝"的语义。
-    if (currentRevision !== expectedRevision) return { ok: false, currentRevision, reason: "stale_revision" };
-    if (requireEditable && (fresh.stage !== "mapping" || fresh.status === "complete")) {
-      return { ok: false, currentRevision, reason: "not_editable" };
-    }
-    if (guardProvided && fresh.assignee_account_id !== writeGuard.assigneeAccountId) {
-      return { ok: false, currentRevision, reason: "assignee_mismatch" };
-    }
-    return { ok: false, currentRevision, reason: "conflict" };
+}
+
+/** CAS 未命中时的冲突分类（只用于给客户端更明确的原因，不改变"未命中即拒绝"的语义）。 */
+async function classifyEmployeeDraftConflict(db, itemId, expectedRevision, writeGuard = null) {
+  const guardProvided = draftWriteGuardProvided(writeGuard);
+  const requireEditable = guardProvided && writeGuard.requireEditable !== false;
+  const fresh = await db.prepare("SELECT employee_draft_json, stage, status, assignee_account_id FROM work_items WHERE id=?").bind(itemId).first();
+  if (!fresh) return { currentRevision: 0, reason: "item_not_found" };
+  let parsed = {};
+  try { parsed = fresh.employee_draft_json ? JSON.parse(fresh.employee_draft_json) : {}; } catch (_error) { parsed = {}; }
+  const currentRevision = draftRevisionOf(parsed);
+  if (currentRevision !== expectedRevision) return { currentRevision, reason: "stale_revision" };
+  if (requireEditable && (fresh.stage !== "mapping" || fresh.status === "complete")) {
+    return { currentRevision, reason: "not_editable" };
   }
-  return { ok: true };
+  if (guardProvided && draftWriteGuardValid(writeGuard) && fresh.assignee_account_id !== writeGuard.assigneeAccountId) {
+    return { currentRevision, reason: "assignee_mismatch" };
+  }
+  return { currentRevision, reason: "conflict" };
 }
 
 async function readDraftRevision(db, itemId) {

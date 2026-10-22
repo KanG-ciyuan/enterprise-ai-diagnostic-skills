@@ -3,17 +3,17 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="企业 AI 流程诊断交互式 MVP">
-    <title>企业 AI 流程诊断</title>
-    <link rel="stylesheet" href="styles.css?v=workbench-v5">
+    <meta name="description" content="通过 AI 访谈还原企业工作流程，经员工确认与人工核验，为改造决策提供可追溯依据。">
+    <title>Enterprise AI · 企业流程诊断</title>
+    <link rel="stylesheet" href="styles.css?v=workbench-v5&amp;b1=entry-1">
     <script src="mock-data.js?v=workbench-v5" defer></script>
     <script src="agent-adapter.js?v=workbench-v5" defer></script>
     <script src="formal-ui-contract.js?v=workbench-v6" defer></script>
     <script src="api-client.js?v=workbench-v6" defer></script>
-    <script src="app.js?v=workbench-v6" defer></script>
+    <script src="app.js?v=workbench-v6&amp;b1=entry-1" defer></script>
   </head>
   <body>
-    <header class="app-header">
+    <header class="app-header" hidden>
       <div class="app-header__inner">
         <div class="brand-lockup">
           <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -50,7 +50,7 @@
     </header>
 
     <div class="product-shell">
-      <aside id="workspace-sidebar" class="workspace-sidebar" aria-label="主导航">
+      <aside id="workspace-sidebar" class="workspace-sidebar" aria-label="主导航" hidden>
         <div class="sidebar-heading"><span class="sidebar-overline">DIAGNOSIS</span><strong>诊断工作区</strong></div>
         <nav class="sidebar-nav">
           <button type="button" data-action="workspace-nav" data-nav="overview" class="sidebar-item is-active"><span class="sidebar-icon">⌂</span>工作概览</button>
@@ -62,7 +62,7 @@
         <div class="sidebar-footer"><span class="status-dot" aria-hidden="true"></span><span>E5 合成数据 · 本地演示</span></div>
       </aside>
       <main class="app-main">
-      <aside class="global-boundary">
+      <aside class="global-boundary" hidden>
         <strong>演示边界</strong>
         <span>当前使用 E5 合成模拟材料，不连接OA、CRM或ERP，不修改任何企业业务数据。</span>
       </aside>
@@ -141,27 +141,25 @@
         </div>
       </section>
 
-      <section id="formal-entry-view" class="view formal-entry-view" data-view hidden aria-labelledby="formal-entry-title">
-        <div class="formal-entry-shell">
-          <div class="formal-entry-story">
-            <p class="panel-label">企业 AI 流程诊断</p>
-            <h1 id="formal-entry-title" tabindex="-1">从真实工作出发，<br>再决定流程如何改。</h1>
-            <p>外部改造方建立诊断项目并邀请企业参与人。员工还原实际工作，核验人员确认事实，企业负责人只审阅已发布的决策摘要。</p>
-            <ol class="formal-entry-steps"><li>创建客户交接项目</li><li>邀请员工与核验人</li><li>依据已确认事实决策</li></ol>
+      <section id="formal-entry-view" class="view formal-entry-view" data-view aria-labelledby="formal-entry-title">
+        <div class="b1-entry-brand"><span class="b1-entry-mark" aria-hidden="true">E</span><span>Enterprise AI <strong>流程诊断</strong></span><span class="b1-entry-tag">访谈 · 确认 · 核验</span></div>
+        <div class="b1-entry-layout">
+          <div class="b1-entry-intro">
+            <p class="b1-entry-eyebrow">把一线经验，变成改造依据</p>
+            <h1 id="formal-entry-title" tabindex="-1">先看清工作，<br>再决定如何改。</h1>
+            <p class="b1-entry-lead">通过 AI 访谈还原真实工作流程，让员工确认、核验人员核实，为企业 AI 改造提供可追溯的依据。</p>
+            <div class="b1-entry-actions"><a class="primary-button b1-entry-link" href="#b1-entry-access">已有账号登录 <span aria-hidden="true">↗</span></a><button type="button" class="secondary-button" data-action="enter-demo">体验合成演示 <span aria-hidden="true">→</span></button></div>
+            <p class="b1-entry-demo-note">合成演示仅在隔离开发环境可用。正式入口需要真实登录或项目邀请；职责说明不授予权限。</p>
+            <ol class="b1-entry-journey" aria-label="诊断过程"><li><span>01</span> 员工还原工作</li><li><span>02</span> 人工确认与核验</li><li><span>03</span> 负责人审阅摘要</li></ol>
           </div>
-
-        </div>
-
-        <!-- 完整授权流程：企业正式交付走这条路，默认折叠 -->
-        <details class="formal-entry-more">
-          <summary>了解完整授权流程（企业正式交付时走这条）</summary>
-          <div class="formal-entry-shell">
-          <div class="formal-entry-mode-switch" role="tablist" aria-label="登录方式">
-            <button class="mode-tab" type="button" role="tab" aria-selected="true" data-action="show-builder-login">新改造方开通</button>
-            <button class="mode-tab" type="button" role="tab" aria-selected="false" data-action="show-member-login">已有账号，重新进入</button>
-          </div>
-          <form id="formal-builder-login-form" class="formal-entry-form">
-            <div><p class="panel-label">新改造方开通</p><h2>建立项目控制台</h2><p>仅用于创建新的外部改造方账号。已有成员请使用右侧的邮箱验证登录。</p></div>
+          <section id="b1-entry-access" class="b1-entry-access" aria-labelledby="b1-entry-access-title">
+            <div class="b1-entry-access-heading"><p class="b1-entry-eyebrow">正式业务入口</p><h2 id="b1-entry-access-title">进入你的项目</h2><p>已有账号使用登记邮箱登录；受邀成员打开收到的邀请链接。新改造方由管理员提供受控开通码。</p></div>
+            <div class="formal-entry-mode-switch" role="tablist" aria-label="登录方式">
+              <button class="mode-tab" type="button" role="tab" aria-selected="true" data-action="show-builder-login">新改造方开通</button>
+              <button class="mode-tab" type="button" role="tab" aria-selected="false" data-action="show-member-login">已有账号登录</button>
+            </div>
+          <form id="formal-builder-login-form" class="formal-entry-form" hidden>
+            <div><p class="panel-label">新改造方开通</p><h2>建立项目控制台</h2><p>仅用于创建新的外部改造方账号。已有成员请切换到“已有账号登录”。</p></div>
             <label>企业名称<input name="enterpriseName" autocomplete="organization" required maxlength="200" placeholder="例如：锐新科技"></label>
             <label>工作邮箱<input name="email" type="email" autocomplete="email" required placeholder="name@company.com"></label>
             <label>你的姓名<input name="name" autocomplete="name" placeholder="用于记录创建人"></label>
@@ -186,8 +184,19 @@
             <button class="primary-button" type="submit">确认并进入工作台</button>
             <p class="form-help">如果邮箱与邀请不匹配，系统不会创建项目成员关系。</p>
           </form>
+            <noscript><p class="b1-entry-noscript">正式登录和邀请确认需要 JavaScript。请启用后刷新；当前没有建立会话或授予任何项目权限。</p></noscript>
+          </section>
+        </div>
+        <section class="b1-entry-responsibilities" aria-labelledby="b1-entry-roles-title">
+          <div class="b1-entry-section-heading"><h2 id="b1-entry-roles-title">四类职责，各有自己的任务。</h2><p>身份由服务端已授权的账号或邀请确定，无需在这里选择角色。</p></div>
+          <div class="b1-entry-role-grid">
+            <article class="b1-entry-role"><p class="b1-entry-role-number">01 / 员工</p><h3>说清自己怎么做</h3><p>还原实际步骤、判断、异常与交接，确认整理结果是否准确。</p><small>从项目邀请进入</small></article>
+            <article class="b1-entry-role"><p class="b1-entry-role-number">02 / 核验人员</p><h3>核实事实与依据</h3><p>逐条对照员工说明和材料，记录一致、分歧与证据缺口。</p><small>从项目邀请进入</small></article>
+            <article class="b1-entry-role"><p class="b1-entry-role-number">03 / 企业负责人</p><h3>审阅摘要，决定下一步</h3><p>阅读已发布的决策摘要及限制，决定是否开展小范围验证。</p><small>从项目邀请或已有账号进入</small></article>
+            <article class="b1-entry-role"><p class="b1-entry-role-number">04 / 外部改造方</p><h3>组织项目与协作</h3><p>建立范围，发起企业授权，邀请成员并跟踪工作交接。</p><small>受控开通或已有账号登录</small></article>
           </div>
-        </details>
+        </section>
+        <footer class="b1-entry-footer">证据不足时保留待核实状态。AI 整理不代替员工具名确认、人工核验或负责人决策。</footer>
       </section>
 
       <section id="formal-builder-view" class="view formal-builder-view" data-view data-formal-role="external_builder" hidden aria-labelledby="formal-builder-title">
@@ -202,7 +211,7 @@
         <section id="formal-builder-decision-panel" class="formal-panel" hidden></section>
       </section>
 
-      <section id="project-list-view" class="view" data-view aria-labelledby="project-list-title">
+      <section id="project-list-view" class="view" data-view aria-labelledby="project-list-title" hidden>
         <div class="page-heading">
           <div>
             <h1 id="project-list-title" tabindex="-1">流程诊断项目</h1>

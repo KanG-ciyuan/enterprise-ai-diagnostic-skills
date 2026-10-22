@@ -1,5 +1,7 @@
 from pathlib import Path
 import re
+import json
+import subprocess
 import unittest
 
 
@@ -58,7 +60,64 @@ class DiagnosticMvpContractTest(unittest.TestCase):
         for field in ("reason", "scope", "constraints", "successMetrics", "stopConditions", "downstreamOwner"):
             self.assertIn(field, script)
         owner_section = html[html.index('id="formal-owner-view"'):html.index('id="employee-workbench-view"')]
-        self.assertIn("不展示原始材料", owner_section)
+        self.assertIn('id="owner-nav-note"', owner_section)
+        # The owner surface is rendered into hooks by the actual app renderer.
+        # This checks renderer output; browser visibility and API privacy remain separate gates.
+        render_probe = r"""
+import {readFileSync} from "node:fs";
+import vm from "node:vm";
+const source = readFileSync("app.js", "utf8");
+const fn = (name) => {
+  const found = source.match(new RegExp("^function " + name + "\\([^]*?^\\}\\n", "m"));
+  if (!found) throw new Error("Missing actual renderer/helper: " + name);
+  return found[0];
+};
+const helperStart = source.indexOf("const EMPLOYEE_STEPS = [");
+const helperEnd = source.indexOf("\n}", source.indexOf("function blockTitle(")) + 3;
+if (helperStart < 0 || helperEnd <= helperStart) throw new Error("Missing UI helpers");
+const ids = ["owner-steps", "owner-task", "owner-nav-meta", "owner-nav-note", "owner-thread", "owner-thread-meta", "owner-trace", "owner-composer-inner"];
+const nodes = Object.fromEntries(ids.map((id) => [id, {
+  innerHTML: "", textContent: "",
+  querySelector: () => ({ addEventListener() {} }),
+}]));
+const context = {
+  window: {}, state: {},
+  document: { querySelector: (selector) => nodes[selector.slice(1)] || null },
+  submitFormalOwnerDecision() {}, E5_LABEL: "AI假设，待验证",
+};
+vm.createContext(context);
+vm.runInContext(readFileSync("formal-ui-contract.js", "utf8"), context);
+context.formalUiContract = context.window.formalUiContract;
+vm.runInContext(fn("escapeMarkup") + "\n" + fn("formatFormalTime") + "\n" + source.slice(helperStart, helperEnd) + "\n" + fn("renderFormalOwnerWorkspace"), context);
+const packet = {
+  version: 1, pilotScope: "合成范围", riskSummary: "合成摘要",
+  constraints: ["c"], successMetrics: ["m"], stopConditions: ["s"],
+  downstreamOwner: "合成责任人", confirmedFacts: [{claim: "合成事实", evidenceLevel: "E2"}],
+};
+const output = {};
+for (const kind of ["empty", "ready", "stale", "legacy_e5"]) {
+  context.state.formalOwnerError = {status: 404, message: "暂无摘要"};
+  context.state.formalOwnerReceipt = null;
+  context.state.formalOwnerPacket = kind === "empty" ? null : structuredClone(packet);
+  if (kind === "stale") context.state.formalOwnerPacket.invalidation = {stale: true, notice: "所依据事实已失效"};
+  if (kind === "legacy_e5") context.state.formalOwnerPacket.confirmedFacts = [{claim: "合成异常历史记录", evidenceLevel: "E5", requiresAiLabel: true}];
+  vm.runInContext("renderFormalOwnerWorkspace()", context);
+  output[kind] = {note: nodes["owner-nav-note"].innerHTML, thread: nodes["owner-thread"].innerHTML, trace: nodes["owner-trace"].innerHTML};
+}
+console.log(JSON.stringify(output));
+"""
+        completed = subprocess.run(
+            ["node", "--input-type=module"], input=render_probe,
+            text=True, capture_output=True, cwd=ROOT, timeout=10,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        rendered = json.loads(completed.stdout)
+        self.assertEqual(set(rendered), {"empty", "ready", "stale", "legacy_e5"})
+        for mode, output in rendered.items():
+            self.assertIn("不展示原始材料", output["note"], mode)
+        self.assertIn('role="alert"', rendered["stale"]["thread"])
+        self.assertIn("依据已失效", rendered["stale"]["thread"])
+        self.assertIn("AI假设，待验证", rendered["legacy_e5"]["trace"])
         for forbidden in ("E5", "切换角色", "X-Demo-Role"):
             self.assertNotIn(forbidden, owner_section)
 

@@ -48,7 +48,17 @@ class CloudflareBackendContractTest(unittest.TestCase):
         schema = (ROOT / "schema.sql").read_text(encoding="utf-8")
         shared = self.read("_shared.js")
         self.assertIn("member_login_challenges", schema)
-        self.assertIn("member_login_challenges", shared)
+        # Challenge storage is owned by the auth handlers, not the shared readiness module.
+        for route in (request_route, consume_route):
+            self.assertIn("member_login_challenges", route)
+            self.assertIn("sha256(token)", route)
+            self.assertIn("token_hash", route)
+        self.assertIn("token_hash TEXT NOT NULL UNIQUE", schema)
+        self.assertIn("consume_claim TEXT UNIQUE", schema)
+        self.assertRegex(request_route, r"15\s*\*\s*60\s*\*\s*1000")
+        self.assertIn("consume_claim IS NULL", consume_route)
+        self.assertIn("datetime(expires_at)>datetime('now')", consume_route)
+        self.assertIn("env.DB.batch", consume_route)
         self.assertIn("sha256", request_route + consume_route)
         self.assertRegex(request_route, r"202")
         self.assertRegex(request_route, r"FROM accounts[\s\S]*status='active'")

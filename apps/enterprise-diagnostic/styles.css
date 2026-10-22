@@ -1217,3 +1217,73 @@ button:not(:disabled):active { transform: translateY(1px); }
 }
 .engine-badge.is-ai { color: var(--brand-ink); background: var(--brand-soft); border-color: #cfdefb; }
 .engine-badge.is-fallback { color: var(--warn); background: var(--warn-soft); border-color: #f0dfb8; font-weight: 600; }
+
+/* B1 public entry: appended, confined to the public section. */
+#formal-entry-view .b1-entry-brand { display:flex; align-items:center; gap:12px; color:#1c344f; font-size:15px; margin-bottom:32px; flex-wrap:wrap; }
+#formal-entry-view .b1-entry-mark { display:grid; place-items:center; width:34px; height:34px; border-radius:9px; background:#235baf; color:white; font-weight:750; font-size:18px; }
+#formal-entry-view .b1-entry-brand strong { font-weight:500; margin-left:5px; }
+#formal-entry-view .b1-entry-tag { color:#596b82; font-size:12px; margin-left:auto; }
+#formal-entry-view .b1-entry-layout { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(360px,.9fr); gap:54px; align-items:start; }
+#formal-entry-view .b1-entry-intro { padding:25px 0 12px; min-width:0; }
+#formal-entry-view .b1-entry-eyebrow { color:#245c9b; font-size:12px; font-weight:700; letter-spacing:.06em; margin:0 0 14px; }
+#formal-entry-view .b1-entry-intro h1 { font-size:clamp(34px,3.5vw,49px); line-height:1.27; letter-spacing:-.035em; margin:0 0 22px; color:#162b43; font-weight:720; }
+#formal-entry-view .b1-entry-intro h1:focus { outline:2px solid transparent; }
+#formal-entry-view .b1-entry-lead { max-width:480px; font-size:16px; line-height:1.95; color:#41556d; margin:0 0 28px; }
+#formal-entry-view .b1-entry-actions { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+#formal-entry-view .b1-entry-actions > * { min-height:46px; margin:0; display:inline-flex; align-items:center; justify-content:center; gap:14px; text-decoration:none; font-size:14px; white-space:normal; text-align:center; }
+#formal-entry-view .b1-entry-demo-note { max-width:470px; color:#62728a; font-size:12px; line-height:1.8; margin:15px 0 30px; }
+#formal-entry-view .b1-entry-journey { display:grid; gap:10px; border-top:1px solid #dce3ec; padding:20px 0 0; list-style:none; margin:0; color:#42566e; font-size:13px; }
+#formal-entry-view .b1-entry-journey span { font-size:11px; color:#6e8198; padding-right:12px; }
+#formal-entry-view .b1-entry-access { min-width:0; border:1px solid #d6dfeb; background:#fff; border-radius:12px; box-shadow:0 4px 18px #18324a06; overflow:hidden; scroll-margin-top:20px; }
+#formal-entry-view .b1-entry-access-heading { padding:24px 26px 16px; }
+#formal-entry-view .b1-entry-access-heading h2 { margin:0 0 10px; color:#1a3048; font-size:21px; }
+#formal-entry-view .b1-entry-access-heading > p:last-child { color:#5b6d84; font-size:13px; line-height:1.8; margin:0; }
+#formal-entry-view .formal-entry-mode-switch { padding:0 18px; gap:4px; display:flex; flex-wrap:wrap; }
+#formal-entry-view .formal-entry-mode-switch .mode-tab { flex:1; min-height:46px; font-size:13px; white-space:normal; }
+#formal-entry-view .formal-entry-form { padding:22px 26px 26px; gap:13px; min-width:0; }
+#formal-entry-view .formal-entry-form h2 { font-size:18px; }
+#formal-entry-view .formal-entry-form input { min-width:0; min-height:44px; font-size:14px; }
+#formal-entry-view .formal-entry-form > button { min-height:46px; white-space:normal; }
+#formal-entry-view .formal-entry-form .form-help { overflow-wrap:anywhere; }
+#formal-entry-view .b1-entry-noscript { margin:20px; font-size:14px; line-height:1.8; color:#795614; }
+#formal-entry-view .b1-entry-responsibilities { border-top:1px solid #dce3ec; padding-top:30px; margin-top:38px; }
+#formal-entry-view .b1-entry-section-heading h2 { color:#1a3048; font-size:21px; margin:0 0 8px; }
+#formal-entry-view .b1-entry-section-heading > p { font-size:13px; color:#5b6d84; line-height:1.8; margin:0 0 22px; }
+#formal-entry-view .b1-entry-role-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:20px; }
+#formal-entry-view .b1-entry-role { padding:4px 18px 4px 0; min-width:0; border-right:1px solid #dce3ec; }
+#formal-entry-view .b1-entry-role:last-child { border-right:0; padding-right:0; }
+#formal-entry-view .b1-entry-role-number { font-size:11px; font-weight:650; color:#5e7693; margin:0 0 14px; }
+#formal-entry-view .b1-entry-role h3 { font-size:15px; color:#213a55; margin:0 0 10px; line-height:1.6; }
+#formal-entry-view .b1-entry-role > p:not(.b1-entry-role-number) { color:#5a6b82; font-size:13px; line-height:1.85; margin:0 0 14px; }
+#formal-entry-view .b1-entry-role small { color:#526a88; font-size:11px; line-height:1.7; }
+#formal-entry-view .b1-entry-footer { margin-top:36px; padding-top:18px; border-top:1px solid #dce3ec; color:#65778e; font-size:12px; line-height:1.8; }
+#formal-entry-view .b1-entry-actions > :focus-visible,
+#formal-entry-view .formal-entry-mode-switch .mode-tab:focus-visible,
+#formal-entry-view .formal-entry-form :is(input,button):focus-visible { outline:3px solid #3d70b9; outline-offset:3px; }
+@media (max-width:900px) {
+  #formal-entry-view .b1-entry-layout { grid-template-columns:minmax(0,1fr) minmax(320px,.9fr); gap:28px; }
+  #formal-entry-view .b1-entry-role-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+  #formal-entry-view .b1-entry-role:nth-child(2) { border-right:0; }
+}
+@media (max-width:700px) {
+  #formal-entry-view .b1-entry-brand { margin-bottom:22px; gap:9px; font-size:14px; }
+  #formal-entry-view .b1-entry-tag { width:100%; padding-left:43px; margin:0; }
+  #formal-entry-view .b1-entry-layout { display:flex; flex-direction:column; gap:24px; }
+  #formal-entry-view .b1-entry-intro { padding:0; width:100%; }
+  #formal-entry-view .b1-entry-intro h1 { font-size:34px; margin-bottom:18px; }
+  #formal-entry-view .b1-entry-lead { font-size:14px; line-height:1.9; margin-bottom:21px; }
+  #formal-entry-view .b1-entry-actions { gap:10px; }
+  #formal-entry-view .b1-entry-actions > * { flex:1 1 135px; padding:10px 12px; gap:6px; font-size:13px; }
+  #formal-entry-view .b1-entry-demo-note { margin-bottom:0; }
+  #formal-entry-view .b1-entry-journey { display:none; }
+  #formal-entry-view .b1-entry-access { width:100%; }
+  #formal-entry-view .b1-entry-access-heading { padding:21px 20px 16px; }
+  #formal-entry-view .formal-entry-form { padding:20px; }
+  #formal-entry-view .formal-entry-mode-switch { padding-inline:12px; }
+  #formal-entry-view .b1-entry-responsibilities { margin-top:28px; padding-top:25px; }
+  #formal-entry-view .b1-entry-role-grid { grid-template-columns:1fr; gap:0; }
+  #formal-entry-view .b1-entry-role { border:0; border-bottom:1px solid #dce3ec; padding:20px 0; }
+  #formal-entry-view .b1-entry-role:last-child { padding-top:20px; border-bottom:0; }
+  #formal-entry-view .b1-entry-role-number { margin-bottom:8px; }
+  #formal-entry-view .b1-entry-role > p:not(.b1-entry-role-number) { margin-bottom:8px; }
+}

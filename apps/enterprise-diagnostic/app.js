@@ -219,6 +219,7 @@ async function openFormalEntry() {
     if (restored.role === "employee" && restored.projectId) return loadFormalEmployeeTask(restored.projectId);
     if (restored.role === "verifier" && restored.projectId) return loadFormalVerifierWorkspace(restored.projectId);
     if (restored.role === "owner" && restored.projectId) return loadFormalOwnerWorkspace(restored.projectId);
+    if (restored.role === "external_builder") return loadFormalBuilderWorkspace();
     if (restored.role === "account") return loadFormalBuilderWorkspace();
   } catch (_error) {
     state.formalSessionActive = false;
@@ -337,7 +338,7 @@ const FORMAL_ROLE_LABELS = {
   employee: "一线员工",
   verifier: "流程核验人员",
   owner: "企业负责人",
-  account: "外部改造方",
+  account: "账号管理",
   external_builder: "外部改造方",
 };
 

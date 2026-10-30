@@ -115,5 +115,39 @@
     return url.toString();
   }
 
-  global.formalUiContract = { buildSupplementPayload, employeeStepForTask, employeeStageForStatus, employeeQuestionIndex, employeeMaterialLabel, materialStatusLabel, ownerDecisionLabel, statusLabel, roleLabel, ownerWorkspaceState, formalEntryMode, invitationUrlAfterAccept };
+  function suggestionPriorityLabel(priority) {
+    return { high: "高", medium: "中", low: "低" }[String(priority || "").toLowerCase()] || "待定";
+  }
+
+  function suggestionDraftKindLabel(kind) {
+    return kind === "internal" ? "内部待核实初稿" : "正式诊断建议";
+  }
+
+  function suggestionFactStatusLabel(status) {
+    return { confirmed: "已确认", open: "待核验", insufficient_evidence: "证据不足" }[status] || "状态待更新";
+  }
+
+  function suggestionFactLine(entry = {}) {
+    const level = String(entry.evidenceLevel || "").toUpperCase() || "未定级";
+    const delivery = entry.eligible === false ? " · 不可正式交付" : "";
+    return `${entry.factId || "未知事实"} · ${suggestionFactStatusLabel(entry.status)} · ${level}${delivery}`;
+  }
+
+  // The single source of truth for what the UI may offer on a packet/scope.
+  function suggestionDeliveryState(packet = null) {
+    const items = Array.isArray(packet?.suggestions) ? packet.suggestions : [];
+    if (!items.length) return "none";
+    if (packet?.suggestionsInvalidated?.invalidated || packet?.invalidation?.stale) return "invalidated";
+    if (packet?.draftKind === "internal" || packet?.status === "internal_draft") return "internal";
+    if (packet?.status === "published" || packet?.status === "owner_decided" || packet?.status === "revision_requested") return "published";
+    return packet?.suggestionReview?.contentHash ? "reviewed" : "unreviewed";
+  }
+
+  function suggestionReviewState(packet = null) {
+    const items = Array.isArray(packet?.suggestions) ? packet.suggestions : [];
+    if (!items.length) return "none";
+    return packet?.suggestionReview?.contentHash ? "reviewed" : "pending";
+  }
+
+  global.formalUiContract = { buildSupplementPayload, employeeStepForTask, employeeStageForStatus, employeeQuestionIndex, employeeMaterialLabel, materialStatusLabel, ownerDecisionLabel, statusLabel, roleLabel, ownerWorkspaceState, formalEntryMode, invitationUrlAfterAccept, suggestionPriorityLabel, suggestionDraftKindLabel, suggestionFactStatusLabel, suggestionFactLine, suggestionDeliveryState, suggestionReviewState };
 })(window);

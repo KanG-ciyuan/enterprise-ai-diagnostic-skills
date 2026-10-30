@@ -42,6 +42,7 @@ const state = {
   formalInferenceRejected: {},
   formalAgentFlowCard: null,
   formalAgentThinking: false,
+  formalPendingTurn: null, // unaccepted input only; never evidence or completion authority
   // PILOT-04B/A：访谈会话状态与自动保存状态。
   // formalInterviewRevision 是服务端草稿修订号 —— 唯一可靠的并发标识。
   formalInterviewRevision: 0,
@@ -64,7 +65,12 @@ const state = {
   formalProjectId: "",
   formalProjects: [],
   formalConfirmedFacts: [],
+  formalInternalFacts: [],
   formalDecisionPacket: null,
+  formalInternalPacket: null,
+  formalSuggestionDraft: null,
+  formalSuggestionPending: false,
+  formalSuggestionError: "",
   formalBuilderControl: null,
   formalBuilderMaterials: [],
   formalInvitations: [],
@@ -220,7 +226,13 @@ async function openFormalEntry() {
     if (restored.role === "verifier" && restored.projectId) return loadFormalVerifierWorkspace(restored.projectId);
     if (restored.role === "owner" && restored.projectId) return loadFormalOwnerWorkspace(restored.projectId);
     if (restored.role === "external_builder") return loadFormalBuilderWorkspace();
-    if (restored.role === "account") return loadFormalBuilderWorkspace();
+    if (restored.role === "account") {
+      if (restored.accountRole === "external_builder") return loadFormalBuilderWorkspace();
+      showFormalEntryMode("member");
+      showView("formal-entry-view");
+      renderFormalMemberProjectChoices(restored.memberships || []);
+      return;
+    }
   } catch (_error) {
     state.formalSessionActive = false;
   }
@@ -230,6 +242,12 @@ async function openFormalEntry() {
   if (!invitationToken) showFormalEntryMode("builder");
   showView("formal-entry-view");
 }
+
+// Local login links can navigate within the same document; consume them just as
+// a freshly opened link, without requiring the user to refresh.
+window.addEventListener("hashchange", () => {
+  if (new URLSearchParams(window.location.hash.replace(/^#/, "")).get("login")) openFormalEntry();
+});
 
 async function submitFormalInvitationAccept(event) {
   event.preventDefault();
@@ -342,26 +360,69 @@ const FORMAL_ROLE_LABELS = {
   external_builder: "外部改造方",
 };
 
+let formalWorkspaceRequest = 0;
+let formalProjectSelection = Promise.resolve();
+function beginFormalWorkspace(projectId, viewId) {
+  const requestId = ++formalWorkspaceRequest;
+  state.formalProjectId = projectId || "";
+  state.formalProjectName = "";
+  state.formalProjectContext = null;
+  renderFormalIdentity(viewId);
+  return requestId;
+}
+function isCurrentFormalWorkspace(requestId, projectId) {
+  return requestId === formalWorkspaceRequest && state.formalProjectId === (projectId || "");
+}
+function selectFormalWorkspaceProject(projectId, requestId) {
+  // Serialize session writes: an earlier slow selection must finish before the
+  // latest selection, otherwise refresh could restore the earlier project.
+  const pending = formalProjectSelection.then(() => {
+    if (!isCurrentFormalWorkspace(requestId, projectId)) return null;
+    return window.diagnosticApi.selectMemberProject(projectId);
+  });
+  formalProjectSelection = pending.then(() => undefined, () => undefined);
+  return pending;
+}
+async function loadFormalProjectIdentity(projectId, viewId, requestId) {
+  const [session, detail] = await Promise.all([
+    window.diagnosticApi.restoreSession(),
+    projectId ? window.diagnosticApi.getFormalProject(projectId) : Promise.resolve({ project: null }),
+  ]);
+  if (!isCurrentFormalWorkspace(requestId, projectId)) return false;
+  if (projectId && detail.project?.id !== projectId) throw new Error("项目身份不匹配，请重新进入。");
+  if (projectId && session.projectId !== projectId) throw new Error("会话项目已变化，请刷新后重新选择项目。");
+  state.formalProjectName = detail.project?.name || "";
+  state.formalBuilderName = session.account?.name || "";
+  state.formalProjectContext = {
+    projectId: projectId || "", projectName: detail.project?.name || "",
+    role: detail.role || session.role, accountName: session.account?.name || "",
+    email: session.account?.email || "", enterpriseName: session.enterprise?.name || "",
+  };
+  renderFormalIdentity(viewId);
+  return true;
+}
 function renderFormalIdentity(viewId) {
   const strip = document.querySelector("#formal-identity");
   if (!strip) return;
   const isRoleView = ["formal-employee-view", "formal-verifier-view", "formal-owner-view", "formal-builder-view"].includes(viewId);
   strip.hidden = !isRoleView;
   if (!isRoleView) return;
-  const role = document.querySelector(`#${viewId}`)?.dataset.formalRole || "";
+  const context = state.formalProjectContext?.projectId === (state.formalProjectId || "") ? state.formalProjectContext : null;
   const roleEl = document.querySelector("#formal-identity-role");
   const projectEl = document.querySelector("#formal-identity-project");
   const nameEl = document.querySelector("#formal-identity-name");
-  if (roleEl) roleEl.textContent = FORMAL_ROLE_LABELS[role] || "项目成员";
   const envEl = document.querySelector("#formal-identity-env");
+  if (roleEl) roleEl.textContent = context ? (FORMAL_ROLE_LABELS[context.role] || "项目成员") : "正在确认职责";
   if (projectEl) {
-    const name = state.formalProjectName || state.domainModel?.project?.name || "客户交接流程诊断";
-    projectEl.textContent = name;
-    // B2-02：正式业务环境标识。文案只陈述"运行模式 + 当前项目"这一可验证事实，
-    // 不使用"所有数据真实""数据绝对安全"之类未经验证的承诺。
-    if (envEl) envEl.textContent = `正式业务 · 当前项目：${name}`;
+    projectEl.textContent = context ? (context.projectName ? `${context.projectName} · ${context.projectId.slice(-6)}` : "尚未选择项目") : "正在确认项目身份";
+    projectEl.title = context?.projectId || "";
+    projectEl.dataset.projectId = context?.projectId || "";
   }
-  if (nameEl) nameEl.textContent = state.formalBuilderName || "";
+  // Account affiliation is not the customer's legal/project identity. Never infer
+  // a client enterprise from the external builder's organisation or demo fixture.
+  if (envEl) envEl.textContent = context ? `正式业务 · 账号登记机构：${context.enterpriseName || "未登记"}` : "正在核对账号与项目";
+  if (envEl) envEl.title = "账号登记机构不代表项目客户企业；项目企业范围以具名授权为准。";
+  if (nameEl) { nameEl.textContent = context?.accountName || context?.email || ""; nameEl.title = context?.email || ""; }
 }
 
 function showView(viewId) {
@@ -549,29 +610,126 @@ async function submitFormalReassignment(event) {
   }
 }
 
+function renderSuggestionCards(items, { unverified = false } = {}) {
+  return (items || []).map((item) => {
+    const facts = (item.evidence || []).map((entry) => `<li>${escapeMarkup(formalUiContract.suggestionFactLine(entry))}</li>`).join("");
+    const pending = (item.pendingConditions || []).map(escapeMarkup).join("；");
+    return `<article class="suggestion-card${unverified || item.unverified ? " suggestion-card--unverified" : ""}">` +
+      `<div class="suggestion-card__head"><span class="suggestion-priority suggestion-priority--${escapeMarkup(item.priority)}">${escapeMarkup(formalUiContract.suggestionPriorityLabel(item.priority))}优先级</span>` +
+      `${unverified || item.unverified ? '<span class="suggestion-unverified">未核实</span>' : ""}</div>` +
+      `<h3>${escapeMarkup(item.problem)}</h3>` +
+      `<p><strong>AI 改造机会：</strong>${escapeMarkup(item.opportunity)}</p>` +
+      `<p><strong>优先级理由：</strong>${escapeMarkup(item.priorityReason)}</p>` +
+      `${pending ? `<p><strong>待确认条件：</strong>${pending}</p>` : ""}` +
+      `${facts ? `<ul class="suggestion-facts">${facts}</ul>` : ""}` +
+      `</article>`;
+  }).join("");
+}
+
+function renderSuggestionGenerator() {
+  const pending = state.formalSuggestionPending;
+  const formal = state.formalConfirmedFacts;
+  const internal = state.formalInternalFacts;
+  const formalRows = formal.map((fact) => `<li>${escapeMarkup(fact.claim)} · 已确认${fact.impactLevel === "high" ? " · 高影响" : ""}</li>`).join("");
+  const internalRows = internal.map((fact) => `<li>${escapeMarkup(fact.claim)} · ${escapeMarkup(formalUiContract.suggestionFactStatusLabel(fact.status))} · ${escapeMarkup(String(fact.evidenceLevel || "未定级"))}</li>`).join("");
+  return `<div class="suggestion-generator">` +
+    `<p class="panel-label">AI 诊断建议</p>` +
+    `<p class="field-help">基于已确认事实生成正式建议。没有合格材料时只能生成内部待核实初稿，后者不可核验、不可发布。</p>` +
+    `<details class="suggestion-fact-source"><summary>可用于诊断的业务事实（正式 ${formal.length} 条 / 未核实 ${internal.length} 条）</summary>` +
+    `${formalRows ? `<p class="panel-label">正式可用</p><ul class="suggestion-facts">${formalRows}</ul>` : ""}` +
+    `${internalRows ? `<p class="panel-label">未核实（仅内部稿）</p><ul class="suggestion-facts">${internalRows}</ul>` : ""}` +
+    `</details>` +
+    `<div class="suggestion-actions">` +
+    `<button class="primary-button" type="button" data-action="generate-suggestions" data-scope="formal" ${pending || !formal.length ? "disabled" : ""}>${pending ? "正在生成…" : `生成正式诊断建议（${formal.length} 条事实）`}</button>` +
+    `<button class="secondary-button" type="button" data-action="generate-suggestions" data-scope="internal" ${pending || !internal.length ? "disabled" : ""}>生成内部待核实初稿（${internal.length} 条未核实事实）</button>` +
+    `</div>` +
+    (state.formalSuggestionError ? `<p class="error-feedback" role="alert">${escapeMarkup(state.formalSuggestionError)}</p>` : "") +
+    `</div>`;
+}
+
+function renderVerifierSuggestionBlock(packet) {
+  if (!Array.isArray(packet.suggestions) || !packet.suggestions.length) return "";
+  const review = formalUiContract.suggestionReviewState(packet);
+  const details = (packet.suggestionFacts || []).map((fact) => {
+    if (fact.restricted) {
+      return `<details class="verifier-fact"><summary>${escapeMarkup(fact.factId)} · 受限</summary>` +
+        `<div><p class="field-help">${escapeMarkup(fact.note || "该事实引用了未分配给你的任务或不可见材料，不能在此查看。")}</p></div></details>`;
+    }
+    const materials = (fact.materials || []).map((material) => `<li>${escapeMarkup(material.materialId)} · ${escapeMarkup(material.label || "材料")} · v${escapeMarkup(material.version)} · ${escapeMarkup(material.authorizationStatus)} / ${escapeMarkup(material.integrityStatus)}</li>`).join("");
+    return `<details class="verifier-fact"><summary>${escapeMarkup(fact.factId)} · ${escapeMarkup(fact.effectiveText || fact.claim)}</summary>` +
+      `<div><p><strong>当前有效文本：</strong>${escapeMarkup(fact.effectiveText || fact.claim)}</p>` +
+      `${fact.correction ? `<p><strong>核验更正：</strong>${escapeMarkup(fact.correction)}</p>` : ""}` +
+      `<p><strong>状态 / 等级：</strong>${escapeMarkup(formalUiContract.suggestionFactStatusLabel(fact.status))} · ${escapeMarkup(fact.evidenceLevel || "未定级")} · 影响 ${escapeMarkup(fact.impactLevel || "normal")}</p>` +
+      `${materials ? `<p><strong>材料依据：</strong></p><ul class="suggestion-facts">${materials}</ul>` : `<p class="field-help">该事实没有可展示的材料依据。</p>`}` +
+      `</div></details>`;
+  }).join("");
+  return `<div class="msg"><span class="msg__avatar">AI</span><div>` +
+    `<div class="msg__head">诊断建议 · 请逐条核对事实引用</div>` +
+    `<div class="msg__text">${renderSuggestionCards(packet.suggestions)}` +
+    `${details ? `<p class="panel-label">建议引用的事实与材料</p>${details}` : ""}` +
+    `<p class="field-help">${review === "reviewed" ? "改造方已完成内容审核；你只核验事实引用与证据资格。" : "改造方尚未完成内容审核；即使你确认引用，发布仍会被阻止。"}</p></div></div></div>`;
+}
+
+function suggestionWirePayload(items) {
+  return (items || []).map(({ problem, opportunity, factIds, priority, priorityReason, pendingConditions }) => ({ problem, opportunity, factIds, priority, priorityReason, pendingConditions }));
+}
+
+function renderSuggestionReviewAction(packet) {
+  if (!packet.suggestions?.length) return "";
+  if (formalUiContract.suggestionReviewState(packet) === "reviewed") {
+    return `<p class="field-help">内容审核已完成（${escapeMarkup(formatFormalTime(packet.suggestionReview.reviewedAt))}）。</p>`;
+  }
+  return `<div class="suggestion-gate"><p class="field-help">核验前请先完成建议内容审核；修改建议后需重新审核。</p><button class="secondary-button" type="button" data-action="review-formal-suggestions" data-packet-id="${escapeMarkup(packet.id)}" data-packet-version="${escapeMarkup(packet.version)}" data-content-key="${escapeMarkup(packet.contentKey ?? 0)}">完成内容审核</button></div>`;
+}
+
 function renderFormalBuilderDecisionPanel() {
   if (!formalBuilderDecisionPanel || !state.formalProjectId) return;
   formalBuilderDecisionPanel.hidden = false;
   const packet = state.formalDecisionPacket;
+  const internalPacket = state.formalInternalPacket;
+  const preview = state.formalSuggestionDraft;
+  const generator = renderSuggestionGenerator();
+  const previewBlock = preview
+    ? `<div class="suggestion-preview"><p class="panel-label">${escapeMarkup(formalUiContract.suggestionDraftKindLabel(preview.scope))} · 尚未保存</p>${renderSuggestionCards(preview.suggestions, { unverified: preview.scope === "internal" })}</div>`
+    : "";
   const revisionTask = state.formalBuilderControl?.revisionBlocker;
+  const internalBlock = internalPacket
+    ? `<div class="internal-draft-banner" role="status"><strong>内部待核实初稿（仅供参考）</strong><span>依据尚未通过正式事实资格。本稿不能核验、不能发布，企业负责人不可见。</span></div>${renderSuggestionCards(internalPacket.suggestions, { unverified: true })}`
+    : "";
+
   if (packet?.status === "verifier_checked") {
-    formalBuilderDecisionPanel.innerHTML = `<p class="panel-label">第三步 · 已完成事实引用核验</p><h2>发布给企业负责人</h2><p>${escapeMarkup(packet.riskSummary)}</p><button class="primary-button" type="button" data-action="publish-formal-packet" data-packet-id="${escapeMarkup(packet.id)}">发布决策摘要</button>`;
+    const reviewState = formalUiContract.suggestionReviewState(packet);
+    formalBuilderDecisionPanel.innerHTML = `<p class="panel-label">第三步 · 已完成事实引用核验</p><h2>发布给企业负责人</h2><p>${escapeMarkup(packet.riskSummary)}</p>${renderSuggestionCards(packet.suggestions)}${renderSuggestionReviewAction(packet)}<button class="primary-button" type="button" data-action="publish-formal-packet" data-packet-id="${escapeMarkup(packet.id)}" ${packet.suggestions?.length && reviewState !== "reviewed" ? "disabled" : ""}>发布决策摘要</button>` +
+      `<div class="suggestion-gate"><p class="field-help">若核验后仍发现建议内容有误，可在发布前重新生成并保存修改；保存后会退回草稿，必须重新内容审核并由核验人员重新核验。</p></div>` +
+      generator + previewBlock +
+      (preview ? `<button class="secondary-button" type="button" data-action="update-suggestions" data-packet-id="${escapeMarkup(packet.id)}" data-packet-version="${escapeMarkup(packet.version)}" data-content-key="${escapeMarkup(packet.contentKey ?? 0)}">保存修改并退回草稿</button>` : "");
     return;
   }
   if (packet?.status === "draft") {
-    formalBuilderDecisionPanel.innerHTML = `<p class="panel-label">第三步 · 等待核验人员</p><h2>风险与试点草稿已保存</h2><p>核验人员确认事实引用后，你才能发布给企业负责人。</p>`;
+    formalBuilderDecisionPanel.innerHTML = `<p class="panel-label">第三步 · 等待核验人员</p><h2>诊断建议草稿已保存</h2>${renderSuggestionCards(packet.suggestions)}${renderSuggestionReviewAction(packet)}` +
+      `${generator}${previewBlock}` +
+      (preview ? `<button class="primary-button" type="button" data-action="update-suggestions" data-packet-id="${escapeMarkup(packet.id)}" data-packet-version="${escapeMarkup(packet.version)}" data-content-key="${escapeMarkup(packet.contentKey ?? 0)}">保存修改（需重新内容审核）</button>` : `<p class="field-help">可重新生成建议并保存修改；已核验前不会发布。</p>`);
     return;
   }
   if (packet?.status === "revision_requested" && revisionTask) {
-    formalBuilderDecisionPanel.innerHTML = `<p class="panel-label">负责人退回 · 从 v${escapeMarkup(revisionTask.revisionFromVersion)} 生成新版本</p><h2>按退回理由修订</h2><p>${escapeMarkup(revisionTask.revisionReason)}</p>${renderFormalDecisionDraftForm("生成 v" + (Number(revisionTask.revisionFromVersion) + 1) + " 并交核验")}`;
+    formalBuilderDecisionPanel.innerHTML = `<p class="panel-label">负责人退回 · 从 v${escapeMarkup(revisionTask.revisionFromVersion)} 生成新版本</p><h2>按退回理由修订</h2><p>${escapeMarkup(revisionTask.revisionReason)}</p>${renderSuggestionCards(packet.suggestions)}${generator}${previewBlock}${renderFormalDecisionDraftForm(preview ? "保存修订版本并交核验" : "生成 v" + (Number(revisionTask.revisionFromVersion) + 1) + " 并交核验")}`;
     formalBuilderDecisionPanel.querySelector("form")?.addEventListener("submit", submitFormalDecisionPacket);
     return;
   }
-  if (!state.formalConfirmedFacts.length) {
-    formalBuilderDecisionPanel.innerHTML = `<p class="panel-label">第三步</p><h2>等待已确认事实</h2><p>员工提交并由核验人员确认后，这里会开放风险与试点建议起草。</p>`;
+  if (packet?.status === "stale") {
+    const mustRebuild = Boolean(packet.suggestions?.length);
+    const draftForm = (!mustRebuild || preview)
+      ? renderFormalDecisionDraftForm(preview ? "保存重新起草版本" : "重新起草 v" + (Number(packet.version) + 1))
+      : `<p class="field-help">原版本包含诊断建议；请先重新生成建议，再提交重新起草，避免新版本丢失建议。</p>`;
+    formalBuilderDecisionPanel.innerHTML = `<div class="stale-banner" role="alert"><strong>原诊断包已失效</strong><span>所依据的事实已变化。请基于当前已确认事实重新生成建议，重新内容审核并重新核验。</span></div>${renderSuggestionCards(packet.suggestions)}${generator}${previewBlock}${draftForm}`;
+    formalBuilderDecisionPanel.querySelector("form")?.addEventListener("submit", submitFormalDecisionPacket);
     return;
   }
-  formalBuilderDecisionPanel.innerHTML = `<p class="panel-label">第三步 · 基于 ${state.formalConfirmedFacts.length} 条已确认事实</p><h2>起草风险与影子试点建议</h2>${renderFormalDecisionDraftForm("保存并交给核验人员")}`;
+  if (!state.formalConfirmedFacts.length && !preview) {
+    formalBuilderDecisionPanel.innerHTML = `${generator}${internalBlock}<p class="panel-label">第三步</p><h2>等待已确认事实</h2><p>员工提交并由核验人员确认后，这里会开放正式建议生成与风险试点起草。无合格材料时可先生成内部待核实初稿。</p>`;
+    return;
+  }
+  formalBuilderDecisionPanel.innerHTML = `${generator}${internalBlock}${previewBlock}<p class="panel-label">第三步 · 基于 ${state.formalConfirmedFacts.length} 条已确认事实</p><h2>起草风险与影子试点建议</h2>${renderFormalDecisionDraftForm(preview ? (preview.scope === "internal" ? "保存内部待核实初稿" : "保存建议并交核验人员") : "保存并交给核验人员")}`;
   formalBuilderDecisionPanel.querySelector("form")?.addEventListener("submit", submitFormalDecisionPacket);
 }
 
@@ -612,23 +770,38 @@ async function enterDemo(demoRole) {
 }
 
 async function loadFormalBuilderWorkspace() {
+  const requestId = beginFormalWorkspace(state.formalProjectId, "formal-builder-view");
   showView("formal-builder-view");
   if (!state.formalSessionActive) return;
+  if (formalBuilderControl) formalBuilderControl.hidden = true;
+  if (formalBuilderDecisionPanel) formalBuilderDecisionPanel.hidden = true;
+  if (formalInvitationPanel) formalInvitationPanel.hidden = true;
   try {
     const response = await window.diagnosticApi.listFormalProjects();
+    if (requestId !== formalWorkspaceRequest) return;
     state.formalProjects = response.projects || [];
-    if (!state.formalProjectId && state.formalProjects[0]) state.formalProjectId = state.formalProjects[0].id;
-    if (state.formalProjectId) {
-      const [facts, packet, control, invitations, events, materials] = await Promise.all([
+    if (!state.formalProjects.some(project => project.id === state.formalProjectId)) state.formalProjectId = state.formalProjects[0]?.id || "";
+    const projectId = state.formalProjectId;
+    // Persist the selected membership so refresh/re-entry uses the same project.
+    if (projectId) await selectFormalWorkspaceProject(projectId, requestId);
+    if (!isCurrentFormalWorkspace(requestId, projectId)) return;
+    if (!await loadFormalProjectIdentity(projectId, "formal-builder-view", requestId)) return;
+    if (projectId) {
+      const [facts, internalFacts, packet, internalPacket, control, invitations, events, materials] = await Promise.all([
         window.diagnosticApi.listConfirmedFacts(state.formalProjectId).catch(() => ({ facts: [] })),
+        window.diagnosticApi.listConfirmedFacts(state.formalProjectId, "internal").catch(() => ({ facts: [] })),
         window.diagnosticApi.getFormalDecisionPacket(state.formalProjectId).catch(() => ({ packet: null })),
+        window.diagnosticApi.getFormalDecisionPacket(state.formalProjectId, "internal").catch(() => ({ packet: null })),
         window.diagnosticApi.getFormalProject(state.formalProjectId),
         window.diagnosticApi.listFormalInvitations(state.formalProjectId).catch(() => ({ invitations: [] })),
         window.diagnosticApi.listFormalEvents(state.formalProjectId).catch(() => ({ events: [] })),
         window.diagnosticApi.listFormalMaterials(state.formalProjectId).catch(() => ({ materials: [] })),
       ]);
+      if (!isCurrentFormalWorkspace(requestId, projectId)) return;
       state.formalConfirmedFacts = facts.facts || [];
+      state.formalInternalFacts = internalFacts.facts || [];
       state.formalDecisionPacket = packet.packet || null;
+      state.formalInternalPacket = internalPacket.packet || null;
       state.formalBuilderControl = control;
       state.formalInvitations = invitations.invitations || [];
       state.formalBuilderEvents = events.events || [];
@@ -636,6 +809,7 @@ async function loadFormalBuilderWorkspace() {
     }
     renderFormalBuilderWorkspace();
   } catch (error) {
+    if (requestId !== formalWorkspaceRequest) return;
     if (formalProjectList) formalProjectList.innerHTML = '<p class="error-feedback">无法读取项目：' + escapeMarkup(error.message) + '</p>';
   }
 }
@@ -646,6 +820,14 @@ async function submitFormalDecisionPacket(event) {
   const list = (name) => String(data.get(name) || "").split("；").map((v) => v.trim()).filter(Boolean);
   if (!state.formalDecisionDraftKey) state.formalDecisionDraftKey = window.crypto.randomUUID();
   const draftPayload = state.formalDecisionDraftPayload || { factRefs: state.formalConfirmedFacts.map(({ factId, materialStatus }) => ({ factId, materialStatus })), riskSummary: String(data.get("riskSummary") || ""), pilotScope: String(data.get("pilotScope") || ""), constraints: list("constraints"), successMetrics: list("successMetrics"), stopConditions: list("stopConditions"), downstreamOwner: String(data.get("downstreamOwner") || "") };
+  const preview = state.formalSuggestionDraft;
+  if (preview) {
+    draftPayload.suggestions = suggestionWirePayload(preview.suggestions);
+    draftPayload.draftKind = preview.scope;
+    // The preview is only valid for the exact fact set the model saw. The digest is
+    // re-checked server-side so a preview cannot be rebound to newer facts.
+    draftPayload.basisDigest = preview.basisDigest || "";
+  }
   state.formalDecisionDraftPayload = draftPayload;
   state.formalBuilderPendingAction = "decision-draft";
   renderFormalBuilderDecisionPanel();
@@ -653,7 +835,11 @@ async function submitFormalDecisionPacket(event) {
     const response = await window.diagnosticApi.createFormalDecisionPacket(state.formalProjectId, draftPayload, state.formalDecisionDraftKey);
     state.formalDecisionDraftKey = "";
     state.formalDecisionDraftPayload = null;
-    state.formalDecisionPacket = response.packet; renderFormalBuilderDecisionPanel();
+    state.formalSuggestionDraft = null;
+    if (draftPayload.draftKind === "internal") state.formalInternalPacket = response.packet;
+    else state.formalDecisionPacket = response.packet;
+    await loadFormalBuilderWorkspace();
+    showMessage(draftPayload.draftKind === "internal" ? "内部待核实初稿已保存，不会进入正式交付。" : "诊断建议已保存，等待核验人员确认事实引用。");
   } catch (error) {
     if (error.status === 409 || (error.status >= 400 && error.status < 500)) { state.formalDecisionDraftKey = ""; state.formalDecisionDraftPayload = null; }
     showMessage("决策包草稿没有保存：" + error.message);
@@ -663,8 +849,61 @@ async function submitFormalDecisionPacket(event) {
   }
 }
 
+async function generateFormalSuggestions(scope) {
+  if (state.formalSuggestionPending || !state.formalProjectId) return;
+  state.formalSuggestionPending = true;
+  state.formalSuggestionError = "";
+  // A new preview must not reuse the idempotency key or payload of a previous attempt.
+  state.formalDecisionDraftKey = "";
+  state.formalDecisionDraftPayload = null;
+  renderFormalBuilderDecisionPanel();
+  try {
+    const response = await window.diagnosticApi.generateDiagnosisSuggestions(state.formalProjectId, scope, window.crypto.randomUUID());
+    state.formalSuggestionDraft = { scope, suggestions: response.suggestions || [], basisDigest: response.generation?.basisDigest || "" };
+    showMessage(scope === "internal" ? "已生成内部待核实初稿；它不能被核验或发布。" : "已生成正式诊断建议，请核对内容后保存并交核验。");
+  } catch (error) {
+    state.formalSuggestionError = "生成失败：" + error.message;
+  } finally {
+    state.formalSuggestionPending = false;
+    renderFormalBuilderDecisionPanel();
+  }
+}
+
+async function reviewFormalSuggestionContent(packetId, packetVersion, contentKey) {
+  if (!state.formalProjectId || !packetId) return;
+  try {
+    await window.diagnosticApi.reviewFormalSuggestionContent(state.formalProjectId, packetId, packetVersion, contentKey);
+    await loadFormalBuilderWorkspace();
+    showMessage("建议内容审核已完成。核验人员确认事实引用后即可发布。");
+  } catch (error) {
+    showMessage("内容审核没有完成：" + error.message);
+  }
+}
+
+async function updateFormalSuggestionDraft(packetId, packetVersion, contentKey) {
+  const preview = state.formalSuggestionDraft;
+  if (!preview || !packetId) return;
+  try {
+    await window.diagnosticApi.updateFormalSuggestionDraft(state.formalProjectId, packetId, packetVersion, {
+      suggestions: suggestionWirePayload(preview.suggestions),
+      draftKind: preview.scope,
+      basisDigest: preview.basisDigest || "",
+      contentKey,
+    });
+    state.formalSuggestionDraft = null;
+    await loadFormalBuilderWorkspace();
+    showMessage("建议修改已保存；请重新完成内容审核后再交核验。");
+  } catch (error) {
+    showMessage("建议修改没有保存：" + error.message);
+  }
+}
+
 async function publishFormalDecisionPacket(packetId) {
-  try { await window.diagnosticApi.publishFormalDecisionPacket(packetId); state.formalDecisionPacket = null; renderFormalBuilderDecisionPanel(); showMessage("已发布给企业负责人。负责人现在可以进入决策工作台。"); }
+  try {
+    await window.diagnosticApi.publishFormalDecisionPacket(packetId);
+    await loadFormalBuilderWorkspace();
+    showMessage("已发布给企业负责人。负责人现在可以进入决策工作台。");
+  }
   catch (error) { showMessage("尚未发布：" + error.message); }
 }
 
@@ -743,9 +982,7 @@ async function consumeFormalMemberToken(token) {
     const response = await window.diagnosticApi.consumeMemberLogin(token);
     const memberships = response.memberships || [];
     if (memberships.length > 1) {
-      const options = memberships.map((entry, index) => `<option value="${escapeMarkup(String(index))}">${escapeMarkup(entry.project?.name || entry.projectId)} · ${escapeMarkup(formalUiContract.roleLabel(entry.role))}</option>`).join("");
-      if (formalMemberLoginStatus) formalMemberLoginStatus.innerHTML = `<label>选择要进入的项目<select id="formal-member-project-choice">${options}</select></label><button class="secondary-button" type="button" data-action="choose-member-project">进入所选项目</button>`;
-      state.formalPendingMemberships = memberships;
+      renderFormalMemberProjectChoices(memberships);
       return;
     }
     const membership = memberships[0];
@@ -766,15 +1003,30 @@ async function consumeFormalMemberTestToken() {
   await consumeFormalMemberToken(token);
 }
 
+function renderFormalMemberProjectChoices(memberships) {
+  state.formalPendingMemberships = memberships;
+  if (!formalMemberLoginStatus) return;
+  if (!memberships.length) {
+    formalMemberLoginStatus.textContent = "当前账号没有可访问的项目，请联系项目负责人。";
+    return;
+  }
+  const options = memberships.map((entry, index) => `<option value="${escapeMarkup(String(index))}">${escapeMarkup(entry.project?.name || entry.projectId)} · ${escapeMarkup(formalUiContract.roleLabel(entry.role))}</option>`).join("");
+  formalMemberLoginStatus.innerHTML = `<label>选择要进入的项目<select id="formal-member-project-choice">${options}</select></label><button class="secondary-button" type="button" data-action="choose-member-project">进入所选项目</button>`;
+}
 async function enterMemberProject(index) {
   const membership = state.formalPendingMemberships?.[Number(index)];
   if (!membership) return;
+  const requestId = beginFormalWorkspace(membership.projectId, "formal-entry-view");
+  let selected;
+  try { selected = await selectFormalWorkspaceProject(membership.projectId, requestId); }
+  catch (error) { if (isCurrentFormalWorkspace(requestId, membership.projectId) && formalMemberLoginStatus) formalMemberLoginStatus.textContent = "项目恢复失败，请刷新后重试。"; return; }
+  if (!selected || !isCurrentFormalWorkspace(requestId, membership.projectId)) return;
   state.formalPendingMemberships = null;
-  state.formalProjectId = membership.projectId;
-  try { await window.diagnosticApi.selectMemberProject(membership.projectId); } catch (error) { if (formalMemberLoginStatus) formalMemberLoginStatus.textContent = "项目恢复失败，请刷新后重试。"; return; }
-  if (membership.role === "employee") return loadFormalEmployeeTask(membership.projectId);
-  if (membership.role === "verifier") return loadFormalVerifierWorkspace(membership.projectId);
-  if (membership.role === "owner") return loadFormalOwnerWorkspace(membership.projectId);
+  state.formalSessionActive = true;
+  state.formalProjectId = selected.projectId;
+  if (selected.role === "employee") return loadFormalEmployeeTask(selected.projectId);
+  if (selected.role === "verifier") return loadFormalVerifierWorkspace(selected.projectId);
+  if (selected.role === "owner") return loadFormalOwnerWorkspace(selected.projectId);
   return loadFormalBuilderWorkspace();
 }
 
@@ -1284,7 +1536,7 @@ const formalEmployeeQuestions = [
 ];
 
 function formalEmployeeCard() {
-  const answers = state.formalEmployeeAnswers;
+  const answers = state.formalEmployeeTask?.draftWorkflowCard || state.formalEmployeeAnswers;
   return {
     trigger: answers.trigger || "",
     inputs: answers.inputs || "",
@@ -1295,6 +1547,7 @@ function formalEmployeeCard() {
     // 也不会把它们写进候选事实，核验人将完全看不到"交给谁""耗时多少"。
     handoff: answers.handoff || "",
     burden: answers.burden || "",
+    ...(answers.unresolved?.length ? { unresolved: answers.unresolved } : {}),
     materialIndex: formalUiContract.employeeMaterialLabel(state.formalEmployeeMaterialStatus),
   };
 }
@@ -1395,9 +1648,10 @@ function levelBadge(level, note) {
 function renderFormalWorkflowCard() {
   const card = formalEmployeeCard();
   const agentDims = state.formalAgentFlowCard?.dimensions || {};
-  const unresolved = (state.formalAgentFlowCard?.unresolved || []).filter((u) => u && (u.key || u.dimension));
+  const unresolved = (card.unresolved || state.formalAgentFlowCard?.unresolved || []).filter((u) => u && (u.key || u.dimension));
   const unresolvedKeys = new Set(unresolved.map((u) => u.key || u.dimension));
-  const evidence = state.formalAgentFlowCard?.evidence || [];
+  // Evidence metadata also carries version digests; only material lists render as rows.
+  const evidence = Array.isArray(state.formalAgentFlowCard?.evidence) ? state.formalAgentFlowCard.evidence : [];
   const task = state.formalEmployeeTask || {};
   const materialStatus = state.formalEmployeeMaterialStatus;
 
@@ -1414,7 +1668,7 @@ function renderFormalWorkflowCard() {
   };
   const has = (key) => String(raw(key)).trim().length > 0;
 
-  const answeredCount = ["trigger", "inputs", "steps", "judgments", "exceptions"].filter(has).length;
+  const answeredCount = formalEmployeeQuestions.filter(q=>has(q.key)).length;
   const materialLabel = materialStatus === "provided" ? "员工声明有已授权材料"
     : materialStatus === "none_available" ? "员工声明暂无可提供材料" : "尚未选择";
 
@@ -1423,35 +1677,15 @@ function renderFormalWorkflowCard() {
     ["本次还原的工作", escapeMarkup(task.workName || "客户交接流程")],
     ["所属项目", escapeMarkup(task.projectScope || state.formalProjectName || "—")],
     ["还原人", escapeMarkup(state.formalBuilderName || "本人") + " · 该流程的实际执行人"],
-    ["由谁发起", has("trigger") ? value("trigger") : '<span class="wfc-missing">未还原</span>'],
-    ["结果交给谁", has("handoff") ? value("handoff") : '<span class="wfc-missing">未还原</span>'],
-    ["需要先看什么", has("inputs") ? value("inputs") : '<span class="wfc-missing">未还原</span>'],
   ].map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("");
 
-  // ── 工作流程：按维度铺成一段可读的走法 ────────────────────
-  const flowNodes = [];
-  if (has("trigger")) flowNodes.push(`<span class="wfc-node">${escapeMarkup(raw("trigger"))}</span>`);
-  if (has("inputs")) flowNodes.push(`<span class="wfc-arrow">→</span><span class="wfc-node">${escapeMarkup(raw("inputs"))}</span>`);
-  if (has("steps")) flowNodes.push(`<span class="wfc-arrow">→</span><span class="wfc-node wfc-node--main">${escapeMarkup(raw("steps"))}</span>`);
-  if (has("handoff")) flowNodes.push(`<span class="wfc-arrow">→</span><span class="wfc-node wfc-node--ok">${escapeMarkup(raw("handoff"))}</span>`);
-  const flowLine = flowNodes.length
-    ? flowNodes.join("")
-    : '<span class="wfc-missing">本次没有还原出可展示的走法。</span>';
-
-  // ── 步骤明细：每个维度一行，异常的判断单独成列 ──────────────
-  const stepRows = [
-    ["1", "接收与触发", "本人", "trigger", "上游流程到位"],
-    ["2", "取所需信息", "本人", "inputs", "信息是否齐全"],
-    ["3", "实际执行", "本人", "steps", "按既定顺序操作"],
-    ["4", "无法自行决定时", "本人 / 上级", "judgments", "是否超出本人权限"],
-    ["5", "卡住或被退回时", "本人", "exceptions", "资料缺失 / 冲突"],
-  ].map(([no, stage, who, key, basis]) =>
-    `<tr${has(key) ? "" : ' class="wfc-row--missing"'}>` +
-    `<td class="wfc-num">${no}</td><td>${stage}</td><td>${who}</td>` +
-    `<td>${value(key)}</td><td class="wfc-dim">${basis}</td>` +
-    `<td class="wfc-dim">${has(key) ? "见上文" : '<span class="wfc-missing">待确认</span>'}</td>` +
-    `<td>${levelBadge("E3", "本人陈述")}</td></tr>`).join("");
-
+  const presentation = task.draftPresentation || {};
+  const effectiveSections = formalEmployeeQuestions.map(q=>{
+    const statements=(presentation.currentStatements||[]).filter(p=>p.dimension===q.key);
+    return `<section><h4>${escapeMarkup(q.label)}</h4>` +
+      (statements.length ? `<ul>${statements.map(p=>`<li>${escapeMarkup(p.text)} <small class="wfc-dim">（来源：陈述 #${escapeMarkup(p.statementSeq)}）</small></li>`).join("")}</ul>`
+        : `<p class="wfc-dim">${escapeMarkup(raw(q.key) ? "暂无可确认的具体做法，请看下方待核实事项及原话。" : "尚未还原，不能推测。")}</p>`) + `</section>`;
+  }).join("");
   // ── 证据清单：Agent 引用的材料 + 放弃的维度 ────────────────
   const evidenceRows = [
     ...evidence.map((e, i) =>
@@ -1459,17 +1693,11 @@ function renderFormalWorkflowCard() {
       `<td>${escapeMarkup(e.ref || "已登记材料")}</td>` +
       `<td>${levelBadge(String(e.level || "E4").toUpperCase())}</td>` +
       `<td class="wfc-dim">员工引用 · 待核验</td></tr>`),
-    ...unresolved.map((u, i) =>
-      `<tr class="wfc-row--missing"><td>CARD-M${i + 1}</td>` +
-      `<td>${escapeMarkup((u.dimension || u.key) + "：" + (u.reason || "重复追问后仍不明确"))}</td>` +
-      `<td class="wfc-dim">—</td><td><strong>待人工核验</strong></td></tr>`),
-  ].join("") || `<tr><td colspan="4" class="wfc-dim">本次没有引用材料，也没有放弃的维度。</td></tr>`;
-
-  const unresolvedNote = unresolved.length
-    ? `<div class="wfc-note wfc-note--warn"><strong>有 ${unresolved.length} 项没能还原</strong>` +
-      `${escapeMarkup(unresolved.map((u) => (u.dimension || u.key) + "（" + (u.reason || "仍不明确") + "）").join("、"))}。` +
-      `这些项不会进入事实核验，需要人工补充。</div>`
-    : "";
+    ...(presentation.unresolvedGroups || unresolved.map(u=>({summary:u.reason||u.quote,sources:[u]}))).map((g,i)=>
+      `<tr class="wfc-row--missing"><td>待核实 ${i+1}</td><td><strong>${escapeMarkup(g.kind === "correction" ? "员工已修正口径，需核验新口径；原话见下方来源" : g.summary)}</strong>` +
+      `<details><summary>原话与来源（${g.sources.length} 条）</summary>${g.sources.map(u=>`<p>${escapeMarkup(u.quote||u.reason)}</p><p class="wfc-dim">陈述 #${escapeMarkup(u.statementSeq??"未记录")} · ${escapeMarkup(FORMAL_HISTORY_DIMENSION_LABELS[u.sourceDimension||u.dimension||u.key]||u.sourceDimension||u.dimension||u.key)} · E3 本人陈述</p><p class="wfc-dim">交给：${escapeMarkup(u.requestedFrom||"流程核验人员")}；需要：${escapeMarkup(u.evidenceNeeded||"对应的授权材料或独立说明")}</p>`).join("")}</details></td><td>E3</td><td>待人工核验<br>${escapeMarkup([...new Set(g.sources.map(u=>u.requestedFrom||"流程核验人员"))].join("；"))}</td></tr>`),
+  ].join("") || `<tr><td colspan="4" class="wfc-dim">本次尚无材料或待核实条目。</td></tr>`;
+  const unresolvedNote = unresolved.length ? `<p class="wfc-note">${(presentation.unresolvedGroups||unresolved).length} 项待核实，保留 ${unresolved.length} 条原话来源。合并展示不合并证据，也不代表已确认事实。</p>` : "";
 
   // ── AI 推断逐条判定 ────────────────────────────────────────
   // 这一段是整张卡的闸门：AI 对工作的理解总比本人口述多一点，
@@ -1502,7 +1730,7 @@ function renderFormalWorkflowCard() {
     const quoteText = inf.quote && String(inf.quote).trim();
     // U1：有 quote 才展示"你的原话"；没有 quote 时**明确说明没有引用**，绝不伪造来源。
     const quoteHtml = quoteText
-      ? `<div class="wfc-quote" style="margin-top:6px;padding:6px 8px;border-left:3px solid #c9d6e3;background:#f7f9fb;font-size:13px;">你的原话：「${escapeMarkup(quoteText)}」</div>`
+      ? `<div class="wfc-quote" style="margin-top:6px;padding:6px 8px;border-left:3px solid #c9d6e3;background:#f7f9fb;font-size:13px;">你的原话（引用片段）：「${escapeMarkup(quoteText)}」</div>`
       : `<div class="wfc-quote wfc-quote--none" style="margin-top:6px;padding:6px 8px;border-left:3px solid #e3e3e3;background:#fafafa;font-size:13px;color:#666;">该推断不引用你的原话（由 AI 归纳，没有员工原话证据）</div>`;
     const staleHint = (jstate === "stale" && prior)
       ? `<div class="wfc-stale-hint" style="margin-top:6px;font-size:12px;color:#8a4b00;">上次判定：${escapeMarkup(verdictLabel(prior.verdict))}（依据已更新，需重新确认）</div>`
@@ -1519,7 +1747,7 @@ function renderFormalWorkflowCard() {
     return `<tr class="${rowClass}">` +
       `<td>${escapeMarkup(inf.text || "")}` +
       quoteHtml +
-      `<div class="wfc-basis">依据你的「${escapeMarkup(inf.basis || "")}」回答 · ${escapeMarkup(inf.assumes || "")}</div>` +
+      `<div class="wfc-basis">依据你的「${escapeMarkup(FORMAL_HISTORY_DIMENSION_LABELS[inf.basis] || inf.basis || "")}」回答 · ${escapeMarkup(inf.assumes || "")}</div>` +
       jstateBadge(jstate) + staleHint + pendingHint + rejectedHint + `</td>` +
       `<td class="wfc-judge">` +
       `<label class="wfc-verdict"><input type="radio" name="inference-${escapeMarkup(inf.id)}" value="agree" data-inference-id="${escapeMarkup(inf.id)}" ${effectiveVerdict === "agree" ? "checked" : ""}>符合实际</label>` +
@@ -1543,7 +1771,8 @@ function renderFormalWorkflowCard() {
   const inferenceSection = (visibleInferences.length || capacityMarker)
     ? `<section class="wfc-sec">
     <h3 class="wfc-h">AI 推断 · 请逐条判定</h3>
-    <p class="wfc-dim">下面是 AI 在整理时做的推断，不是你原话。每条下方标注「你的原话」的才是你的原话；未标注原话的是 AI 归纳。它们大多数时候对，但对的部分会成为事实，错的部分会成为假事实 —— 所以需要你逐条确认。</p>
+    <p class="wfc-dim">当前 ${visibleInferences.length} 条候选假设，全部列在下方。每条都需要你判定，未完成或依据过期时不能提交。</p>
+    <p class="wfc-dim">下面是 AI 在整理时做的推断，不是你原话。每条下方标注「你的原话」的才是你的原话；未标注原话的是 AI 归纳。你的判定只确认本人陈述中的读法，不能把 AI 假设自动变成企业事实；后续仍需材料核验。</p>
     ${capacityNotice}
     ${visibleInferences.length ? `<table class="wfc-table wfc-table--grid">
       <tr><th>AI 的推断 · 你的原话 · 判定状态</th><th>你的判定</th></tr>
@@ -1629,7 +1858,7 @@ function renderFormalWorkflowCard() {
   const scopeSection = `<section class="wfc-sec">
     <h3 class="wfc-h">本卡的证据射程</h3>
     <div class="wfc-levelrow">${levelBadge(cardLevel, "本人单方陈述")}${
-      inferences.length ? levelBadge("E5", `${inferences.length} 条 AI 推断`) : ""}</div>
+      visibleInferences.length ? levelBadge("E5", `${visibleInferences.length} 条当前 AI 假设`) : ""}</div>
     <table class="wfc-table">${scopeRows}</table>
     <div class="wfc-note wfc-note--warn">
       <strong>守门结论</strong>
@@ -1650,7 +1879,7 @@ function renderFormalWorkflowCard() {
     <div class="wfc-badges">
       <span class="wfc-badge wfc-badge--wait">待本人确认</span>
       <span class="wfc-badge">流程卡 第 ${escapeMarkup(task.flowCardVersion || 1)} 版</span>
-      <span class="wfc-badge">进度 ${answeredCount} / 5 项</span>
+      <span class="wfc-badge">已记录 ${answeredCount} / ${formalEmployeeQuestions.length} 个方面</span>
       <span class="wfc-badge">证据等级 ${cardLevel}（本人陈述）</span>
       <span class="wfc-badge ${materialStatus === "provided" ? "wfc-badge--ok" : "wfc-badge--warn"}">${escapeMarkup(materialLabel)}</span>
     </div>
@@ -1664,23 +1893,12 @@ function renderFormalWorkflowCard() {
   </section>
 
   <section class="wfc-sec">
-    <h3 class="wfc-h">工作流程</h3>
-    <div class="wfc-flow">${flowLine}</div>
-    ${has("judgments") ? `<div class="wfc-note"><strong>不能自己决定的情况</strong>${value("judgments")}</div>` : ""}
-    ${has("exceptions") ? `<div class="wfc-note"><strong>卡住或被退回时</strong>${value("exceptions")}</div>` : ""}
-    ${has("burden") ? `<div class="wfc-note"><strong>耗时与工作量</strong>${value("burden")}</div>` : ""}
+    <h3 class="wfc-h">当前有效流程（员工陈述 E3，尚未核验）</h3>
+    ${effectiveSections}
   </section>
 
   <section class="wfc-sec">
-    <h3 class="wfc-h">步骤明细</h3>
-    <table class="wfc-table wfc-table--grid">
-      <tr><th>#</th><th>环节</th><th>谁做</th><th>实际操作</th><th>判断依据</th><th>异常怎么办</th><th>证据</th></tr>
-      ${stepRows}
-    </table>
-  </section>
-
-  <section class="wfc-sec">
-    <h3 class="wfc-h">证据清单</h3>
+    <h3 class="wfc-h">待核实事项与证据</h3>
     <table class="wfc-table wfc-table--grid">
       <tr><th>编号</th><th>内容</th><th>等级</th><th>状态</th></tr>
       ${evidenceRows}
@@ -1688,13 +1906,11 @@ function renderFormalWorkflowCard() {
     ${unresolvedNote}
   </section>
 
-  ${policySection}
-
-  ${scopeSection}
-
-  ${requestSection}
+  <details class="wfc-sec"><summary>证据边界与补证说明</summary>${policySection}${scopeSection}${requestSection}</details>
 
   ${inferenceSection}
+
+  ${formalInferenceHistorySection()}
 
   ${formalStatementHistorySection()}
 
@@ -1708,7 +1924,9 @@ function renderFormalWorkflowCard() {
 
 function formatFormalTime(value) {
   if (!value) return "尚未提交";
-  const date = new Date(value);
+  const source = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(String(value))
+    ? String(value).replace(" ", "T") + "Z" : value;
+  const date = new Date(source);
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("zh-CN", { hour12: false });
 }
 
@@ -1802,7 +2020,7 @@ function renderFormalEmployeeNav() {
       label = `已了解 ${handled} / ${required.length} 个方面`;
     } else {
       pct = Math.round((answered / total) * 100);
-      label = `已回答 ${answered} / ${total} 个问题`;
+      label = `已填写 ${answered} / ${total} 个方面`;
     }
     progressEl.innerHTML =
       `${blockTitle("本步进度", "pane-block__title")}` +
@@ -1904,11 +2122,14 @@ function renderFormalEmployeeThread() {
         `<dl class="workflow-card"><div><dt>需要补什么</dt><dd>${escapeMarkup(supplement.requestedMaterial)}</dd></div>` +
         `<div><dt>责任人</dt><dd>${escapeMarkup(supplement.responsiblePerson)}</dd></div>` +
         `<div><dt>截止时间</dt><dd>${escapeMarkup(supplement.deadline)}</dd></div></dl>` +
+        `<div class="employee-supplement-fields">` +
         `<label class="employee-label" for="formal-employee-supplement">我有材料可以提供</label>` +
         `<p class="field-help">这是员工提供的线索，不代表平台已经确认材料真实或可用于核验。</p>` +
         `<textarea id="formal-employee-supplement" rows="4" placeholder="例如：已授权的 OA 审批导出，包含申请编号和审批完成时间"></textarea>` +
         `<label class="employee-label" for="formal-employee-supplement-source">材料来源标识</label>` +
-        `<input id="formal-employee-supplement-source" placeholder="例如：oa://exports/2026-08">`;
+        `<input id="formal-employee-supplement-source" placeholder="例如：oa://exports/2026-08">` +
+        `<label class="employee-label" for="formal-employee-supplement-type">来源类型</label>` +
+        `<select id="formal-employee-supplement-type" required><option value="">请选择来源类型</option><option value="pdf">PDF</option><option value="image">图片</option><option value="csv">CSV</option><option value="xlsx">Excel</option><option value="text">文本</option></select></div>`;
       return;
     }
     if (metaEl) metaEl.textContent = "已提交";
@@ -1946,27 +2167,28 @@ function renderFormalEmployeeThread() {
 
   if (metaEl) {
     metaEl.textContent = agentQuestion
-      ? `第 ${answered.length + 1} 问 · 自适应`
-      : `第 ${fallbackIndex + 1} / ${formalEmployeeQuestions.length} 问`;
+      ? `自适应访谈 · 已记录 ${formalRecordedStatementCount()} 条陈述`
+      : `当前方面 ${fallbackIndex + 1} / ${formalEmployeeQuestions.length}`;
   }
 
-  const history = answered.map((entry) =>
+  const storedHistory = task?.draftLedger?.statementHistory || [];
+  const history = (storedHistory.length ? storedHistory : answered.map(e=>({dimension:e.q.key,text:e.answer}))).map(entry=>
     `<div class="msg msg--me"><span class="msg__avatar">我</span><div>` +
-    `<div class="msg__step">第 ${entry.index + 1} 问 · ${escapeMarkup(entry.q.label)}</div>` +
-    `<div class="msg__text">${escapeMarkup(entry.answer)}</div></div></div>`
+    `<div class="msg__step">${entry.seq ? `陈述 #${escapeMarkup(entry.seq)} · ` : "已回答 · "}${escapeMarkup(FORMAL_HISTORY_DIMENSION_LABELS[entry.dimension]||entry.dimension)}</div>` +
+    `<div class="msg__text">${escapeMarkup(entry.text)}</div></div></div>`
   ).join("");
 
   const currentMsg =
     `<div class="msg"><span class="msg__avatar">AI</span><div>` +
-    `<div class="msg__step">第 ${agentQuestion ? answered.length + 1 : fallbackIndex + 1} 问</div>` +
+    `<div class="msg__step">当前问题 · 已记录 ${formalRecordedStatementCount()} 条陈述</div>` +
     `<div class="msg__head">${escapeMarkup(question.label)}</div>` +
     `<div class="msg__text">${escapeMarkup(question.prompt)}</div></div></div>`;
 
   const divider = answered.length
-    ? threadDivider(`本轮摸排 · 已答 ${answered.length} 问`)
+    ? threadDivider(`本轮摸排 · 已记录 ${formalRecordedStatementCount()} 条陈述`)
     : threadDivider("摸排开始 · 自适应提问");
 
-  threadEl.innerHTML = divider + (history || `<p class="thread-empty">共 ${formalEmployeeQuestions.length} 个问题，一次只问一个。</p>`) + currentMsg +
+  threadEl.innerHTML = divider + (history || `<p class="thread-empty">围绕 ${formalEmployeeQuestions.length} 个方面，一次只问一个问题。</p>`) + currentMsg +
     (state.formalAgentThinking
       ? `<div class="msg msg--pending"><span class="msg__avatar">AI</span><div><div class="msg__text">正在根据你的回答追问…</div></div></div>`
       : "");
@@ -1990,7 +2212,7 @@ function renderFormalEmployeeTrace() {
   ];
 
   const cardCards = cardFields.map(([key, label]) => {
-    const value = String(state.formalEmployeeAnswers[key] || "").trim();
+    const value = String(task.workflowCard?.[key] || formalEmployeeCard()[key] || "").trim();
     return `<div class="trace-card ${value ? "" : "trace-card--pending"}">` +
       `<div class="trace-card__label">${escapeMarkup(label)}` +
       `${value ? '<span class="trace-badge trace-badge--done">已还原</span>' : '<span class="trace-badge">待还原</span>'}</div>` +
@@ -2121,20 +2343,30 @@ function renderFormalEmployeeComposer() {
     .filter((q) => String(state.formalEmployeeAnswers?.[q.key] || "").trim()).length;
   const statusBar = needsStatusBar()
     ? `<div class="composer__status">` +
-      `<span class="composer__status-item"><span class="composer__dot"></span>已完成 ${answeredCount} / ${totalQuestions} 问</span>` +
+      `<span class="composer__status-item"><span class="composer__dot"></span>已填写 ${answeredCount} / ${totalQuestions} 个方面</span>` +
       `<span class="composer__status-sep"></span>` +
       formalEmployeeEngineBadge() +
       `<span class="composer__status-item">Enter 发送 · Shift + Enter 换行</span>` +
       formalEmployeeSaveBadge() +
       `</div>`
     : "";
-  actionsEl.innerHTML = buttons + statusBar;
+  const pending = state.formalPendingTurn;
+  const paused = pending && !state.formalAgentThinking
+    ? `<div class="field-help" role="alert"><strong>访谈已暂停，尚未完成</strong><p>${escapeMarkup(pending.detail)} 本轮输入尚未成为员工陈述。${pending.storageSaved ? "已暂存在本浏览器标签页，刷新可恢复；关闭标签页前请自行保留。" : "浏览器暂存不可用，输入仅保留在当前页面；刷新或关闭前请先复制。"}</p>` +
+      (pending.question.key !== state.formalAgentQuestion?.key ? `<p>原问题：${escapeMarkup(pending.question.prompt)}</p><p>保留的原回答：${escapeMarkup(pending.text)}</p><p>当前问题已变化，请核对后重新作答，不会自动把原回答附到新问题。</p>` : "") + `</div>` : "";
+  actionsEl.innerHTML = paused + buttons + statusBar;
+  if (pending?.code === "model_call_limit_reached") {
+    const next = actionsEl.querySelector('[data-action="continue-formal-employee"]');
+    if (next) { next.disabled = true; next.textContent = "额度已用完，访谈暂停"; }
+  }
 
   // 输入框只在真正需要输入的状态出现
   const needsInput = !["intro", "waiting", "card"].includes(state.formalEmployeeStep) &&
     !(state.formalEmployeeStep === "submitted");
   if (input) {
     input.hidden = !needsInput;
+    input.disabled = state.formalAgentThinking;
+    if (state.formalPendingTurn && state.formalPendingTurn.question.key === state.formalAgentQuestion?.key) input.value = state.formalPendingTurn.text;
     if (needsInput && document.activeElement !== input) {
       const agentQuestion = state.formalAgentQuestion;
       const fallbackIndex = Math.max(0, formalUiContract.employeeQuestionIndex(
@@ -2143,7 +2375,8 @@ function renderFormalEmployeeComposer() {
       const editing = Number.isInteger(state.formalEmployeeEditIndex) && state.formalEmployeeEditIndex >= 0;
       // 只有“回到某条历史回答去改”时才回填；正常前进时留空。
       // 否则 Agent 追问同一题时会把上一轮的答案又填回来，用户以为没提交成功。
-      input.value = editing ? (state.formalEmployeeAnswers[question.key] || "") : "";
+      input.value = state.formalPendingTurn && state.formalPendingTurn.question.key === question?.key ? state.formalPendingTurn.text
+        : editing ? (state.formalEmployeeAnswers[question.key] || "") : "";
     }
   }
 }
@@ -2233,7 +2466,7 @@ function formalInferenceJudgmentState(entry, verdicts, priorVerdicts) {
 function formalInferenceCapacityMarker() {
   return (state.formalAgentInferences || []).find(formalIsCapacityMarker) || null;
 }
-/** 界面上可判定的条目：排除容量标记与溢出条目（溢出条目服务端不允许在界面判定） */
+/** 全部已保存推断都需可判定；listed 只标识服务端首批列表，不是人工审核范围。 */
 /**
  * PILOT-09C/IMPLEMENT-3D（H-1）：员工陈述历史 —— **只读展示**。
  *
@@ -2242,51 +2475,38 @@ function formalInferenceCapacityMarker() {
  */
 const FORMAL_HISTORY_DIMENSION_LABELS = {
   trigger: "触发条件", inputs: "看什么", steps: "实际怎么做",
-  judgments: "卡住怎么判断", exceptions: "不能自己决定的情况",
-  handoff: "卡住后怎么办", burden: "耗时与人力",
+  judgments: "不能自己决定的情况", exceptions: "卡住后怎么办",
+  handoff: "交给谁", burden: "耗时与人力",
 };
 const FORMAL_HISTORY_KIND_LABELS = {
   initial: "首次陈述", supplement: "补充", correction: "明确纠正",
-  unknown: "明确不知道", conflict_pending: "存在冲突待澄清",
+  unknown: "明确不知道", conflict_pending: "口径变化标记（待核实）",
 };
 function formalStatementHistorySection() {
-  const task = state.formalEmployeeTask || {};
-  const ledger = task.draftLedger || task.draft?.ledger || null;
-  const history = ledger && Array.isArray(ledger.statementHistory) ? ledger.statementHistory : [];
+  const history = state.formalEmployeeTask?.draftLedger?.statementHistory || [];
   if (!history.length) return "";
-  const byDimension = new Map();
-  for (const entry of history) {
-    if (!entry || !entry.dimension || !entry.text) continue;
-    const bucket = byDimension.get(entry.dimension) || [];
-    bucket.push(entry);
-    byDimension.set(entry.dimension, bucket);
-  }
-  // 只展示"有故事"的维度：多轮，或出现「不知道 / 纠正 / 冲突」
-  const notable = [...byDimension.entries()].filter(([, entries]) => entries.length > 1
-    || entries.some((e) => ["unknown", "correction", "conflict_pending"].includes(e.kind)));
-  if (!notable.length) return "";
-  const rows = notable.map(([dimension, entries]) => {
-    const label = FORMAL_HISTORY_DIMENSION_LABELS[dimension] || dimension;
-    const items = entries.map((entry) => {
-      const kindLabel = FORMAL_HISTORY_KIND_LABELS[entry.kind] || entry.kind;
-      const rev = Number.isInteger(entry.turnRevision) ? `第 ${entry.turnRevision + 1} 轮` : "";
-      return `<li style="margin:2px 0;"><span style="font-size:12px;padding:1px 6px;border-radius:8px;background:#eef2f7;color:#334;">${escapeMarkup(kindLabel)}</span> <span style="color:#555;font-size:12px;">${escapeMarkup(rev)}</span> 「${escapeMarkup(entry.text)}」</li>`;
-    }).join("");
-    return `<li style="margin:6px 0;"><strong>${escapeMarkup(label)}</strong><ul style="margin:4px 0 0 16px;padding:0;list-style:disc;">${items}</ul></li>`;
-  }).join("");
-  return `<section class="wfc-sec">
-<h3 class="wfc-h">你的陈述历史</h3>
-<p class="wfc-dim">同一个维度你回答过多次时，之前的原话不会被覆盖 —— 下面是服务端保存的完整记录（只读）。</p>
-<ul style="margin:0;padding:0;list-style:none;">${rows}</ul>
-</section>`;
+  return `<details class="wfc-sec"><summary>原始回答与修正记录（${history.length} 条）</summary>` +
+    `<p class="wfc-dim">原话逐条保留。陈述编号不是草稿修订号，也不冒充模型调用轮次。</p>` +
+    history.map(h=>`<article><strong>陈述 #${escapeMarkup(h.seq)} · ${escapeMarkup(FORMAL_HISTORY_DIMENSION_LABELS[h.dimension]||h.dimension)}</strong>` +
+      `<p class="wfc-dim">${escapeMarkup(FORMAL_HISTORY_KIND_LABELS[h.kind]||h.kind)}${Number.isInteger(h.turnRevision)?` · 草稿修订 ${h.turnRevision}`:""}</p><p>${escapeMarkup(h.text)}</p></article>`).join("") + `</details>`;
 }
+function formalInferenceHistorySection() {
+  const entries=(state.formalAgentInferences||[]).filter(e=>e.reviewStatus && e.reviewStatus!=="active" && !formalIsCapacityMarker(e));
+  if(!entries.length)return "";
+  return `<details class="wfc-sec"><summary>历史假设（${entries.length} 条，不作为当前结论）</summary>` +
+    entries.map(e=>`<article><strong>${escapeMarkup(e.reviewReason)}</strong><p>${escapeMarkup(e.text)}</p>` +
+      `<p class="wfc-dim">${escapeMarkup(FORMAL_HISTORY_DIMENSION_LABELS[e.basis]||e.basis||"")} · 内容版本 ${escapeMarkup(e.contentVersion)} · 证据版本 ${escapeMarkup(e.evidenceVersion)}</p>` +
+      (e.reviewCorrection?`<p>员工更正：${escapeMarkup(e.reviewCorrection)}</p>`:"") +
+      (e.reviewSource?`<p>后续依据 · 陈述 #${escapeMarkup(e.reviewSource.statementSeq)}：${escapeMarkup(e.reviewSource.quote)}</p>`:"") +`</article>`).join("") + `</details>`;
+}
+function formalRecordedStatementCount() { return (state.formalEmployeeTask?.draftLedger?.statementHistory || []).length; }
 
 function formalVisibleInferences() {
-  return (state.formalAgentInferences || []).filter((e) => e && e.id && !formalIsCapacityMarker(e) && e.listed !== false);
+  return (state.formalAgentInferences || []).filter((e) => e && e.id && !formalIsCapacityMarker(e) && (!e.reviewStatus || e.reviewStatus === "active"));
 }
 function formalInferenceSummary(inferences, verdicts) {
   const list = (Array.isArray(inferences) ? inferences : formalVisibleInferences())
-    .filter((e) => e && e.id && !formalIsCapacityMarker(e) && e.listed !== false);
+    .filter((e) => e && e.id && !formalIsCapacityMarker(e) && (!e.reviewStatus || e.reviewStatus === "active"));
   let valid = 0; let stale = 0; let unjudged = 0; let corrections = 0;
   for (const entry of list) {
     const jstate = formalInferenceJudgmentState(entry, verdicts);
@@ -2388,7 +2608,7 @@ function applyFormalEmployeeTaskPayload(payload) {
     const ledger = task.draftLedger || task.draft?.ledger || null;
     return ledger && Array.isArray(ledger.authoritativeInferences) ? ledger.authoritativeInferences : [];
   })();
-  if (baselineInferences.length) {
+  { // An empty server baseline is authoritative too; keep no prior-task hypotheses.
     state.formalAgentInferences = baselineInferences
       .filter((entry) => entry && entry.id && entry.text)
       .map((entry) => ({
@@ -2398,6 +2618,9 @@ function applyFormalEmployeeTaskPayload(payload) {
         assumes: entry.assumes || null,
         // ★ 服务端可信字段，原样镜像（客户端不修改、不回传参与裁决）
         source: entry.source === "server_template" || entry.source === "capacity_block" ? entry.source : "model",
+        reviewStatus: entry.reviewStatus || "active", reviewReason: entry.reviewReason || "",
+        reviewCorrection: entry.reviewCorrection || "", reviewSource: entry.reviewSource || null,
+        lastProposedRevision: entry.lastProposedRevision ?? null,
         quote: entry.quote || null,
         evidenceHash: entry.evidenceHash || null,
         contentVersion: Number.isInteger(entry.contentVersion) ? entry.contentVersion : null,
@@ -2415,10 +2638,16 @@ function applyFormalEmployeeTaskPayload(payload) {
 
 async function loadFormalEmployeeTask(projectId) {
   state.formalSessionActive = true;
-  state.formalProjectId = projectId;
+  const requestId = beginFormalWorkspace(projectId, "formal-employee-view");
+  state.formalEmployeeTask = null;
+  state.formalPendingTurn = null;
+  state.formalEmployeeStep = "loading";
   showView("formal-employee-view");
+  renderFormalEmployeeWorkbench();
   try {
+    if (!await loadFormalProjectIdentity(projectId, "formal-employee-view", requestId)) return;
     const payload = await window.diagnosticApi.getEmployeeTask(projectId);
+    if (!isCurrentFormalWorkspace(requestId, projectId)) return;
     applyFormalEmployeeTaskPayload(payload);
     // PILOT-09C/FIX-CODEX-02B（F02）：重新加载任务 = 接受服务端最新状态，解除冲突闩锁。
     // （只有这条路径可以解除：冲突后禁止自动重试并覆盖服务端较新内容。）
@@ -2433,10 +2662,15 @@ async function loadFormalEmployeeTask(projectId) {
     if (state.formalEmployeeStep === "intro") {
       const reloadAnswers = state.formalEmployeeAnswers || {};
       const allAnswered = formalEmployeeQuestions.every(({ key }) => String(reloadAnswers[key] || "").trim());
-      if (allAnswered) state.formalEmployeeStep = "card";
+      if (state.formalInterviewLedger?.pendingQuestion?.key) {
+        state.formalEmployeeStep = "questions";
+        state.formalAgentQuestion = resumeFormalAgentQuestion();
+      } else if (allAnswered) state.formalEmployeeStep = "card";
     }
+    if (["intro", "questions", "card"].includes(state.formalEmployeeStep)) restoreFormalPendingTurn();
     renderFormalEmployeeWorkbench();
   } catch (error) {
+    if (!isCurrentFormalWorkspace(requestId, projectId)) return;
     const target = document.querySelector("#formal-employee-thread");
     if (target) target.innerHTML = `<div role="alert"><h2>暂时无法打开任务</h2><p>${escapeMarkup(error.message)}</p></div>`;
   }
@@ -2530,12 +2764,18 @@ function renderFormalOwnerWorkspace() {
       (packet.invalidation.reason ? `<small>${escapeMarkup(`原因：${packet.invalidation.reason}`)}</small>` : "") +
       `</div>`
     : "";
+  const suggestionInvalidation = packet.suggestionsInvalidated?.invalidated
+    ? `<div class="stale-banner" role="alert"><strong>诊断建议已失效</strong><span>${escapeMarkup(packet.suggestionsInvalidated.reason || "建议所依据的事实已变化，不能继续作为有效结论。")}</span></div>`
+    : "";
+  const suggestionBlock = Array.isArray(packet.suggestions) && packet.suggestions.length
+    ? `<div class="msg"><span class="msg__avatar">AI</span><div><div class="msg__head">AI 改造建议 · ${escapeMarkup(formalUiContract.suggestionDraftKindLabel(packet.draftKind))}</div><div class="msg__text">${renderSuggestionCards(packet.suggestions)}</div></div></div>`
+    : "";
   threadEl.innerHTML =
-    invalidationNotice +
+    invalidationNotice + suggestionInvalidation +
     `<div class="msg"><span class="msg__avatar">AI</span><div>` +
     `<div class="msg__head">风险摘要</div><div class="msg__text">${escapeMarkup(packet.riskSummary)}</div></div></div>` +
     `<div class="msg"><span class="msg__avatar">AI</span><div>` +
-    `<div class="msg__head">影子试点范围</div><div class="msg__text">${escapeMarkup(packet.pilotScope)}</div></div></div>` +
+    `<div class="msg__head">影子试点范围</div><div class="msg__text">${escapeMarkup(packet.pilotScope)}</div></div></div>` + suggestionBlock +
     `<div class="msg msg--me"><span class="msg__avatar">摘</span><div>` +
     `<div class="msg__head">约束与判据</div><div class="msg__text">` +
     `<dl class="receipt-grid">` +
@@ -2593,15 +2833,23 @@ function renderFormalOwnerWorkspace() {
 }
 
 async function loadFormalOwnerWorkspace(projectId) {
-  state.formalSessionActive = true; state.formalProjectId = projectId;
+  state.formalSessionActive = true;
+  const requestId = beginFormalWorkspace(projectId, "formal-owner-view");
+  state.formalOwnerPacket = null;
+  state.formalOwnerReceipt = null;
   state.role = "owner";
+  state.formalOwnerError = null;
   showView("formal-owner-view");
+  renderFormalOwnerWorkspace();
   try {
+    if (!await loadFormalProjectIdentity(projectId, "formal-owner-view", requestId)) return;
     const response = await window.diagnosticApi.getFormalOwnerPacket(projectId);
+    if (!isCurrentFormalWorkspace(requestId, projectId)) return;
     state.formalOwnerPacket = response.packet;
     state.formalOwnerReceipt = response.packet.decisionReceipt || null;
     state.formalOwnerError = null;
   } catch (error) {
+    if (!isCurrentFormalWorkspace(requestId, projectId)) return;
     state.formalOwnerPacket = null;
     state.formalOwnerReceipt = null;
     state.formalOwnerError = error;
@@ -2625,9 +2873,10 @@ async function submitFormalOwnerDecision(event) {
 
 async function saveFormalEmployeeDraft() {
   if (state.formalEmployeeSaving || !state.formalEmployeeTask) return;
-  const question = formalEmployeeQuestions.find((entry) => !state.formalEmployeeAnswers[entry.key]);
+  const question = state.formalAgentQuestion || formalEmployeeQuestions.find((entry) => !state.formalEmployeeAnswers[entry.key]);
   const answer = document.querySelector("#formal-employee-answer");
-  if (question && answer?.value.trim()) state.formalEmployeeAnswers[question.key] = answer.value.trim();
+  const pendingText = answer?.value || "";
+  if (question && pendingText.trim()) state.formalEmployeeAnswers[question.key] = pendingText.trim();
   state.formalEmployeeSaving = true;
   renderFormalEmployeeWorkbench();
   try {
@@ -2638,6 +2887,8 @@ async function saveFormalEmployeeDraft() {
   } finally {
     state.formalEmployeeSaving = false;
     renderFormalEmployeeWorkbench();
+    const input = document.querySelector("#formal-employee-answer");
+    if (input && !input.hidden && pendingText) input.value = pendingText;
   }
 }
 
@@ -2686,9 +2937,9 @@ async function submitFormalEmployee() {
     return;
   }
   const preflight = (() => {
-    const summary = formalInferenceSummary(formalVisibleInferences(), {
-      ...(state.formalInferenceVerdicts || {}), ...(state.formalInferencePending || {}),
-    });
+    // Pending choices must first be persisted; they are not server-stamped verdicts.
+    const needingSavedVerdict = formalVisibleInferences().filter(entry => !state.formalInferencePending?.[entry.id]?.verdict);
+    const summary = formalInferenceSummary(needingSavedVerdict, state.formalInferenceVerdicts || {});
     return summary;
   })();
   if (preflight.valid < preflight.total || preflight.stale > 0) {
@@ -2707,7 +2958,7 @@ async function submitFormalEmployee() {
     return;
   }
   const card = formalEmployeeCard();
-  const text = formalEmployeeQuestions.map((question) => `${question.label}：${state.formalEmployeeAnswers[question.key]}`).join("\n\n");
+  const text = formalEmployeeQuestions.map((question) => `${question.label}：${card[question.key] || ""}`).join("\n\n");
   if (!state.formalEmployeeSubmissionKey) state.formalEmployeeSubmissionKey = window.crypto.randomUUID();
   state.formalEmployeeSubmitting = true;
   renderFormalEmployeeWorkbench();
@@ -2716,6 +2967,9 @@ async function submitFormalEmployee() {
     // 服务端自 IMPLEMENT-2B 起以"库中已保存的草稿判定"为唯一可信来源，
     // 请求体里的判定不参与裁决 —— 因此不先保存就会出现"界面显示已完成、服务端却说未判定"（§八-4）。
     state.formalEmployeeSubmitting = false;
+    if (inferenceVerdictFlushTimer) { clearTimeout(inferenceVerdictFlushTimer); inferenceVerdictFlushTimer = null; }
+    // A preceding autosave owns the same revision; settle it before the explicit save.
+    if (inferenceVerdictFlushPromise) await inferenceVerdictFlushPromise;
     const flushed = await persistFormalEmployeeDraftNow({ verdictsOnly: true });
     state.formalEmployeeSubmitting = true;
     if (!flushed) {
@@ -2795,11 +3049,13 @@ async function submitFormalEmployeeSupplement() {
   const sourceType = document.querySelector("#formal-employee-supplement-type")?.value || "";
   const metadataText = document.querySelector("#formal-employee-supplement-metadata")?.value || "";
   if (!task || !material || !reference) return showMessage("请填写补充的材料说明和材料来源标识。");
+  if (!["pdf", "image", "csv", "xlsx", "text"].includes(sourceType)) return showMessage("请选择有效的材料来源类型。");
   let payload;
   try { payload = formalUiContract.buildSupplementPayload({ material, reference, sourceType, metadataText }); }
   catch (error) { return showMessage(error.message); }
   state.formalEmployeeSupplementing = true;
-  renderFormalEmployeeWorkbench();
+  // Updating only the actions keeps entered evidence intact on failed submissions.
+  renderFormalEmployeeComposer();
   try {
     await window.diagnosticApi.provideFormalSupplement(task.id, payload);
     showMessage("补充材料已提交，核验人员将复核同一条事实。");
@@ -2808,8 +3064,47 @@ async function submitFormalEmployeeSupplement() {
     showMessage(`补充材料没有提交：${error.message}`);
   } finally {
     state.formalEmployeeSupplementing = false;
-    renderFormalEmployeeWorkbench();
+    renderFormalEmployeeComposer();
   }
+}
+
+// IQ02: same-tab recovery, scoped to the server-authorized employee/task. This
+// input is never a statement, ledger, inference verdict or completion flag.
+function formalPendingTurnKey() {
+  const task = state.formalEmployeeTask;
+  return task?.id && task.assigneeAccountId
+    ? `employee-pending:${state.formalProjectId}:${task.id}:${task.assigneeAccountId}` : null;
+}
+function writeFormalPendingTurn(question, text, failure = {}) {
+  state.formalPendingTurn = { question: { key: question.key, label: question.label, prompt: question.prompt }, text,
+    baseRevision: state.formalPendingTurn?.baseRevision ?? state.formalInterviewRevision,
+    code: failure.code || "pending", detail: failure.message || "上一轮尚未确认保存，请先检查本轮状态。" };
+  const key = formalPendingTurnKey();
+  state.formalPendingTurn.storageSaved = Boolean(key);
+  try { if (key) sessionStorage.setItem(key, JSON.stringify(state.formalPendingTurn)); }
+  catch (_) { state.formalPendingTurn.storageSaved = false; }
+}
+function clearFormalPendingTurn() {
+  const key = formalPendingTurnKey();
+  try { if (key) sessionStorage.removeItem(key); } catch (_) { /* no evidence state is stored here */ }
+  state.formalPendingTurn = null;
+}
+function restoreFormalPendingTurn() {
+  state.formalPendingTurn = null;
+  const key = formalPendingTurnKey();
+  try {
+    const saved = key && JSON.parse(sessionStorage.getItem(key) || "null");
+    if (typeof saved?.text !== "string" || !saved.text || !formalEmployeeQuestions.some(q => q.key === saved.question?.key)
+      || !Number.isInteger(saved.baseRevision) || saved.baseRevision < 0) return;
+    const history = state.formalEmployeeTask?.draftLedger?.statementHistory || [];
+    if (history.some(h => h.dimension === saved.question.key && h.text === saved.text && h.turnRevision >= saved.baseRevision)) {
+      clearFormalPendingTurn(); return;
+    }
+    state.formalPendingTurn = saved;
+    state.formalEmployeeStep = "questions";
+    state.formalAgentQuestion = resumeFormalAgentQuestion();
+    state.formalEmployeeSaveState = "error";
+  } catch (_) { /* unusable local input cannot change a server task */ }
 }
 
 function advanceFormalEmployeeFixed() {
@@ -2827,12 +3122,16 @@ function advanceFormalEmployeeFixed() {
 }
 
 function resumeFormalAgentQuestion() {
+  const issued = state.formalEmployeeTask?.draftLedger?.pendingQuestion;
+  if (!Number.isInteger(state.formalEmployeeEditIndex) && issued?.key && formalEmployeeQuestions.some(q => q.key === issued.key)) return issued;
   const index = Math.max(0, formalUiContract.employeeQuestionIndex(state.formalEmployeeAnswers, null, formalEmployeeQuestions.length));
   return formalEmployeeQuestions[index];
 }
 
 async function continueFormalEmployeeAgent(question, text) {
   if (state.formalAgentThinking) return;              // 客户端单飞（服务端另有陈旧轮次防护）
+  let recoveredAnswer = null;
+  writeFormalPendingTurn(question, text);
   state.formalAgentThinking = true;
   state.formalEmployeeSaveState = "saving";
   renderFormalEmployeeWorkbench();
@@ -2907,6 +3206,15 @@ async function continueFormalEmployeeAgent(question, text) {
       if (!canRecoverQuestionIdentity(error)) throw error;
       const issuedQuestion = await recoverIssuedQuestion();
       if (!issuedQuestion) throw error;
+      if (issuedQuestion.key !== question.key) {
+        // Never attach an answer written for another question to a new dimension.
+        state.formalEmployeeAnswers[question.key] = state.formalEmployeeTask?.draftAnswers?.[question.key] || "";
+        state.formalAgentQuestion = issuedQuestion;
+        state.formalEmployeeSaveState = "error";
+        recoveredAnswer = text;
+        showMessage("当前问题已更新，原输入已保留但尚未保存。请对照当前问题检查后再提交。");
+        return;
+      }
       result = await window.diagnosticApi.agentTurn(state.formalProjectId, {
         ...turnPayload,
         questionKey: issuedQuestion.key,
@@ -2916,6 +3224,7 @@ async function continueFormalEmployeeAgent(question, text) {
       });
     }
 
+    clearFormalPendingTurn(); // the server acknowledged this answer and its authoritative turn
     const turn = result.turn || {};
     // 服务端在需要时会回报更高修订号（本次已落库则取之，否则以权威库值为基准）。
     if (Number.isInteger(result.draftRevision)) state.formalInterviewRevision = result.draftRevision;
@@ -2943,20 +3252,26 @@ async function continueFormalEmployeeAgent(question, text) {
     }
     // PILOT-04/D8：每轮有效回答后自动保存。只有保存成功才显示"已保存"，
     // 失败必须可见 —— 绝不能静默丢掉员工刚说的话。
-    await persistFormalEmployeeDraftNow();
+    await persistFormalEmployeeDraftNow({ verdictsOnly: true, syncAnswers: true });
   } catch (error) {
     // 陈旧轮次：不是错误，是另一个标签页推进了状态；提示刷新即可，不覆盖本地。
     if (error.status === 409 && error.code === "stale_turn") {
       state.formalEmployeeSaveState = "stale";
-      showMessage("访谈已在别处更新，请刷新页面后继续。");
+      writeFormalPendingTurn(question, text, error);
+      showMessage("访谈已在别处更新，未保存输入已保留。请刷新页面后检查当前问题。");
     } else {
       state.formalEmployeeSaveState = "error";
-      advanceFormalEmployeeFixed();
-      showMessage(`自适应追问暂不可用，已切回固定问题：${error.message}`);
+      state.formalEmployeeStep = "questions";
+      writeFormalPendingTurn(question, text, error);
+      showMessage("访谈已暂停；本轮回答尚未成功保存，已保留输入。" + (error.message || "请检查后重试。"));
     }
   } finally {
     state.formalAgentThinking = false;
     renderFormalEmployeeWorkbench();
+    if (recoveredAnswer !== null && state.formalPendingTurn && state.formalPendingTurn.question.key === state.formalAgentQuestion?.key) {
+      const input = document.querySelector("#formal-employee-answer");
+      if (input) input.value = recoveredAnswer;
+    }
   }
 }
 
@@ -2985,23 +3300,24 @@ function scheduleInferenceVerdictFlush() {
     void flushInferenceVerdictsNow();
   }, 800);
 }
+let inferenceVerdictFlushPromise = null;
 async function flushInferenceVerdictsNow() {
-  if (inferenceVerdictFlushInFlight) return false;
-  if (!state.formalEmployeeTask || state.formalEmployeeSaving) return false;
-  // 轮次进行中不要插一次判定保存：轮次自身会推进 revision（服务端签发锚点），
-  // 此时再写草稿会撞上 stale_turn / draft_conflict。等轮次结束由它自己的保存路径落库。
-  if (state.formalAgentThinking) return false;
+  if (inferenceVerdictFlushPromise) return inferenceVerdictFlushPromise;
+  if (!state.formalEmployeeTask || state.formalEmployeeSaving || state.formalAgentThinking) return false;
   inferenceVerdictFlushInFlight = true;
-  try {
-    return await persistFormalEmployeeDraftNow({ verdictsOnly: true });
-  } catch (error) {
-    state.formalEmployeeSaveState = 'error';
-    showMessage('推断判定未能保存：' + (error.message || '请重试'));
-    renderFormalEmployeeWorkbench();
-    return false;
-  } finally {
-    inferenceVerdictFlushInFlight = false;
-  }
+  inferenceVerdictFlushPromise = (async () => {
+    try { return await persistFormalEmployeeDraftNow({ verdictsOnly: true }); }
+    catch (error) {
+      state.formalEmployeeSaveState = 'error';
+      showMessage('推断判定未能保存：' + (error.message || '请重试'));
+      renderFormalEmployeeWorkbench();
+      return false;
+    } finally {
+      inferenceVerdictFlushInFlight = false;
+      inferenceVerdictFlushPromise = null;
+    }
+  })();
+  return inferenceVerdictFlushPromise;
 }
 
 async function persistFormalEmployeeDraftNow(options = {}) {
@@ -3017,7 +3333,7 @@ async function persistFormalEmployeeDraftNow(options = {}) {
   try {
     const result = await window.diagnosticApi.saveEmployeeDraft(
       state.formalEmployeeTask.id,
-      state.formalEmployeeAnswers,
+      verdictsOnly ? undefined : state.formalEmployeeAnswers,
       state.formalEmployeeMaterialStatus,
       {
         // PILOT-07C/R6：verdictsOnly 模式只推"推断判定"，不推 ledger / answers。
@@ -3032,7 +3348,16 @@ async function persistFormalEmployeeDraftNow(options = {}) {
         baseRevision: Number.isInteger(state.formalInterviewRevision) ? state.formalInterviewRevision : undefined,
       },
     );
-    if (result?.task) state.formalEmployeeTask = result.task;
+    if (result?.task) state.formalEmployeeTask = { ...state.formalEmployeeTask, ...result.task };
+    if (options.syncAnswers && result?.task) {
+      // The persisted response is also the authority for inference versions. A turn
+      // can update evidence versions while saving, so restore the full baseline.
+      const coverage = state.formalCoverage, engine = state.formalInterviewEngine, ending = state.formalEndingNote;
+      applyFormalEmployeeTaskPayload({ task: state.formalEmployeeTask, receipt: state.formalEmployeeReceipt });
+      state.formalCoverage = coverage;
+      state.formalInterviewEngine = engine;
+      state.formalEndingNote = ending;
+    }
     // U6：判定是否有效**只能由服务端答复**。保存成功后用服务端返回的盖章判定
     // 重建本地镜像（含"依据已更新 → stale"的判定），客户端不得自行宣布 valid。
     if (result?.task) applyServerInferenceVerdicts(result.task.draftInferenceVerdicts);
@@ -3055,6 +3380,7 @@ async function persistFormalEmployeeDraftNow(options = {}) {
     state.formalEmployeeSaveState = "saved";
     state.formalEmployeeSavedAt = Date.now();
     state.formalEmployeeSaveError = "";
+    updateInferenceSummary();
     return true;
   } catch (error) {
     // PILOT-04B/A：并发冲突必须明确提示"刷新或恢复"，绝不静默覆盖较新回答。
@@ -3078,7 +3404,11 @@ window.loadFormalEmployeeTask = loadFormalEmployeeTask;
 
 async function loadFormalVerifierWorkspace(projectId) {
   state.formalSessionActive = true;
-  state.formalProjectId = projectId;
+  const requestId = beginFormalWorkspace(projectId, "formal-verifier-view");
+  state.verifierFact = null;
+  state.verifierPacket = null;
+  state.verifierFacts = [];
+  state.verifierHistory = [];
   state.role = "verifier";
   state.verifierDecision = "";
   state.verifierReason = "";
@@ -3088,7 +3418,9 @@ async function loadFormalVerifierWorkspace(projectId) {
   showView("formal-verifier-view");
   renderVerifierWorkbench();
   try {
+    if (!await loadFormalProjectIdentity(projectId, "formal-verifier-view", requestId)) return;
     const response = await window.diagnosticApi.getFormalVerifierFacts(projectId);
+    if (!isCurrentFormalWorkspace(requestId, projectId)) return;
     const items = response.facts || [];
     state.verifierFacts = items;
     state.verifierProgress = response.progress || { current: items.length ? 1 : 0, total: items.length, completed: 0 };
@@ -3098,10 +3430,12 @@ async function loadFormalVerifierWorkspace(projectId) {
     state.verifierSourceRefs = state.verifierFact?.sourceRefs ? [...state.verifierFact.sourceRefs] : [];
     if (!state.verifierFact) {
       const packet = await window.diagnosticApi.getFormalDecisionPacket(projectId).catch(() => ({ packet: null }));
+      if (!isCurrentFormalWorkspace(requestId, projectId)) return;
       state.verifierPacket = packet.packet;
     }
     state.verifierState = state.verifierFact ? (state.verifierFact.status === "blocked" ? "waiting" : "ready") : (state.verifierPacket ? "packet" : "empty");
   } catch (error) {
+    if (!isCurrentFormalWorkspace(requestId, projectId)) return;
     state.verifierFact = null;
     state.verifierState = "error";
     showMessage(`暂时无法打开核验事项：${error.message}`);
@@ -3241,14 +3575,17 @@ function renderFormalVerifierShell() {
       `<div class="msg__head">风险与试点建议引用了这些已确认事实</div>` +
       `<div class="msg__text">${escapeMarkup(packet.riskSummary)}</div></div></div>` +
       `<div class="msg"><span class="msg__avatar">AI</span><div>` +
-      `<div class="msg__head">试点范围</div><div class="msg__text">${escapeMarkup(packet.pilotScope)}</div></div></div>`;
+      `<div class="msg__head">试点范围</div><div class="msg__text">${escapeMarkup(packet.pilotScope)}</div></div></div>` +
+      renderVerifierSuggestionBlock(packet);
     if (traceEl) {
       traceEl.innerHTML = `<div class="trace-block">${blockTitle("你的职责边界", "trace-block__title")}` +
         `<div class="trace-card"><div class="trace-card__value">这里只确认事实引用是否准确，不替企业负责人做最终决策。</div></div></div>`;
     }
     if (composerEl) {
+      const restricted = (packet.suggestionFacts || []).some((fact) => fact.restricted);
       composerEl.innerHTML = `<div class="composer__actions">` +
-        `<button class="primary-button" type="button" data-action="verify-formal-packet" data-packet-id="${escapeMarkup(packet.id)}">确认引用无误</button></div>`;
+        `${restricted ? `<p class="field-help">建议引用了未分配给你的任务或不可见材料，当前不能由你核验。</p>` : ""}` +
+        `<button class="primary-button" type="button" data-action="verify-formal-packet" data-packet-id="${escapeMarkup(packet.id)}" ${restricted ? "disabled" : ""}>确认引用无误</button></div>`;
     }
     return;
   }
@@ -3333,7 +3670,12 @@ function renderFormalVerifierShell() {
 
   // 中栏：要判断的那一条
   if (threadMeta) threadMeta.textContent = secondConfirmation ? "独立二次确认" : `第 ${progress.current || 1} 条`;
-  const alternatives = (task.alternativeExplanations || []).map(formalAlternativeItem).join("") || "<li>暂无替代解释</li>";
+  const alternatives = (task.alternativeExplanations || []).filter(e=>!e.reviewStatus||e.reviewStatus==="active").map(formalAlternativeItem).join("") || "<li>暂无当前替代解释</li>";
+  const historicalAlternatives = (task.alternativeExplanations || []).filter(e=>e.reviewStatus&&e.reviewStatus!=="active");
+  const historicalAlternativeHtml = historicalAlternatives.length ? `<details><summary>历史假设（${historicalAlternatives.length} 条，不作为当前结论）</summary><ul>${historicalAlternatives.map(formalAlternativeItem).join("")}</ul></details>` : "";
+  const unresolvedTrace = (task.unresolvedQuestions || []).map(u =>
+    `<li><strong>待核实 · 员工陈述 E3</strong><p>${escapeMarkup(u.reason || u.quote || "仍不明确")}</p>` +
+    `<p>${escapeMarkup(u.requestedFrom || "流程核验人员")} · ${escapeMarkup(u.evidenceNeeded || "请补充对应证据")}</p></li>`).join("");
   // 中栏只放"你要判的那一条"。参考资料（流程卡版本、替代解释）
   // 全部移到右栏 —— 之前四样东西争垂直空间，事实本身被挤出屏幕。
   threadEl.innerHTML =
@@ -3354,8 +3696,9 @@ function renderFormalVerifierShell() {
       `<div class="trace-block"><div class="trace-block__title">这条事实的来源</div>` +
       `<div class="trace-card"><div class="trace-card__label">员工流程卡 v${escapeMarkup(task.flowCardVersion || "1")}</div>` +
       `<div class="trace-card__value">证据版本 v${escapeMarkup(task.evidenceVersion || "1")} · 由员工本人逐问还原</div></div></div>` +
+      (unresolvedTrace ? `<div class="trace-block"><div class="trace-block__title">这条事实的待核实清单</div><div class="trace-card trace-card--pending"><div class="trace-card__value"><ul>${unresolvedTrace}</ul></div></div></div>` : "") +
       `<div class="trace-block"><div class="trace-block__title">替代解释</div>` +
-      `<div class="trace-card trace-card--pending"><div class="trace-card__value"><ul>${alternatives}</ul></div></div></div>` +
+      `<div class="trace-card trace-card--pending"><div class="trace-card__value"><ul>${alternatives}</ul>${historicalAlternativeHtml}</div></div></div>` +
       `<div class="trace-block"><div class="trace-block__title">证据门禁</div>` +
       `<div class="trace-card ${evidenceGateMet ? "" : "trace-card--pending"}"><div class="trace-card__value">` +
       `${evidenceGateMet ? "已满足：材料版本、授权和完整性均可核对。" : "未满足：不能确认事实，只能要求补证。"}</div></div></div>` +
@@ -3432,7 +3775,7 @@ function renderVerifierWorkbench() {
     : state.verifierFact || state.workItems.find((entry) => entry.assigneeRole === "verifier" && entry.stage === "facts") || state.verifierQuestion;
   if (state.verifierState === "packet" && state.verifierPacket) {
     const packet = state.verifierPacket;
-    target.innerHTML = `<section class="verifier-question-panel"><p class="panel-label">待确认事实引用</p><h2>风险与试点建议将引用 ${packet.factRefs.length} 条已确认事实</h2><p>${escapeMarkup(packet.riskSummary)}</p><p><strong>试点范围：</strong>${escapeMarkup(packet.pilotScope)}</p><button class="primary-button" type="button" data-action="verify-formal-packet" data-packet-id="${escapeMarkup(packet.id)}">确认引用无误</button><div class="verifier-boundary"><strong>你的职责边界</strong><span>这里只确认事实引用是否准确，不替企业负责人做最终决策。</span></div></section>`;
+    target.innerHTML = `<section class="verifier-question-panel"><p class="panel-label">待确认事实引用</p><h2>风险与试点建议将引用 ${packet.factRefs.length} 条已确认事实</h2><p>${escapeMarkup(packet.riskSummary)}</p><p><strong>试点范围：</strong>${escapeMarkup(packet.pilotScope)}</p>${renderSuggestionCards(packet.suggestions)}<button class="primary-button" type="button" data-action="verify-formal-packet" data-packet-id="${escapeMarkup(packet.id)}">确认引用无误</button><div class="verifier-boundary"><strong>你的职责边界</strong><span>这里只确认事实引用是否准确，不替企业负责人做最终决策。</span></div></section>`;
     return;
   }
   if (!task || state.verifierState === "empty") {
@@ -3804,7 +4147,10 @@ document.addEventListener("click", (event) => {
   }
   if (button.dataset.action === "formal-logout") {
     // 退出后回到统一的正式入口，并清掉本地保存的项目名与身份。
+    ++formalWorkspaceRequest;
     state.formalSessionActive = false;
+    state.formalProjectContext = null;
+    state.formalProjects = [];
     state.formalProjectId = "";
     state.formalProjectName = "";
     state.formalBuilderName = "";
@@ -3821,10 +4167,15 @@ document.addEventListener("click", (event) => {
     state.formalAuthorizationKey = "";
     state.formalDecisionDraftKey = "";
     state.formalDecisionDraftPayload = null;
+    state.formalSuggestionDraft = null;
+    state.formalSuggestionError = "";
     loadFormalBuilderWorkspace();
   }
   if (button.dataset.action === "open-formal-reassignment") openFormalReassignment(button.dataset.itemId);
   if (button.dataset.action === "close-formal-reassignment") closeFormalReassignment();
+  if (button.dataset.action === "generate-suggestions") generateFormalSuggestions(button.dataset.scope || "formal");
+  if (button.dataset.action === "review-formal-suggestions") reviewFormalSuggestionContent(button.dataset.packetId, Number(button.dataset.packetVersion || 0), button.dataset.contentKey ?? 0);
+  if (button.dataset.action === "update-suggestions") updateFormalSuggestionDraft(button.dataset.packetId, Number(button.dataset.packetVersion || 0), button.dataset.contentKey ?? 0);
   if (button.dataset.action === "publish-formal-packet") publishFormalDecisionPacket(button.dataset.packetId);
   if (button.dataset.action === "resend-formal-authorization") resendFormalAuthorization(button.dataset.authorizationId);
   if (button.dataset.action === "copy-formal-authorization-link") {
@@ -3847,7 +4198,7 @@ document.addEventListener("click", (event) => {
     }
   }
   if (button.dataset.action === "verify-formal-packet") {
-    window.diagnosticApi.verifyFormalDecisionPacket(button.dataset.packetId, state.verifierPacket.factRefs)
+    window.diagnosticApi.verifyFormalDecisionPacket(button.dataset.packetId, state.verifierPacket.factRefs, state.verifierPacket.contentKey)
       .then(() => { state.verifierPacket = null; state.verifierState = "empty"; renderVerifierWorkbench(); showMessage("事实引用已确认，已交回外部改造方发布。"); })
       .catch((error) => showMessage("未能确认决策包：" + error.message));
   }
@@ -3887,10 +4238,7 @@ document.addEventListener("click", (event) => {
     if (!question || !text) {
       showMessage("先回答 Agent 的问题，再继续。");
     } else {
-      state.formalEmployeeAnswers[question.key] = text;
-      // 提交即清空。渲染时的“输入框有焦点就不动它”保护会跳过清空，
-      // 所以必须在这里清；否则用户看到旧答案还以为没提交成功。
-      if (answer) answer.value = "";
+      // Keep unaccepted input separate from server-stored answers/evidence.
       continueFormalEmployeeAgent(question, text);
     }
   }

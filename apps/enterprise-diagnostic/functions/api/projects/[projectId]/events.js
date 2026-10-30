@@ -28,6 +28,11 @@ export async function onRequest({ request, env, params }) {
     const events = (result.results || []).map((event) => {
       let payload = {};
       try { payload = JSON.parse(event.payload || "{}"); } catch (_error) { payload = {}; }
+      // The builder needs business status, not what the employee actually said. Event
+      // payloads can carry the raw submission text, workflow card and inference snapshots.
+      if (formal && current.role === "external_builder") {
+        return { id: event.id, projectId: event.project_id, workItemId: event.work_item_id, type: event.type, actorRole: event.actor_role, createdAt: event.created_at };
+      }
       return { ...event, projectId: event.project_id, workItemId: event.work_item_id, actorRole: event.actor_role, actorId: event.actor_id, createdAt: event.created_at, payload };
     });
     return json({ events });

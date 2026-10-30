@@ -1,4 +1,35 @@
-import { actor, assertSchemaReady, cors, formalActor, httpError, itemPayload, json, requireMembership } from "../../_shared.js";
+import { actor, assertSchemaReady, cors, formalActor, httpError, json, requireMembership } from "../../_shared.js";
+
+/**
+ * Builder control-plane projection. The builder needs to know whether a task is blocked
+ * and who owns it; it must not receive the employee's private description, draft,
+ * answers, ledger, workflow card or AI inference list.
+ */
+function builderTaskPayload(item) {
+  return {
+    id: item.id,
+    projectId: item.project_id,
+    title: item.title,
+    description: item.description,
+    stage: item.stage,
+    status: item.status,
+    assigneeRole: item.assignee_role,
+    assigneeLabel: item.assignee_label,
+    assigneeAccountId: item.assignee_account_id || null,
+    assignedVerifierId: item.assigned_verifier_id || null,
+    assignedVerifierName: item.assigned_verifier_name || null,
+    assignmentVersion: Number(item.assignment_version || 1),
+    evidenceCompleteness: item.evidence_completeness,
+    blockingReason: item.blocking_reason,
+    nextAction: item.next_action,
+    judgmentStatus: item.judgment_status || "open",
+    revisionReason: item.revision_reason || null,
+    revisionFromVersion: item.revision_from_version == null ? null : Number(item.revision_from_version),
+    revisionPacketId: item.revision_packet_id || null,
+    submittedAt: item.submitted_at || null,
+  };
+}
+
 export async function onRequest({ request, env, params }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
@@ -28,8 +59,13 @@ export async function onRequest({ request, env, params }) {
     ]);
     let latestPayload = {};
     try { latestPayload = JSON.parse(latestEvent?.payload || "{}"); } catch (_error) { latestPayload = {}; }
-    const tasks = (tasksResult.results || []).map(itemPayload);
+    const latestEventView = latestEvent
+      ? (current?.role === "external_builder"
+        ? { type: latestEvent.type, actorRole: latestEvent.actor_role, createdAt: latestEvent.created_at }
+        : { type: latestEvent.type, actorRole: latestEvent.actor_role, createdAt: latestEvent.created_at, payload: latestPayload })
+      : null;
+    const tasks = (tasksResult.results || []).map(builderTaskPayload);
     const revisionBlocker = tasks.find((item) => ["revision_requested", "awaiting_verification"].includes(item.status)) || null;
-    return json({ project, role: current.role, members: membersResult.results || [], authorizations: authorizationsResult.results || [], tasks, revisionBlocker, latestEvent: latestEvent ? { type: latestEvent.type, actorRole: latestEvent.actor_role, createdAt: latestEvent.created_at, payload: latestPayload } : null, sla: { verificationBusinessDays: 2, supplementBusinessDays: 5, ownerDecisionBusinessDays: 5 } });
+    return json({ project, role: current.role, members: membersResult.results || [], authorizations: authorizationsResult.results || [], tasks, revisionBlocker, latestEvent: latestEventView, sla: { verificationBusinessDays: 2, supplementBusinessDays: 5, ownerDecisionBusinessDays: 5 } });
   } catch (error) { return error instanceof Response ? error : httpError(error.message, 500); }
 }

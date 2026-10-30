@@ -16,7 +16,17 @@ at the repository level.
 
 ## [Unreleased]
 
-Nothing yet.
+### Application V0.2 internal development baseline — 2026-10-31
+
+- Preserve the current interview, evidence, diagnosis and decision WIP on an
+  independent V0.2 branch, with its product code, regression fixtures, tests,
+  migration chain and schema artifacts. Existing commit history is retained.
+- Acceptance is **conditional_pass, for internal synthetic rehearsal only**.
+  Post-publication fact/material replacement recovery through the product UI is
+  unverified. Production operation and real-enterprise pilots are unverified.
+- This is an application development baseline, not a new Skill-package version
+  or a production release. See the [V0.2 baseline notes](docs/releases/v0.2-internal-baseline.md)
+  for scope, known limits, validation boundaries and recovery instructions.
 
 ---
 

@@ -11,7 +11,7 @@
  * L4：客户端伪造 evidence/history/推断/verdict 版本 → 服务端重算/拒绝
  */
 import { createHash } from "node:crypto";
-import { normalizeEmployeeDraft, serializeEmployeeDraft } from "../functions/_shared.js";
+import { itemPayload, normalizeEmployeeDraft, serializeEmployeeDraft } from "../functions/_shared.js";
 import { onRequestPut as saveDraft } from "../functions/api/work-items/[itemId]/employee-draft.js";
 import { onRequestPost as submitEmployee } from "../functions/api/work-items/[itemId]/employee-submission.js";
 import { ANSWER_DIMENSIONS, canonicalJson, normalizeAnswers } from "../functions/api/agent/_evidence.js";
@@ -100,6 +100,10 @@ const revOf = (db) => draftOf(db).revision;
 const infsOf = (db) => draftOf(db).ledger?.authoritativeInferences || [];
 const factsOf = (db) => db.count("candidate_facts");
 const eventsOf = (db) => db.all("SELECT type,payload FROM events WHERE work_item_id=? ORDER BY id", ITEM);
+const snapshotOf = (db) => JSON.stringify(Object.fromEntries(
+  ["work_items", "candidate_facts", "fact_judgments", "events", "idempotency_records", "decision_packets"]
+    .map(table => [table, db.all(`SELECT * FROM ${table}`)]),
+));
 const jsonOf = async (r) => r.clone().json().catch(() => ({}));
 const put = (db, body) => saveDraft({ request: bearerRequest(`http://127.0.0.1/api/work-items/${ITEM}/employee-draft`, TOK, body), env: { DB: db }, params: { itemId: ITEM } });
 const submit = (db, body, key = `K-${Math.random()}`, envDb = db) => submitEmployee({ request: bearerRequest(`http://127.0.0.1/api/work-items/${ITEM}/employee-submission`, TOK, { ...body, baseRevision: body.baseRevision ?? revOf(db) }, { "Idempotency-Key": key }), env: { DB: envDb }, params: { itemId: ITEM } });
@@ -117,14 +121,15 @@ function depRefs(db, dimensions) {
   const evidence = draftOf(db).ledger.evidence;
   return dimensions.map((dim) => ({ dimension: dim, digest: evidence.dimensions[dim].digest, source: dim === dimensions[0] ? "basis" : "server_rule", ruleId: dim === dimensions[0] ? null : "G14-R-INPUTS-JUDGMENTS" }));
 }
-const submitBody = (task) => ({ text: text(task.draftAnswers), workflowCard: card(task.draftAnswers), materialStatus: task.materialStatus || "provided", inferences: [], inferenceVerdicts: {}, baseRevision: task.draftRevision });
+// Match the actual browser contract: current server projection contains retained
+// supplements, while draftAnswers still carries the latest raw answer per dimension.
+const submitBody = (task) => ({ text: text(task.draftWorkflowCard), workflowCard: { ...task.draftWorkflowCard, materialIndex: MAT[task.materialStatus || "provided"] }, materialStatus: task.materialStatus || "provided", inferences: [], inferenceVerdicts: {}, baseRevision: task.draftRevision });
 async function submitTask(db, key = `K-${Math.random()}`) {
   const task = await getTaskFromDb(db);
   return submit(db, submitBody(task), key);
 }
 async function getTaskFromDb(db) {
-  const item = itemOf(db); const draft = draftOf(db);
-  return { draftAnswers: draft.answers, materialStatus: item.material_status, draftRevision: draft.revision, draftLedger: draft.ledger, draftInferenceVerdicts: draft.inferenceVerdicts, id: ITEM };
+  return itemPayload(itemOf(db));
 }
 console.log("PILOT-09C/G14 · 跨维度依赖与精准失效 —— 定向运行时套件\n");
 
@@ -146,8 +151,10 @@ console.log("PILOT-09C/G14 · 跨维度依赖与精准失效 —— 定向运行
     res.status === 200 && after.evidenceVersion === 1 && audit && audit.reason === "dependency_changed" && audit.changed.some((c) => c.dimension === "inputs") && audit.ruleVersion === 1 && audit.previousEvidenceVersion === 0 && audit.newEvidenceVersion === 1,
     `ev=${after.evidenceVersion} audit=${JSON.stringify(audit?.changed || [])}`);
   check("G14-01b", "无关 steps 推断 EV 不变", stepsAfter.evidenceVersion === 0, `stepsEv=${stepsAfter.evidenceVersion}`);
+  const earlyBefore = snapshotOf(db);
   const early = await submitTask(db, "K-G1401-unjudged");
-  check("G14-01c", "未重新判定提交被 422 inferences_unjudged、零事实", early.status === 422 && factsOf(db) === 0 && itemOf(db).submission_version === 0, `status=${early.status}`);
+  const earlyBody = await jsonOf(early);
+  check("G14-01c", "未重新判定提交被 422 inferences_unjudged、零副作用", early.status === 422 && earlyBody.code === "inferences_unjudged" && factsOf(db) === 0 && itemOf(db).submission_version === 0 && snapshotOf(db) === earlyBefore, `status=${early.status} code=${earlyBody.code}`);
   const task = await getTaskFromDb(db);
   await put(db, { answers: task.draftAnswers, materialStatus: "provided", inferenceVerdicts: echo(infsOf(db)), baseRevision: revOf(db) });
   const sub = await submitTask(db, "K-G1401-ok");
@@ -180,8 +187,10 @@ console.log("PILOT-09C/G14 · 跨维度依赖与精准失效 —— 定向运行
   ], proposedDependencyDimensions: ["inputs"], dependencyProposalKey: JSON.stringify({ basis: "judgments", hints: ["inputs"] }), dependencySource: "server_rule", dependencyRuleStatus: "model_rule_validated", dependencyRuleVersion: 1, evidenceVersion: 0, invalidations: [] });
   await put(db, { answers: { inputs: "【G14-06】输入变更" }, materialStatus: "provided", baseRevision: revOf(db) });
   const rev = revOf(db); const sv = itemOf(db).submission_version; const facts = factsOf(db); const events = eventsOf(db).filter((e) => e.type === "employee_submitted").length; const key = itemOf(db).last_submission_key;
+  const rejectBefore = snapshotOf(db);
   const sub = await submitTask(db, "K-G1406");
-  check("G14-06", "跨维失效后提交被拒且零副作用", [409, 422].includes(sub.status) && revOf(db) === rev && itemOf(db).submission_version === sv && factsOf(db) === facts && eventsOf(db).filter((e) => e.type === "employee_submitted").length === events && itemOf(db).last_submission_key === key, `status=${sub.status}`);
+  const rejectBody = await jsonOf(sub);
+  check("G14-06", "跨维失效后提交被拒且零副作用", sub.status === 422 && rejectBody.code === "inferences_unjudged" && snapshotOf(db) === rejectBefore && revOf(db) === rev && itemOf(db).submission_version === sv && factsOf(db) === facts && eventsOf(db).filter((e) => e.type === "employee_submitted").length === events && itemOf(db).last_submission_key === key, `status=${sub.status}`);
 }
 
 // G14-08/14：旧草稿无依赖元数据 → 提交 fail-closed；保存重建后旧判定 stale；重判后 200
@@ -194,18 +203,24 @@ console.log("PILOT-09C/G14 · 跨维度依赖与精准失效 —— 定向运行
       delete e.evidenceRefs; delete e.evidenceVersion; delete e.invalidations; delete e.proposedDependencyDimensions;
     }
   });
+  const beforeState = snapshotOf(db);
   const before = await submitTask(db, "K-G1408-before");
+  const beforeBody = await jsonOf(before);
+  const beforeUnchanged = snapshotOf(db) === beforeState;
   const init = await put(db, { answers: draftOf(db).answers, materialStatus: "provided", baseRevision: revOf(db) });
   const afterInit = draftOf(db);
   const inf = afterInit.ledger.authoritativeInferences[0];
+  const staleState = snapshotOf(db);
   const staleSubmit = await submitTask(db, "K-G1408-stale");
+  const staleBody = await jsonOf(staleSubmit);
+  const staleUnchanged = snapshotOf(db) === staleState;
   const task = await getTaskFromDb(db);
   const rejudge = await put(db, { answers: task.draftAnswers, materialStatus: "provided", inferenceVerdicts: echo(infsOf(db)), baseRevision: revOf(db) });
   const rejudgeBody = await jsonOf(rejudge);
   const ok = await submitTask(db, "K-G1408-ok");
   const okBody = await jsonOf(ok);
   check("G14-08", "旧草稿无依赖元数据：直接提交被拒；保存后服务端重建依赖+EV 推进+审计，未重判提交拒；重判后 200",
-    [409, 422].includes(before.status) && init.status === 200 && Number.isInteger(inf.dependencyRuleVersion) && inf.invalidations.length >= 1 && [409, 422].includes(staleSubmit.status) && ok.status === 200,
+    before.status === 409 && beforeBody.code === "dependency_rule_mismatch" && beforeUnchanged && init.status === 200 && Number.isInteger(inf.dependencyRuleVersion) && inf.invalidations.length >= 1 && staleSubmit.status === 422 && staleBody.code === "inferences_unjudged" && staleUnchanged && ok.status === 200,
     `before=${before.status} init=${init.status} rejudge=${rejudge.status}/${rejudgeBody.code || ""} stale=${staleSubmit.status} ok=${ok.status}/${okBody.code || ""} ev=${inf.evidenceVersion} inv=${inf.invalidations.length}`);
 }
 
@@ -219,9 +234,10 @@ console.log("PILOT-09C/G14 · 跨维度依赖与精准失效 —— 定向运行
   ], proposedDependencyDimensions: ["inputs"], dependencyProposalKey: JSON.stringify({ basis: "judgments", hints: ["inputs"] }), dependencySource: "server_rule", dependencyRuleStatus: "model_rule_validated", dependencyRuleVersion: 1, evidenceVersion: 0,
      invalidations: Array.from({ length: 20 }, (_, i) => ({ seq: i + 1, at: "2026-01-01T00:00:00Z", draftRevision: 1, evidenceSeq: 1, reason: "dependency_changed", ruleVersion: 1, changed: [], previousEvidenceVersion: i, newEvidenceVersion: i + 1, verdictStateWas: "valid" })) });
   const rev = revOf(db); const answers = JSON.stringify(draftOf(db).answers); const ev = JSON.stringify(draftOf(db).ledger.evidence);
+  const capacityBefore = snapshotOf(db);
   const res = await put(db, { answers: { inputs: "【G14-12】容量测试" }, materialStatus: "provided", baseRevision: revOf(db) });
   const body = await jsonOf(res);
-  check("G14-12", "失效审计满 20 → 409 dependency_audit_overflow，零副作用、无 slice", res.status === 409 && body.code === "dependency_audit_overflow" && revOf(db) === rev && JSON.stringify(draftOf(db).answers) === answers && JSON.stringify(draftOf(db).ledger.evidence) === ev && infsOf(db).find((e) => e.id === target.id).invalidations.length === 20, `status=${res.status} code=${body.code || ""}`);
+  check("G14-12", "失效审计满 20 → 409 dependency_audit_overflow，零副作用、无 slice", res.status === 409 && body.code === "dependency_audit_overflow" && snapshotOf(db) === capacityBefore && revOf(db) === rev && JSON.stringify(draftOf(db).answers) === answers && JSON.stringify(draftOf(db).ledger.evidence) === ev && infsOf(db).find((e) => e.id === target.id).invalidations.length === 20, `status=${res.status} code=${body.code || ""}`);
 }
 // ── 扩展（回归轮补充，不放宽既有断言）：提交门禁对规则版本/依赖元数据的 fail-closed 错误码 ──
 // G14-14a：evidence.ruleVersion 缺失 → 409 dependency_rule_mismatch
@@ -229,40 +245,44 @@ console.log("PILOT-09C/G14 · 跨维度依赖与精准失效 —— 定向运行
   const db = fixture();
   tamper(db, (d) => { delete d.ledger.evidence.ruleVersion; });
   const beforeFacts = factsOf(db); const beforeSv = itemOf(db).submission_version;
+  const gateBefore = snapshotOf(db);
   const res = await submitTask(db, "K-G14-GATE-A");
   const body = await jsonOf(res);
   check("G14-14a", "evidence.ruleVersion 缺失 → 409 dependency_rule_mismatch，零事实/零提交",
-    res.status === 409 && body.code === "dependency_rule_mismatch" && factsOf(db) === beforeFacts && itemOf(db).submission_version === beforeSv,
+    res.status === 409 && body.code === "dependency_rule_mismatch" && snapshotOf(db) === gateBefore && factsOf(db) === beforeFacts && itemOf(db).submission_version === beforeSv,
     `status=${res.status} code=${body.code || ""}`);
 }
 // G14-14b：推断 dependencyRuleVersion 缺失 → 409 dependency_rule_mismatch（列出推断 ID）
 {
   const db = fixture(); const target = infsOf(db)[0];
   tamper(db, (d) => { delete d.ledger.authoritativeInferences.find((e) => e.id === target.id).dependencyRuleVersion; });
+  const gateBefore = snapshotOf(db);
   const res = await submitTask(db, "K-G14-GATE-B");
   const body = await jsonOf(res);
   check("G14-14b", "推断 dependencyRuleVersion 缺失 → 409 dependency_rule_mismatch 且 inferenceIds 命中",
-    res.status === 409 && body.code === "dependency_rule_mismatch" && Array.isArray(body.inferenceIds) && body.inferenceIds.includes(target.id) && factsOf(db) === 0,
+    res.status === 409 && body.code === "dependency_rule_mismatch" && snapshotOf(db) === gateBefore && Array.isArray(body.inferenceIds) && body.inferenceIds.includes(target.id) && factsOf(db) === 0,
     `status=${res.status} code=${body.code || ""} ids=${JSON.stringify(body.inferenceIds || [])}`);
 }
 // G14-14c：推断 dependencySource 缺失 → 409 dependency_metadata_missing
 {
   const db = fixture(); const target = infsOf(db)[0];
   tamper(db, (d) => { delete d.ledger.authoritativeInferences.find((e) => e.id === target.id).dependencySource; });
+  const gateBefore = snapshotOf(db);
   const res = await submitTask(db, "K-G14-GATE-C");
   const body = await jsonOf(res);
   check("G14-14c", "推断 dependencySource 缺失 → 409 dependency_metadata_missing 且 inferenceIds 命中",
-    res.status === 409 && body.code === "dependency_metadata_missing" && Array.isArray(body.inferenceIds) && body.inferenceIds.includes(target.id) && factsOf(db) === 0,
+    res.status === 409 && body.code === "dependency_metadata_missing" && snapshotOf(db) === gateBefore && Array.isArray(body.inferenceIds) && body.inferenceIds.includes(target.id) && factsOf(db) === 0,
     `status=${res.status} code=${body.code || ""} ids=${JSON.stringify(body.inferenceIds || [])}`);
 }
 // G14-14d：推断 evidenceRefs 为空/引用了非服务端依赖 → 409 dependency_metadata_missing
 {
   const db = fixture(); const target = infsOf(db)[0];
   tamper(db, (d) => { d.ledger.authoritativeInferences.find((e) => e.id === target.id).evidenceRefs = []; });
+  const gateBefore = snapshotOf(db);
   const res = await submitTask(db, "K-G14-GATE-D");
   const body = await jsonOf(res);
   check("G14-14d", "推断 evidenceRefs 为空 → 409 dependency_metadata_missing，零写入",
-    res.status === 409 && body.code === "dependency_metadata_missing" && factsOf(db) === 0 && itemOf(db).submission_version === 0,
+    res.status === 409 && body.code === "dependency_metadata_missing" && snapshotOf(db) === gateBefore && factsOf(db) === 0 && itemOf(db).submission_version === 0,
     `status=${res.status} code=${body.code || ""}`);
 }
 // G14-NORMAL：合法提交快照保留规则版本与逐条依赖版本（服务端可信来源）

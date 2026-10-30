@@ -7,7 +7,7 @@
 // real database are used: the migration executor is a fake injected runner.
 //
 // Fingerprints are rebuilt inside this test by replaying migrations/0001..0013
-// with scripts/lib/schema-fingerprint.mjs (k=0..13, 14 prefixes); the historical
+// with scripts/lib/schema-fingerprint.mjs (k=0..N, N+1 prefixes); the historical
 // hashes are read from scripts/schema/known-legacy-fingerprints.json. The test
 // does not depend on generated artifacts (functions/_schema.generated.js).
 import assert from "node:assert/strict";
@@ -453,16 +453,16 @@ function seedCompleteReferenceGraph(db, contract) {
 // 0. Expected model / constants
 // ===========================================================================
 
-test("0 expected model: 13 migrations, 14 prefix fingerprints, terminal counts, legacy constants", () => {
-  assert.equal(MIGRATION_FILES.length, 13, "frozen migration count");
-  assert.equal(prefixFingerprints.length, 14, "k=0..13 prefix fingerprints");
+test("0 expected model: all migrations, prefix fingerprints, terminal counts, legacy constants", () => {
+  assert.equal(MIGRATION_FILES.length, 14, "frozen migration count");
+  assert.equal(prefixFingerprints.length, MIGRATION_FILES.length + 1, "k=0..N prefix fingerprints");
   assert.deepEqual(
     prefixFingerprints.map((item) => item.k),
-    Array.from({ length: 14 }, (_, index) => index),
+    Array.from({ length: MIGRATION_FILES.length + 1 }, (_, index) => index),
   );
-  assert.equal(terminalFingerprint.hash, prefixFingerprints[13].hash);
+  assert.equal(terminalFingerprint.hash, prefixFingerprints.at(-1).hash);
   assert.equal(terminalFingerprint.counts.tables, 19, "terminal tables");
-  assert.equal(terminalFingerprint.counts.columns, 259, "terminal columns");
+  assert.equal(terminalFingerprint.counts.columns, 260, "terminal columns");
   assert.equal(terminalFingerprint.counts.fk, 16, "terminal foreign keys");
   assert.equal(terminalFingerprint.counts.explicitIndexes, 17, "terminal explicit indexes");
   assert.equal(terminalFingerprint.counts.uniqueConstraints, 12, "terminal table-level uniques");
@@ -568,7 +568,7 @@ await testAsync("A no database file -> EMPTY, init allowed -> MIGRATION_COMPLETE
   assert.ok(existsSync(dbFile), "fake runner created the local D1 database");
   const after = diagnose({ stateDir, appRoot: APP_ROOT });
   assert.equal(after.classification.state, "MIGRATION_COMPLETE");
-  assert.equal(after.classification.ledger.rowCount, 13);
+  assert.equal(after.classification.ledger.rowCount, MIGRATION_FILES.length);
   assert.equal(after.classification.fingerprint, terminalFingerprint.hash);
 
   const hashBeforeNoop = sha256File(dbFile);
@@ -690,7 +690,7 @@ await testAsync("F3 ledger-only DB (migrations recorded, no business tables) -> 
   const before = diagnose({ stateDir, appRoot: APP_ROOT });
   assert.equal(before.classification.state, "LEDGER_SCHEMA_CONFLICT");
   assert.equal(before.classification.state, "LEDGER_SCHEMA_CONFLICT", "ledger rows without business tables must not be EMPTY");
-  assert.equal(before.classification.ledger.rowCount, 13);
+  assert.equal(before.classification.ledger.rowCount, MIGRATION_FILES.length);
   assert.equal(before.allowedForInit, false);
 
   const fake = makeFakeRunner();
@@ -769,7 +769,7 @@ await testAsync("F3 damaged d1_migrations schema without business tables -> UNKN
 // D. Fully migrated + complete ledger -> MIGRATION_COMPLETE; repeat init no-op
 // ===========================================================================
 
-await testAsync("D 13 migrations + 13 ledger rows -> MIGRATION_COMPLETE; repeated init is a no-op", async () => {
+await testAsync("D full migrations + ledger rows -> MIGRATION_COMPLETE; repeated init is a no-op", async () => {
   const stateDir = mkTemp("D-complete");
   const dbFile = createDbInStateDir(stateDir, "complete.sqlite", {
     migrations: MIGRATION_FILES.length,
@@ -778,7 +778,7 @@ await testAsync("D 13 migrations + 13 ledger rows -> MIGRATION_COMPLETE; repeate
   const before = diagnose({ stateDir, appRoot: APP_ROOT });
   assert.equal(before.classification.state, "MIGRATION_COMPLETE");
   assert.equal(before.classification.underlyingState, "MIGRATION_COMPLETE");
-  assert.equal(before.classification.ledger.rowCount, 13);
+  assert.equal(before.classification.ledger.rowCount, MIGRATION_FILES.length);
   assert.equal(before.classification.fingerprint, terminalFingerprint.hash);
   assert.equal(before.allowedForInit, true);
 
@@ -825,7 +825,7 @@ for (const k of [2, 5, 12]) {
     const readDb = new DatabaseSync(dbFile, { readOnly: true });
     try {
       assert.equal(fingerprintOf(readDb).hash, terminalFingerprint.hash, "database reached terminal fingerprint");
-      assert.deepEqual(readLedgerNames(readDb), MIGRATION_FILES, "ledger completed to 13 rows");
+      assert.deepEqual(readLedgerNames(readDb), MIGRATION_FILES, "ledger completed to all rows");
     } finally {
       readDb.close();
     }
@@ -1291,7 +1291,7 @@ test("CLI version --json from an arbitrary cwd reports migrations head and termi
   assert.equal(payload.ok, true);
   assert.equal(payload.code, 0);
   assert.equal(payload.cmd, undefined);
-  assert.equal(payload.expected.migrations_count, 13);
+  assert.equal(payload.expected.migrations_count, MIGRATION_FILES.length);
   assert.equal(payload.expected.migrations_head, MIGRATION_FILES[MIGRATION_FILES.length - 1]);
   assert.equal(payload.expected.terminal_fingerprint, terminalFingerprint.hash);
   assert.equal(payload.node_version, process.version);
@@ -1315,7 +1315,7 @@ test("CLI diagnose --json/human on terminal + runtime databases; JSON is stable 
   assert.equal(json.state, "MIGRATION_COMPLETE");
   assert.equal(json.allowed_for_init, true);
   assert.equal(json.classification.state, "MIGRATION_COMPLETE");
-  assert.equal(json.classification.ledger.rowCount, 13);
+  assert.equal(json.classification.ledger.rowCount, MIGRATION_FILES.length);
   assert.equal(json.target.db_file, dbFile);
 
   const humanResult = runCli(["diagnose", "--state-dir", stateDir], { cwd });
@@ -1500,7 +1500,7 @@ test("CLI db.sh wrapper is executable, cwd-independent and supports --json (init
   const cwd = mkTemp("dbsh-other-cwd");
   const version = runDbSh(["version", "--json"], { cwd });
   assert.equal(version.code, EXIT_CODES.OK, `db.sh version stderr: ${version.stderr}`);
-  assert.equal(parseJsonOutput("db.sh version", version).expected.migrations_count, 13);
+  assert.equal(parseJsonOutput("db.sh version", version).expected.migrations_count, MIGRATION_FILES.length);
 
   const diagnosis = runDbSh(["diagnose", "--state-dir", stateDir, "--json"], { cwd });
   assert.equal(diagnosis.code, EXIT_CODES.OK, `db.sh diagnose stderr: ${diagnosis.stderr}`);

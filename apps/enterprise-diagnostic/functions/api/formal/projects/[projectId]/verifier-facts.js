@@ -1,3 +1,4 @@
+import { inferenceReview } from "../../../agent/_inference-review.js";
 import { cors, formalActor, httpError, json, requireAuthorizedProject, requireMembership } from "../../../../_shared.js";
 
 export async function onRequestGet({ request, env, params }) {
@@ -8,7 +9,7 @@ export async function onRequestGet({ request, env, params }) {
     const current = await formalActor(request, env.DB);
     await requireMembership(env.DB, projectId, current, ["verifier"]);
     await requireAuthorizedProject(env.DB, projectId);
-    const result = await env.DB.prepare("SELECT cf.*,wi.title AS work_item_title,wi.status AS work_item_status,wi.assigned_verifier_id,wi.alternative_explanations_json FROM candidate_facts cf JOIN work_items wi ON wi.id=cf.work_item_id AND wi.project_id=cf.project_id WHERE cf.project_id=? AND wi.stage='facts' AND wi.status IN ('awaiting_verification','blocked') AND cf.status IN ('open','insufficient_evidence','awaiting_second_confirmation') AND ((cf.status!='awaiting_second_confirmation' AND wi.assigned_verifier_id=?) OR (cf.status='awaiting_second_confirmation' AND cf.first_verified_by_account_id!=?)) ORDER BY CASE cf.status WHEN 'awaiting_second_confirmation' THEN 0 ELSE 1 END,cf.work_item_id,cf.created_at").bind(projectId, current.accountId, current.accountId).all();
+    const result = await env.DB.prepare("SELECT cf.*,wi.title AS work_item_title,wi.status AS work_item_status,wi.assigned_verifier_id,wi.alternative_explanations_json,wi.workflow_card_json FROM candidate_facts cf JOIN work_items wi ON wi.id=cf.work_item_id AND wi.project_id=cf.project_id WHERE cf.project_id=? AND wi.stage='facts' AND wi.status IN ('awaiting_verification','blocked') AND cf.status IN ('open','insufficient_evidence','awaiting_second_confirmation') AND ((cf.status!='awaiting_second_confirmation' AND wi.assigned_verifier_id=?) OR (cf.status='awaiting_second_confirmation' AND cf.first_verified_by_account_id!=?)) ORDER BY CASE cf.status WHEN 'awaiting_second_confirmation' THEN 0 ELSE 1 END,cf.work_item_id,cf.created_at").bind(projectId, current.accountId, current.accountId).all();
     const progressRow = await env.DB.prepare("SELECT COUNT(*) AS total,SUM(CASE WHEN cf.status IN ('confirmed','awaiting_second_confirmation') THEN 1 ELSE 0 END) AS completed FROM candidate_facts cf JOIN work_items wi ON wi.id=cf.work_item_id WHERE cf.project_id=? AND wi.assigned_verifier_id=? AND cf.required=1").bind(projectId, current.accountId).first();
     const secondProgressRow = await env.DB.prepare("SELECT COUNT(*) AS total,SUM(CASE WHEN fsc.id IS NOT NULL THEN 1 ELSE 0 END) AS completed FROM candidate_facts cf JOIN work_items wi ON wi.id=cf.work_item_id LEFT JOIN fact_second_confirmations fsc ON fsc.fact_id=cf.id AND fsc.confirmer_identity=? WHERE cf.project_id=? AND cf.required=1 AND cf.first_verified_by_account_id IS NOT NULL AND cf.first_verified_by_account_id!=? AND wi.assigned_verifier_id!=? AND (cf.status='awaiting_second_confirmation' OR fsc.id IS NOT NULL)").bind(current.accountId, projectId, current.accountId, current.accountId).first();
     const responsibleResult = await env.DB.prepare("SELECT pm.account_id,a.name,pm.role FROM project_memberships pm JOIN accounts a ON a.id=pm.account_id WHERE pm.project_id=? AND pm.status='active' AND a.status='active' AND pm.role='employee' ORDER BY a.name").bind(projectId).all();
@@ -61,6 +62,9 @@ export async function onRequestGet({ request, env, params }) {
         // （cf.* 已含 alternative_explanations_json），因此**不扩大项目访问范围**，
         // 不返回其他项目/未授权员工的数据，也不改变任何核验结论或证据等级。
         alternativeExplanations: parseAlternativeExplanations(row.alternative_explanations_json),
+        // Only the gaps belonging to this already-authorized fact, never the
+        // entire employee card or unrelated dimensions of the work item.
+        unresolvedQuestions: factUnresolved(row.workflow_card_json, row.source_field),
       });
     }
     const total = Number(progressRow?.total || 0) + Number(secondProgressRow?.total || 0);
@@ -77,8 +81,16 @@ function parseAlternativeExplanations(raw) {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map(entry => entry?.judgmentState === "historical" && entry.reviewStatus ? entry : ({...entry,...inferenceReview(entry,{inferenceVerdicts:entry.judgmentState === 'valid' ? {[entry.id]:entry} : {}})})) : [];
   } catch (_error) {
     return [];
   }
+}
+
+function factUnresolved(raw, sourceField) {
+  let card;try { card=JSON.parse(raw||'{}'); } catch { return []; }
+  const allowed=new Set(String(sourceField||'').split(','));
+  return (Array.isArray(card.unresolved)?card.unresolved:[])
+    .filter(u=>u&&allowed.has(u.dimension||u.key))
+    .map(u=>({dimension:u.dimension||u.key,kind:u.kind||'unknown',quote:String(u.quote||''),reason:String(u.reason||''),requestedFrom:String(u.requestedFrom||'流程核验人员'),evidenceNeeded:String(u.evidenceNeeded||'请补充对应证据'),statementSeq:Number.isInteger(u.statementSeq)?u.statementSeq:null}));
 }

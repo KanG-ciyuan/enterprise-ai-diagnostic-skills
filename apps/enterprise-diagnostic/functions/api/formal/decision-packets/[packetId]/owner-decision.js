@@ -1,4 +1,5 @@
 import { cors, formalActor, httpError, idempotencyKey, json, requireAuthorizedProject, requireDecisionPacket, requireMembership } from "../../../../_shared.js";
+import { parseSuggestions, suggestionBasisDrift } from "../_facts.js";
 
 const allowedDecisions = new Set(["continue", "revision", "pause"]);
 function requiredText(value, label) { const text = String(value || "").trim(); if (!text) throw httpError(`${label}不能为空`, 422); return text; }
@@ -13,7 +14,10 @@ export async function onRequestPost({ request, env, params }) {
     await requireAuthorizedProject(env.DB, packet.project_id);
     const requestKey = idempotencyKey(request) || packet.id;
     const replay = await env.DB.prepare("SELECT response_json FROM idempotency_records WHERE account_id=? AND project_id=? AND action='owner-decision' AND request_key=?").bind(current.accountId, packet.project_id, requestKey).first();
-    if (replay) return json(JSON.parse(replay.response_json));
+    if (replay) {
+      if (packet.status === "stale") return json({ code: "decision_packet_stale", detail: "该决策包的依据已失效，历史决策不受影响，但不能据此作出新的决策。" }, 409);
+      return json({ ...JSON.parse(replay.response_json) });
+    }
     // ── B-01/B-02: 失效结论不得继续作为决策依据 ──────────────────────────
     // A packet becomes `stale` when a fact it cites is withdrawn (evidence
     // supplement) or upgraded to high impact. The historical record is kept, but the
@@ -29,6 +33,18 @@ export async function onRequestPost({ request, env, params }) {
       }, 409);
     }
     if (packet.status !== "published") return json({ code: "transition_conflict", detail: "只能对已发布的决策包做决策" }, 409);
+    // V0.2: the read-time suggestion check is not enough; a decision is the moment the
+    // conclusion becomes actionable. Re-evaluate the snapshot and, on drift, mark the
+    // package stale atomically so no later request can decide on it either.
+    const suggestions = parseSuggestions(packet.suggestions_json);
+    const drift = await suggestionBasisDrift(env.DB, packet.project_id, suggestions);
+    if (drift) {
+      await env.DB.batch([
+        env.DB.prepare("UPDATE decision_packets SET status='stale',last_transition_key=? WHERE id=? AND project_id=? AND status='published'").bind(`decision-drift:${packet.id}:${crypto.randomUUID()}`, packet.id, packet.project_id),
+        env.DB.prepare("INSERT INTO events(event_id,project_id,type,actor_role,actor_id,payload) SELECT ?,project_id,'decision_packet_staled',?,?,json_object('packetId',id,'packetVersion',version,'reason',?) FROM decision_packets WHERE id=? AND project_id=? AND status='stale'").bind(`EVT-STALE-${crypto.randomUUID()}`, current.role, current.accountId, drift, packet.id, packet.project_id),
+      ]);
+      return json({ code: "suggestion_basis_changed", detail: `${drift}。该摘要已失效，不能再据此作出决策。`, packetId: packet.id, packetVersion: Number(packet.version) }, 409);
+    }
     const body = await request.json().catch(() => ({}));
     const decision = String(body.decision || "").trim();
     if (!allowedDecisions.has(decision)) return httpError("负责人决策无效", 422);

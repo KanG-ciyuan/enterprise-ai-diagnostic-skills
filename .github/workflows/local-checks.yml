@@ -47,6 +47,7 @@ jobs:
         run: |
           node tests/pilot09c_g14_final_fix_runtime.mjs
           node tests/pilot09c_g14_runtime.mjs
+          node tests/int01_diagnosis_model_runtime.mjs
 
   # R2A database safety: the migration chain is the only schema authority; generated
   # artifacts must be reproducible; legacy databases must be refused (no auto-migration).
@@ -82,3 +83,11 @@ jobs:
           node tests/db_target_identity_runtime.mjs
           node tests/readiness_runtime.mjs
           node tests/migration_runtime.mjs
+          node tests/v02_suggestions_runtime.mjs
+          node tests/v02_suggestions_flow_runtime.mjs
+          node tests/v02_suggestions_frontend_runtime.mjs
+          node tests/v02_codex_counterexamples_runtime.mjs
+          node tests/v02_round2_counterexamples_runtime.mjs
+          node tests/v02_round3_regressions_runtime.mjs
+          node tests/v02_browser_blockers_runtime.mjs
+          node tests/project_identity_runtime.mjs

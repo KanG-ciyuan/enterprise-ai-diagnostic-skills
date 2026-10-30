@@ -1,3 +1,5 @@
+import { projectInferenceReviews } from "./api/agent/_inference-review.js";
+import { deriveInterviewRecord, groupInterviewUnresolved, interviewUnresolved } from "./api/agent/_interview-record.js";
 import { BUSINESS_TABLES, EXPECTED_MIGRATION_HEAD, KNOWN_MIGRATIONS } from "./_schema.generated.js";
 
 const roles = new Set(["employee", "verifier", "owner", "external_builder", "it_admin"]);
@@ -231,6 +233,8 @@ export function itemPayload(item) {
   // PILOT-04/N3：草稿在出口处统一归一化，读取方只会拿到 answers/ledger，
   // 不再需要（也不允许）自行解析格式。
   const __draft = normalizeEmployeeDraft(parseJson(item.employee_draft_json, {}));
+  const __record = deriveInterviewRecord(__draft.answers, __draft.ledger?.statementHistory);
+  const __unresolved = interviewUnresolved(__record, __draft.ledger?.unresolved);
   return {
     ...item,
     projectId: item.project_id,
@@ -246,7 +250,9 @@ export function itemPayload(item) {
     draft: __draft,
     draftRevision: __draft.revision,
     draftAnswers: __draft.answers,
-    draftLedger: __draft.ledger,
+    draftWorkflowCard: { ...__record.currentDimensions, ...(__unresolved.length ? { unresolved: __unresolved } : {}) },
+    draftLedger: __draft.ledger ? {...__draft.ledger,authoritativeInferences:projectInferenceReviews(__draft.ledger.authoritativeInferences,__draft)} : null,
+    draftPresentation: {currentStatements:__record.currentStatements,unresolvedGroups:groupInterviewUnresolved(__unresolved)},
     draftInferenceVerdicts: __draft.inferenceVerdicts,
     workflowCard: parseJson(item.workflow_card_json, {}),
     candidateFactId: item.candidate_fact_id || `FACT-${item.id}`,
@@ -294,10 +300,20 @@ export async function requireDecisionPacket(db, packetId) {
   return packet;
 }
 
+function suggestionEnvelope(value) {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    if (Array.isArray(parsed)) return { items: parsed, contentReview: null, draftKind: "formal" };
+    if (parsed && typeof parsed === "object" && Array.isArray(parsed.items)) return parsed;
+  } catch (_error) { /* legacy rows without suggestions */ }
+  return { items: [], contentReview: null, draftKind: "formal" };
+}
+
 export function decisionPacketPayload(packet) {
   const parseJson = (value) => {
     try { return JSON.parse(value || "[]"); } catch (_error) { return []; }
   };
+  const suggestions = suggestionEnvelope(packet.suggestions_json);
   return {
     id: packet.id,
     projectId: packet.project_id,
@@ -318,6 +334,10 @@ export function decisionPacketPayload(packet) {
     revisionReason: packet.revision_reason || null,
     revisionFromVersion: packet.revision_from_version == null ? null : Number(packet.revision_from_version),
     revisionWorkItemId: packet.revision_work_item_id || null,
+    contentKey: String(suggestions.revision ?? 0),
+    draftKind: suggestions.draftKind || "formal",
+    suggestions: suggestions.items,
+    suggestionReview: suggestions.contentReview || null,
   };
 }
 

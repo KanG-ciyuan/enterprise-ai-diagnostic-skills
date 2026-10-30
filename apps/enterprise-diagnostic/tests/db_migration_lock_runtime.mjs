@@ -154,9 +154,9 @@ check("MIGRATIONS.lock is a well-formed version-1 lock document", () => {
   assert.ok(lock.files.length > 0);
 });
 
-check("lock contains 13 ascending, well-formed entries that mirror the migrations directory", () => {
+check("lock contains all ascending, well-formed entries that mirror the migrations directory", () => {
   assert.equal(lock.files.length, migrationFiles.length);
-  assert.equal(lock.files.length, 13);
+  assert.equal(lock.files.length, 14);
   const names = lock.files.map((entry) => entry.name);
   assert.deepEqual(names, migrationFiles, "lock entries must mirror migrations/*.sql exactly");
   assert.deepEqual(names, [...names].sort(), "lock entries must be in ascending file-name order");

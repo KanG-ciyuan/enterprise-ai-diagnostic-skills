@@ -281,10 +281,38 @@ export async function onRequestPost({ request, env, params }) {
       currentTurnKey: resolvedKey || null,
       draftRevision: currentRevision,
       rejectedInferences,
+      inferenceVerdicts: storedDraft.inferenceVerdicts,
       authorizedContext,
       materialRefs,
       materialStatus: ["provided", "none_available", "undecided"].includes(body.materialStatus) ? body.materialStatus : "undecided",
     };
+
+    // ── PILOT-09C/IMPLEMENT-3D（H-1）：员工陈述历史（append-only，服务端专属）──
+    // 与推断基线在同一次 CAS 中落库；`statements` 仍保持"最新值"语义（流程卡零回归）。
+    // F-1：识别本轮是否是"补正锚点"的作答（锚点由服务端签发，客户端不可伪造）
+    const pendingAnchor = storedDraft.ledger && storedDraft.ledger.pendingQuestion && typeof storedDraft.ledger.pendingQuestion === "object"
+      ? storedDraft.ledger.pendingQuestion : null;
+    const supplementIntent = pendingAnchor && pendingAnchor.supplementIntent ? pendingAnchor.supplementIntent : "";
+    // 计数从 statementHistory 派生（本次历史已追加后自然 +1），无需额外持久化字段
+    const supplementRounds = readSupplementRounds(storedDraft.ledger);
+    const historyResult = appendStatementHistory({
+      prior: storedDraft.ledger ? storedDraft.ledger.statementHistory : [],
+      dimension: resolvedKey,
+      text: answer,
+      // 补正意图只能来自**服务端锚点**；客户端 body.intent 不参与
+      intent: supplementIntent || "",
+      revision: currentRevision,
+      anchorKey: (authoritativeQuestion && authoritativeQuestion.key) || resolvedKey || "",
+    });
+    if (historyResult.overflow) {
+      // 硬上限：**显式阻塞**，绝不静默截断或丢弃证据
+      return json({
+        code: "statement_history_overflow",
+        detail: "员工陈述历史已达容量上限，无法安全记录本轮回答。请联系管理员处理后再继续（已有陈述不会丢失）。",
+        limit: MAX_STATEMENT_HISTORY,
+        current: historyResult.history.length,
+      }, 409);
+    }
 
     // ── PILOT-09C/FIX-CODEX-02A（F01）：正式任务执行模式由**服务端**决定 ──
     // 旧实现直接采信 body.mode：合法员工可指定 fixture，从而进入"确定性展示列表、
@@ -366,8 +394,10 @@ export async function onRequestPost({ request, env, params }) {
       }
 
       claim = { id: slot.slotId, slot: slot.slot, gateId, meter: { usage: null, model: null } };
+      // IQ01: server-observed budget is context, never a client quota override.
+      frame.modelCallBudget = { claimed: stats.claimed, limit, remaining: Math.max(0, limit - stats.claimed) };
 
-      const ledger = buildTrustedLedger(frame.answers, materialRefs, carriedLedger);
+      const ledger = buildTrustedLedger(frame.answers, materialRefs, { ...carriedLedger, statementHistory: historyResult.history });
       const meter = claim.meter;
       const callModel = async (prompt) => {
         // 槽位 reserved → started。**返回值是权威判定**：若为 false，说明执行权已被接管，
@@ -409,7 +439,7 @@ export async function onRequestPost({ request, env, params }) {
         return failure;
       }
     } else {
-      const ledger = buildTrustedLedger(frame.answers, materialRefs, carriedLedger);
+      const ledger = buildTrustedLedger(frame.answers, materialRefs, { ...carriedLedger, statementHistory: historyResult.history });
       result = runFixture(frame, ledger);
     }
 
@@ -465,32 +495,6 @@ export async function onRequestPost({ request, env, params }) {
       || (resolvedLedger && resolvedLedger.burdenAsked === true)
       || issuedKey === "burden",
     );
-    // ── PILOT-09C/IMPLEMENT-3D（H-1）：员工陈述历史（append-only，服务端专属）──
-    // 与推断基线在同一次 CAS 中落库；`statements` 仍保持"最新值"语义（流程卡零回归）。
-    // F-1：识别本轮是否是"补正锚点"的作答（锚点由服务端签发，客户端不可伪造）
-    const pendingAnchor = storedDraft.ledger && storedDraft.ledger.pendingQuestion && typeof storedDraft.ledger.pendingQuestion === "object"
-      ? storedDraft.ledger.pendingQuestion : null;
-    const supplementIntent = pendingAnchor && pendingAnchor.supplementIntent ? pendingAnchor.supplementIntent : "";
-    // 计数从 statementHistory 派生（本次历史已追加后自然 +1），无需额外持久化字段
-    const supplementRounds = readSupplementRounds(storedDraft.ledger);
-    const historyResult = appendStatementHistory({
-      prior: storedDraft.ledger ? storedDraft.ledger.statementHistory : [],
-      dimension: resolvedKey,
-      text: answer,
-      // 补正意图只能来自**服务端锚点**；客户端 body.intent 不参与
-      intent: supplementIntent || "",
-      revision: currentRevision,
-      anchorKey: (authoritativeQuestion && authoritativeQuestion.key) || resolvedKey || "",
-    });
-    if (historyResult.overflow) {
-      // 硬上限：**显式阻塞**，绝不静默截断或丢弃证据
-      return json({
-        code: "statement_history_overflow",
-        detail: "员工陈述历史已达容量上限，无法安全记录本轮回答。请联系管理员处理后再继续（已有陈述不会丢失）。",
-        limit: MAX_STATEMENT_HISTORY,
-        current: historyResult.history.length,
-      }, 409);
-    }
     const ledgerPatch = { authoritativeInferences, burdenAsked, statementHistory: historyResult.history };
 
     let responseRevision = currentRevision;

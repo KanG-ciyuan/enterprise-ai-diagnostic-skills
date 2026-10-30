@@ -538,7 +538,7 @@ export async function validateSubmissionEvidence({ draft, answers = null, materi
   const dims = await computeDimensionDigests(currentAnswers);
   const history = Array.isArray(ledger.statementHistory) ? ledger.statementHistory : [];
   const inferences = Array.isArray(ledger.authoritativeInferences) ? ledger.authoritativeInferences : [];
-  if (!inferences.length) {
+  if (!inferences.length && !(ledger.burdenAsked === true && ledger.pendingQuestion === null && evidence?.source === "interview")) {
     return { ok: false, code: "interview_evidence_missing", status: 409, detail: "没有服务端访谈证据（推断基线）可供核验，不能直接正式提交。请先完成一次员工访谈。" };
   }
   // 每维最新有效陈述必须与当前答案一致；无陈述视为无访谈证据。
@@ -579,6 +579,11 @@ export async function validateSubmissionEvidence({ draft, answers = null, materi
       detail: "服务端证据/依赖规则版本不一致或缺失，旧裁决不能自动继承。请刷新并完成一次证据保存/重新核验后再提交。",
       expectedRuleVersion: G14_RULE_VERSION, actualRuleVersion: evidence.ruleVersion ?? null };
   }
+  // quote is a display excerpt, while evidenceRefs/dims above bind the full
+  // employee answer. Compare against the canonical template excerpt, never
+  // mistake its 300-character display limit for a changed evidence version.
+  const currentTemplates = new Map(buildInferences({ statements: currentAnswers }, {})
+    .map(normalizeInference).filter(Boolean).map(entry => [entry.basis, entry]));
   const inferenceIssues = [];
   const unverifiedInferences = [];
   const ruleMismatchInferences = [];
@@ -609,7 +614,12 @@ export async function validateSubmissionEvidence({ draft, answers = null, materi
         break;
       }
     }
-    if (entry.source === "server_template" && entry.basis && normalizeAnswerText(entry.quote) !== currentAnswers[entry.basis]) inferenceIssues.push(entry.id || null);
+    if (entry.source === "server_template") {
+      const expected = currentTemplates.get(entry.basis);
+      const quote = normalizeAnswerText(entry.quote);
+      if (!expected || expected.basis !== entry.basis || !quote
+          || (quote !== normalizeAnswerText(expected.quote) && quote !== currentAnswers[entry.basis])) inferenceIssues.push(entry.id || null);
+    }
   }
   if (unverifiedInferences.length) {
     return { ok: false, code: "dependency_metadata_missing", status: 409,

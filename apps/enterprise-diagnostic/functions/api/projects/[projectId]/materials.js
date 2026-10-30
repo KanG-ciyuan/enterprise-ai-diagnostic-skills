@@ -25,7 +25,14 @@ export async function onRequestGet({ request, env, params }) {
     }
     sql += " ORDER BY created_at DESC";
     const result = await env.DB.prepare(sql).bind(...binds).all();
-    return json({ materials: (result.results || []).map((material) => ({ ...material, materialKey: material.material_key, previousVersionId: material.previous_version_id || null, sourceType: material.source_type })) });
+    const materials = (result.results || []).map((material) => {
+      const shaped = { ...material, materialKey: material.material_key, previousVersionId: material.previous_version_id || null, sourceType: material.source_type };
+      // Supplements can carry the employee's own words in metadata. The builder manages
+      // authorisation/version metadata; it does not receive the employee's content.
+      if (current.role === "external_builder") delete shaped.metadata_json;
+      return shaped;
+    });
+    return json({ materials });
   } catch (error) { return error instanceof Response ? error : httpError(error.message, 500); }
 }
 

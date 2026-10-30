@@ -1,4 +1,5 @@
 import { cors, formalActor, httpError, json, requireAuthorizedProject, requireMembership } from "../../../../_shared.js";
+import { effectiveFactText, formalEligibleFacts, INTERNAL_FACT_LIMIT, internalEligibleFacts } from "../../decision-packets/_facts.js";
 
 async function eligibleMaterialRefs(db, fact, role) {
   let refs = [];
@@ -19,18 +20,41 @@ async function eligibleMaterialRefs(db, fact, role) {
   return eligible;
 }
 
+/**
+ * V0.2 internal draft scope (approved B): the builder may read persisted candidate facts
+ * that are not formally eligible, but only the six whitelisted fields. Raw employee
+ * statements, drafts, AI inference lists, material bodies and cross-project rows are
+ * never selected here.
+ */
+async function internalFacts(db, projectId) {
+  // Same range rule as generation and save: the first 30 non-formal candidates.
+  const rows = await internalEligibleFacts(db, projectId, INTERNAL_FACT_LIMIT);
+  return rows.map((fact) => ({
+    factId: fact.id,
+    claim: effectiveFactText(fact),
+    status: fact.status,
+    evidenceLevel: String(fact.evidence_level || "").toUpperCase() || null,
+    impactLevel: fact.impact_level,
+    eligible: false,
+    unverified: true,
+  }));
+}
+
 export async function onRequestGet({ request, env, params }) {
   const preflight = cors(request); if (preflight) return preflight;
   try {
     const current = await formalActor(request, env.DB);
     await requireMembership(env.DB, params.projectId, current, ["external_builder"]);
     await requireAuthorizedProject(env.DB, params.projectId);
-    const result = await env.DB.prepare("SELECT cf.*,wi.title FROM candidate_facts cf JOIN work_items wi ON wi.id=cf.work_item_id WHERE cf.project_id=? AND wi.judgment_status='confirmed' AND cf.status='confirmed' AND cf.material_status IN ('same','different_with_correction') AND (cf.impact_level!='high' OR cf.second_confirmation_status='confirmed') AND NOT EXISTS (SELECT 1 FROM candidate_facts dependent WHERE dependent.work_item_id=cf.work_item_id AND dependent.required=1 AND dependent.status!='confirmed') ORDER BY cf.work_item_id,cf.created_at").bind(params.projectId).all();
+    if (new URL(request.url).searchParams.get("scope") === "internal") {
+      return json({ scope: "internal", facts: await internalFacts(env.DB, params.projectId), limit: INTERNAL_FACT_LIMIT });
+    }
+    const eligible = await formalEligibleFacts(env.DB, params.projectId);
     const facts = [];
-    for (const fact of result.results || []) {
+    for (const [factId, fact] of eligible) {
       const sourceRefs = await eligibleMaterialRefs(env.DB, fact, current.role);
       if (!sourceRefs) continue;
-      facts.push({ factId: fact.id, workItemId: fact.work_item_id, title: fact.title, claim: fact.claim, materialStatus: fact.material_status, provenanceStatus: "supported", sourceRefs: sourceRefs.map((source) => source.id), evidenceMaterials: sourceRefs, impactLevel: fact.impact_level, secondConfirmationStatus: fact.second_confirmation_status });
+      facts.push({ factId, workItemId: fact.work_item_id, claim: effectiveFactText(fact), materialStatus: fact.material_status, provenanceStatus: "supported", sourceRefs: sourceRefs.map((source) => source.id), evidenceMaterials: sourceRefs, evidenceLevel: String(fact.evidence_level || "").toUpperCase() || null, impactLevel: fact.impact_level, secondConfirmationStatus: fact.second_confirmation_status });
     }
     return json({ facts });
   } catch (error) { return error instanceof Response ? error : httpError(error.message, 500); }

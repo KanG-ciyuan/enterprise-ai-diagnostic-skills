@@ -102,6 +102,7 @@ function entryProbe(restored, search = '', hash = '', error = false) {
     formalUiContract: {formalEntryMode: ({invitationToken}) => invitationToken ? 'invite' : 'restore'},
     formalBuilderLoginForm: {}, formalInvitationAcceptForm: {}, formalMemberTestConsume: {}, formalMemberLoginStatus: {},
     showFormalEntryMode: mode => calls.push('mode:' + mode), showView: id => calls.push(id),
+    renderFormalMemberProjectChoices: memberships => calls.push('member-choices:' + memberships.length),
     consumeFormalMemberToken: async () => calls.push('consume'),
     loadFormalEmployeeTask: () => calls.push('employee'), loadFormalVerifierWorkspace: () => calls.push('verifier'),
     loadFormalOwnerWorkspace: () => calls.push('owner'), loadFormalBuilderWorkspace: () => calls.push('builder')};
@@ -253,8 +254,17 @@ async function suite() {
       const db=seed();try {
         const a=fixture.accounts.find(a=>(a.project_role||'account')===role);
         const real=await login(environment(db),a.email);assert.equal(real.restored.role,role);
-        const p=await entryProbe(real.restored);assert(p.calls.includes(['account','external_builder'].includes(role)?'builder':role));
-        assert(!p.calls.includes('formal-entry-view'));
+        const p=await entryProbe(real.restored);
+        if(role==='account') {
+          assert.equal(real.restored.accountRole,'member');
+          assert.deepEqual(real.restored.memberships,[]);
+          assert(p.calls.includes('formal-entry-view'));
+          assert(p.calls.includes('member-choices:0'));
+          assert(!p.calls.includes('builder'));
+        } else {
+          assert(p.calls.includes(role==='external_builder'?'builder':role));
+          assert(!p.calls.includes('formal-entry-view'));
+        }
         assert(/Secure/.test(real.response.headers.get('set-cookie')) && /HttpOnly/.test(real.response.headers.get('set-cookie')) && /SameSite=Lax/.test(real.response.headers.get('set-cookie')));
       }finally{db.close();}
     });

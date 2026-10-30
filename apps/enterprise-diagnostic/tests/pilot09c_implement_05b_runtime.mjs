@@ -1,3 +1,4 @@
+import { deriveInterviewRecord, interviewUnresolved } from "../functions/api/agent/_interview-record.js";
 /**
  * PILOT-09C/IMPLEMENT-05B —— F03 统一证据入口 · 定向运行时套件（真实 handler + 内存 D1）
  *
@@ -257,6 +258,14 @@ const submissionBody = (answers, extra = {}) => ({
   text: canonicalText(answers), workflowCard: canonicalCard(answers, "provided"),
   materialStatus: "provided", inferences: [], inferenceVerdicts: {}, ...extra,
 });
+// AI01/AI02: the browser submits the server-history projection; raw answers
+// still drive the unchanged evidence gate. Preserve all original rejection assertions.
+const projectedBody = (db, answers) => {
+  const draft = draftOf(db);
+  const record = deriveInterviewRecord(answers, draft.ledger.statementHistory);
+  const unresolved = interviewUnresolved(record, draft.ledger.unresolved);
+  return submissionBody(record.currentDimensions, { workflowCard: { ...canonicalCard(record.currentDimensions, "provided"), ...(unresolved.length ? { unresolved } : {}) } });
+};
 const echoVerdicts = (inferences, verdict = "agree") => Object.fromEntries(inferences.map((entry) => [entry.id, {
   verdict,
   correction: "",
@@ -430,7 +439,7 @@ console.log("\n── A6 绕过统一入口篡改证据 → 提交被拒 ──"
     draft.answers.steps = "绕过统一入口写入的新步骤，未进入历史";
   });
   const before2 = snapshotOf(db2);
-  const r2 = await submit(db2, submissionBody({ ...ANSWERS, steps: "绕过统一入口写入的新步骤，未进入历史" }), "K-A6-2");
+  const r2 = await submit(db2, projectedBody(db2, { ...ANSWERS, steps: "绕过统一入口写入的新步骤，未进入历史" }), "K-A6-2");
   const b2 = await jsonOf(r2);
   check("A6-2", "答案被绕过统一入口修改（history/摘要不一致）→ 409 evidence_history_mismatch，零写入",
     r2.status === 409 && b2.code === "evidence_history_mismatch" && snapshotOf(db2) === before2,
@@ -653,7 +662,7 @@ console.log("\n── L2 合法补正（turn 补正锚点）→ 重判 → 提�
       && exceptionsTemplate.quote === CORRECTED_EXCEPTIONS
       && draftOf(db).answers.exceptions === CORRECTED_EXCEPTIONS,
     `recover=${recover.status} turn=${answered.status} kind=${answeredBody?.turn?.turnKind} quote=${String(exceptionsTemplate.quote).slice(0, 16)}`);
-  const blocked = await submit(db, submissionBody(changedAnswers), "K-L2-blocked");
+  const blocked = await submit(db, projectedBody(db, changedAnswers), "K-L2-blocked");
   const blockedBody = await jsonOf(blocked);
   check("L2-2", "补正后旧判定未重判 → 提交 422 inferences_unjudged",
     blocked.status === 422 && blockedBody.code === "inferences_unjudged",
@@ -663,7 +672,7 @@ console.log("\n── L2 合法补正（turn 补正锚点）→ 重判 → 提�
     inferenceVerdicts: echoVerdicts(baselineOf(db)),
   });
   const rejudgeBody = await jsonOf(rejudge);
-  const ok = await submit(db, submissionBody(changedAnswers), "K-L2-ok");
+  const ok = await submit(db, projectedBody(db, changedAnswers), "K-L2-ok");
   const okBody = await jsonOf(ok);
   const exceptionFact = factsOf(db).find((fact) => fact.claim.includes(CORRECTED_EXCEPTIONS.slice(0, 12)));
   check("L2-3", "按当前基线重判 → 提交 200 awaiting_verification，事实含补正陈述",
@@ -706,7 +715,7 @@ console.log("\n── L3 等待核验人分支同样先过证据门禁 ──");
 console.log("\n── 旧判定重放：contentVersion 推进后旧判定不得恢复有效 ──");
 {
   const db = fixture();
-  const target = baselineOf(db)[0];
+  const target = baselineOf(db).find(entry=>entry.source === "model");
   tamperDraft(db, (draft) => {
     const entry = draft.ledger.authoritativeInferences.find((item) => item.id === target.id);
     entry.contentVersion = (Number.isInteger(entry.contentVersion) ? entry.contentVersion : 1) + 1;

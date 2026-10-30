@@ -8,7 +8,7 @@ import {
   SCHEMA_FINGERPRINTS,
 } from "../functions/_schema.generated.js";
 
-// R2A: migrations/0001..0013 are the ONLY schema authority. schema.sql is a
+// R2A: migrations/0001..0014 are the ONLY schema authority. schema.sql is a
 // generated snapshot and must be structurally identical to the migration chain.
 // This test is read-only (in-memory databases only).
 
@@ -47,7 +47,7 @@ assert.equal(
 );
 assert.deepEqual(
   migratedFingerprint.counts,
-  { tables: 19, columns: 259, fk: 16, explicitIndexes: 17, uniqueConstraints: 12, triggers: 0, views: 0 },
+  { tables: 19, columns: 260, fk: 16, explicitIndexes: 17, uniqueConstraints: 12, triggers: 0, views: 0 },
   "unexpected terminal schema counts",
 );
 assert.equal(migratedFingerprint.counts.tables, BUSINESS_TABLES.length);

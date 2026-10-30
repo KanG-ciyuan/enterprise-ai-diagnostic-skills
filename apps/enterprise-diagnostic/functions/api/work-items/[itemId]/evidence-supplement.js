@@ -65,6 +65,7 @@ export async function onRequestPost({ request, env, params }) {
       packets: affectedPackets, projectId: item.project_id, factId: supplement.fact_id,
       actorRole: current.role, actorId,
       reason: "事实因补证被撤回，重新进入待核验状态，原已发布结论的依据已失效",
+      cause: { sql: "EXISTS (SELECT 1 FROM evidence_supplements WHERE id=? AND work_item_id=? AND status='provided' AND material_id=?)", values: [supplement.id, item.id, materialId] },
     });
     response.invalidatedPackets = staledPacketIds;
     const results = await env.DB.batch([

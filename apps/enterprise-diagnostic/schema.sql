@@ -17,6 +17,7 @@
 --   0011_work_item_assignment_version.sql
 --   0012_builder_account_role.sql
 --   0013_fact_evidence_level.sql
+--   0014_decision_packet_suggestions.sql
 --
 -- This is an offline snapshot of the terminal schema shape: CREATE TABLE
 -- statements in creation order, then explicit CREATE INDEX statements. SQLite
@@ -204,7 +205,7 @@ CREATE TABLE decision_packets (
   downstream_owner TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   verified_at TEXT,
-  published_at TEXT, last_transition_key TEXT, revision_reason TEXT, revision_from_version INTEGER, revision_work_item_id TEXT,
+  published_at TEXT, last_transition_key TEXT, revision_reason TEXT, revision_from_version INTEGER, revision_work_item_id TEXT, suggestions_json TEXT NOT NULL DEFAULT '[]',
   UNIQUE(project_id, version),
   FOREIGN KEY (project_id) REFERENCES projects(id)
 );

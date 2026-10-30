@@ -1287,3 +1287,48 @@ button:not(:disabled):active { transform: translateY(1px); }
   #formal-entry-view .b1-entry-role-number { margin-bottom:8px; }
   #formal-entry-view .b1-entry-role > p:not(.b1-entry-role-number) { margin-bottom:8px; }
 }
+
+/* V0.2 · AI 诊断建议 */
+.suggestion-generator { margin: 10px 0 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.suggestion-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 2px; }
+.suggestion-card { margin: 10px 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.suggestion-card h3 { margin: 8px 0 6px; }
+.suggestion-card p { margin: 0 0 6px; }
+.suggestion-card__head { display: flex; align-items: center; gap: 8px; }
+.suggestion-priority { padding: 2px 8px; border-radius: 999px; background: var(--subtle); color: var(--muted); font-size: 12px; font-weight: 650; }
+.suggestion-priority--high { background: #fdecea; color: var(--danger); }
+.suggestion-priority--medium { background: #fff4e0; color: var(--warning); }
+.suggestion-priority--low { background: #eaf3ff; color: var(--accent); }
+.suggestion-unverified { padding: 1px 7px; border: 1px solid #f0d9a8; border-radius: 999px; color: var(--warning); font-size: 12px; }
+.suggestion-card--unverified { border-style: dashed; background: #fffdf7; }
+.suggestion-facts { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 12px; }
+.suggestion-gate { margin: 8px 0; padding: 10px 12px; border: 1px solid #f0d9a8; border-radius: 8px; background: #fffdf7; }
+.suggestion-gate .error-feedback { margin-bottom: 8px; }
+.suggestion-preview { margin: 10px 0; }
+.internal-draft-banner { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; padding: 12px 14px; border: 1px dashed #f0d9a8; border-radius: 10px; background: #fffdf7; }
+.internal-draft-banner strong { color: var(--warning); }
+.suggestion-fact-source { margin: 8px 0 0; }
+.suggestion-fact-source summary { cursor: pointer; color: var(--accent); font-size: 13px; }
+.suggestion-fact-source .panel-label { margin: 8px 0 2px; }
+
+/* Browser acceptance: keep identity readable and contain wide project tables. */
+@media (max-width: 760px) {
+  body.formal-active .app-header { height: auto; }
+  body.formal-active .app-header__inner { flex-wrap: wrap; gap: 8px; padding-block: 9px; }
+  body.formal-active .brand-lockup { flex: 1 1 100%; }
+  body.formal-active .product-name { white-space: nowrap; }
+  body.formal-active .formal-identity { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; margin: 0; padding: 0; gap: 6px; }
+  body.formal-active .formal-identity__env { flex: 1 1 100%; border-radius: 6px; overflow-wrap: anywhere; }
+  body.formal-active .formal-identity__role,
+  body.formal-active .formal-identity__exit { flex-shrink: 0; white-space: nowrap; }
+  body.formal-active .formal-identity__project { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+  body.formal-active .formal-identity__exit { min-height: 44px; margin-left: auto; }
+  #formal-builder-view .formal-panel > *,
+  #formal-builder-view .control-history > * { min-width: 0; max-width: 100%; }
+  #formal-builder-view .formal-table-wrap { width: 100%; }
+  #formal-builder-view .formal-invitation-link code { overflow-wrap: anywhere; }
+}
+@media (max-width: 760px) {
+  body.formal-active .app-shell > .shell-pane--trace { display: block; }
+  body.formal-active .shell-pane--trace .pane-body { max-height: none; }
+}

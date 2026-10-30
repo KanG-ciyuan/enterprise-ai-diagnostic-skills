@@ -1,4 +1,12 @@
 import { cors, decisionPacketPayload, formalActor, httpError, json, requireAuthorizedProject, requireMembership } from "../../../../_shared.js";
+import { parseSuggestions, suggestionBasisDrift } from "../../decision-packets/_facts.js";
+
+/**
+ * V0.2: a published suggestion is only served while every fact it cites still matches the
+ * snapshot taken when the suggestion was created. Event-driven staleness covers fact
+ * resets, re-grades and impact upgrades; `suggestionBasisDrift` is the shared read-time
+ * check used here and by the decision endpoint. On drift the suggestions are withheld.
+ */
 
 export async function onRequestGet({ request, env, params }) {
   const preflight = cors(request); if (preflight) return preflight;
@@ -43,6 +51,16 @@ export async function onRequestGet({ request, env, params }) {
       invalidation = { stale: true, reason, occurredAt: event?.created_at || null, notice: "本摘要所依据的事实已失效，不能继续作为决策依据；历史决策记录保留但依据已失效。" };
     }
     // Raw evidence remains behind the verifier boundary; owners receive only confirmed claims and the published summary.
-    return json({ packet: { ...summary, confirmedFacts, decisionReceipt, invalidation } });
+    const envelope = parseSuggestions(packet.suggestions_json);
+    let suggestions = envelope.items;
+    let suggestionsInvalidated = null;
+    if (suggestions.length && (isStale || (await suggestionBasisDrift(env.DB, params.projectId, envelope)))) {
+      suggestions = [];
+      suggestionsInvalidated = {
+        invalidated: true,
+        reason: "建议所依据的事实已发生变化或不再合格，不能继续作为有效结论交付。",
+      };
+    }
+    return json({ packet: { ...summary, confirmedFacts, decisionReceipt, invalidation, suggestions, suggestionReview: envelope.contentReview || null, suggestionsInvalidated } });
   } catch (error) { return error instanceof Response ? error : httpError(error.message, 500); }
 }

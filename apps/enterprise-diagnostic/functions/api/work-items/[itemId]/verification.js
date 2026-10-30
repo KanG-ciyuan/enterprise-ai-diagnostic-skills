@@ -65,11 +65,14 @@ async function resolveEligibleMaterials(db, projectId, role, sourceRefs) {
 }
 
 function advanceWorkItemStatement(db, itemId, factId, transitionKey, assignedVerifierId = null, assignmentVersion = null) {
-  return db.prepare("UPDATE work_items SET stage=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'decision' ELSE 'facts' END,status=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'awaiting_decision' ELSE 'awaiting_verification' END,assignee_role=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'owner' ELSE 'verifier' END,assignee_label=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN '企业负责人' ELSE '流程核验人员' END,assignee_account_id=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN NULL ELSE assigned_verifier_id END,judgment_status=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'confirmed' ELSE 'open' END,evidence_completeness=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 100 ELSE evidence_completeness END,blocking_reason=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN '等待负责人决定是否进入影子试点' ELSE '仍有必需事实待确认' END,next_action=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN '审阅核验结论' ELSE '继续逐条核验候选事实' END WHERE id=? AND EXISTS (SELECT 1 FROM candidate_facts WHERE id=? AND last_transition_key=?) AND (? IS NULL OR (assigned_verifier_id=? AND assignment_version=?))").bind(itemId, factId, transitionKey, assignedVerifierId, assignedVerifierId, assignmentVersion);
+  // Another fact can finish while this task still awaits employee evidence.
+  // Preserve the active supplement, its blocked state and its recovery instructions.
+  return db.prepare("UPDATE work_items SET stage=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'decision' ELSE 'facts' END,status=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'awaiting_decision' ELSE 'awaiting_verification' END,assignee_role=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'owner' ELSE 'verifier' END,assignee_label=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN '企业负责人' ELSE '流程核验人员' END,assignee_account_id=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN NULL ELSE assigned_verifier_id END,judgment_status=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'confirmed' ELSE 'open' END,evidence_completeness=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 100 ELSE evidence_completeness END,blocking_reason=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN '等待负责人决定是否进入影子试点' ELSE '仍有必需事实待确认' END,next_action=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN '审阅核验结论' ELSE '继续逐条核验候选事实' END WHERE NOT EXISTS (SELECT 1 FROM evidence_supplements es JOIN candidate_facts cf ON cf.id=es.fact_id AND cf.work_item_id=es.work_item_id WHERE es.id=work_items.supplement_id AND es.work_item_id=work_items.id AND es.status='waiting' AND cf.status='insufficient_evidence') AND id=? AND EXISTS (SELECT 1 FROM candidate_facts WHERE id=? AND last_transition_key=?) AND (? IS NULL OR (assigned_verifier_id=? AND assignment_version=?))").bind(itemId, factId, transitionKey, assignedVerifierId, assignedVerifierId, assignmentVersion);
 }
 
 async function conflictResponse(db, itemId, factId) {
   const currentItem = await requireItem(db, itemId);
+  if (currentItem.project_id.startsWith("PRJ-")) return json({ code: "transition_conflict", detail: "事实状态或核验责任已变化，请刷新后重试。" }, 409);
   const currentFact = await db.prepare("SELECT * FROM candidate_facts WHERE id=? AND work_item_id=?").bind(factId, itemId).first();
   return json({ code: "transition_conflict", detail: "事实状态已变化，请刷新后重试。", item: itemPayload(currentItem), fact: currentFact }, 409);
 }
@@ -95,13 +98,17 @@ export async function onRequestPost({ request, env, params }) {
     // 因此该专项动作不受「必须在核验阶段」这一状态门限制；其余动作保持不变。
     const isLevelCorrection = body.action === "correct_evidence_level";
     if (!isLevelCorrection && (item.stage !== "facts" || !["awaiting_verification", "blocked"].includes(item.status))) return httpError("当前任务不在事实核验阶段", 409);
-    if (formal && !isSecondConfirmation && !isLevelCorrection && item.assigned_verifier_id !== current.accountId) return httpError("当前事实未分配给你核验", 403);
+    if (formal && !isSecondConfirmation && item.assigned_verifier_id !== current.accountId) return httpError("当前事实未分配给你核验", 403);
     const factId = String(body.factId || "").trim();
     if (!factId) return httpError("核验必须指定 factId", 422);
     const fact = await env.DB.prepare("SELECT * FROM candidate_facts WHERE id=? AND work_item_id=? AND project_id=?").bind(factId, item.id, item.project_id).first();
     if (!fact) return httpError("候选事实不存在或不属于当前任务", 404);
     const actorId = current.accountId || current.userId;
     const transitionKey = crypto.randomUUID();
+    // Grade/impact corrections change decision authority even after the task moves
+    // to decision. Bind their final write to the current named verifier and member.
+    const correctionAuthoritySql = formal ? " AND EXISTS (SELECT 1 FROM work_items wi JOIN project_memberships pm ON pm.project_id=wi.project_id AND pm.account_id=? AND pm.role='verifier' AND pm.status='active' JOIN accounts a ON a.id=pm.account_id AND a.status='active' WHERE wi.id=? AND wi.project_id=? AND wi.assigned_verifier_id=? AND wi.assignment_version=?)" : "";
+    const correctionAuthorityBindings = formal ? [current.accountId, item.id, item.project_id, current.accountId, assignmentVersion] : [];
 
     // ── V0.1-01b: 漏判补救 — 核验人把漏判事实升级为高影响 ────────────────
     // `impact_level` was decided once, at fact creation, by a regex on the claim
@@ -137,6 +144,7 @@ export async function onRequestPost({ request, env, params }) {
       const { statements: staleStatements } = stalePacketStatements(env.DB, {
         packets: affected, projectId: item.project_id, factId,
         actorRole: "verifier", actorId, reason: `证据等级修正 ${currentLevel || "未定级"} → ${target}：${reason}`,
+        cause: { sql: "EXISTS (SELECT 1 FROM candidate_facts WHERE id=? AND project_id=? AND last_transition_key=?)", values: [factId, item.project_id, correctionKey] },
       });
       const correctionPayload = JSON.stringify({
         factId,
@@ -149,7 +157,7 @@ export async function onRequestPost({ request, env, params }) {
         note: "等级修正不改变确认状态，也不改变二次确认要求",
       });
       const results = await env.DB.batch([
-        env.DB.prepare("UPDATE candidate_facts SET evidence_level=?,evidence_level_source='verifier_correction',evidence_labeled=?,evidence_level_updated_at=CURRENT_TIMESTAMP,evidence_level_updated_by_account_id=?,last_transition_key=? WHERE id=? AND work_item_id=? AND COALESCE(evidence_level,'')!=?").bind(target, requiresLabel(target) ? 1 : 0, actorId, correctionKey, factId, item.id, target),
+        env.DB.prepare("UPDATE candidate_facts SET evidence_level=?,evidence_level_source='verifier_correction',evidence_labeled=?,evidence_level_updated_at=CURRENT_TIMESTAMP,evidence_level_updated_by_account_id=?,evidence_version=evidence_version+1,last_transition_key=? WHERE id=? AND work_item_id=? AND COALESCE(evidence_level,'')!=? AND evidence_version=? AND last_transition_key IS ?" + correctionAuthoritySql).bind(target, requiresLabel(target) ? 1 : 0, actorId, correctionKey, factId, item.id, target, Number(fact.evidence_version || 1), fact.last_transition_key || null, ...correctionAuthorityBindings),
         env.DB.prepare("INSERT INTO fact_judgments(id,work_item_id,fact_id,decision,reason,correction,source_refs,actor_id,flow_card_version,evidence_version) SELECT ?,work_item_id,id,?,?,NULL,'[]',?,flow_card_version,evidence_version FROM candidate_facts WHERE id=? AND last_transition_key=?").bind(`JDG-${crypto.randomUUID()}`, `evidence_level_correction:${currentLevel || "null"}->${target}`, reason, actorId, factId, correctionKey),
         env.DB.prepare("INSERT INTO events(event_id,project_id,work_item_id,type,actor_role,actor_id,payload) SELECT ?,project_id,work_item_id,'fact_evidence_level_corrected','verifier',?,? FROM candidate_facts WHERE id=? AND last_transition_key=?").bind(`EVT-${crypto.randomUUID()}`, actorId, correctionPayload, factId, correctionKey),
         ...staleStatements,
@@ -173,6 +181,7 @@ export async function onRequestPost({ request, env, params }) {
       const { statements: staleStatements } = stalePacketStatements(env.DB, {
         packets: affected, projectId: item.project_id, factId,
         actorRole: "verifier", actorId, reason: `事实升级为高影响：${reason}`,
+        cause: { sql: "EXISTS (SELECT 1 FROM candidate_facts WHERE id=? AND project_id=? AND last_transition_key=?)", values: [factId, item.project_id, upgradeKey] },
       });
       const upgradePayload = JSON.stringify({
         factId, from: fact.impact_level, to: target, reason, actorId,
@@ -180,7 +189,7 @@ export async function onRequestPost({ request, env, params }) {
         invalidatedPackets: affected.map((packet) => packet.id),
       });
       const results = await env.DB.batch([
-        env.DB.prepare("UPDATE candidate_facts SET impact_level=?,impact_level_updated_at=CURRENT_TIMESTAMP,impact_level_updated_by_account_id=?,impact_level_reason=?,second_confirmation_status=?,verified_by_account_id=NULL,last_transition_key=? WHERE id=? AND work_item_id=? AND impact_level!=?").bind(target, actorId, reason, target === "high" ? "pending" : "not_required", upgradeKey, factId, item.id, target),
+        env.DB.prepare("UPDATE candidate_facts SET impact_level=?,impact_level_updated_at=CURRENT_TIMESTAMP,impact_level_updated_by_account_id=?,impact_level_reason=?,second_confirmation_status=?,verified_by_account_id=NULL,evidence_version=evidence_version+1,last_transition_key=? WHERE id=? AND work_item_id=? AND impact_level!=? AND evidence_version=? AND last_transition_key IS ?" + correctionAuthoritySql).bind(target, actorId, reason, target === "high" ? "pending" : "not_required", upgradeKey, factId, item.id, target, Number(fact.evidence_version || 1), fact.last_transition_key || null, ...correctionAuthorityBindings),
         env.DB.prepare("INSERT INTO fact_judgments(id,work_item_id,fact_id,decision,reason,correction,source_refs,actor_id,flow_card_version,evidence_version) SELECT ?,work_item_id,id,?,?,NULL,'[]',?,flow_card_version,evidence_version FROM candidate_facts WHERE id=? AND last_transition_key=?").bind(`JDG-${crypto.randomUUID()}`, `impact_upgrade:${fact.impact_level}->${target}`, reason, actorId, factId, upgradeKey),
         env.DB.prepare("INSERT INTO events(event_id,project_id,work_item_id,type,actor_role,actor_id,payload) SELECT ?,project_id,work_item_id,'fact_impact_upgraded','verifier',?,? FROM candidate_facts WHERE id=? AND last_transition_key=?").bind(`EVT-${crypto.randomUUID()}`, actorId, upgradePayload, factId, upgradeKey),
         ...staleStatements,

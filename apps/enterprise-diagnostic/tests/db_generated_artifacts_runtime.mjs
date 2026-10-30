@@ -46,7 +46,7 @@ const GENERATOR_REF = "scripts/gen-schema-snapshot.mjs";
 
 const TERMINAL_COUNTS = Object.freeze({
   tables: 19,
-  columns: 259,
+  columns: 260,
   fk: 16,
   explicitIndexes: 17,
   uniqueConstraints: 12,
@@ -69,6 +69,7 @@ const BASELINE_MIGRATION_SHA256 = Object.freeze({
   "0011_work_item_assignment_version.sql": "6bab9110e8012a0dc72d892bf8175f0b88fff0ea94205520f8af40ceed56e9da",
   "0012_builder_account_role.sql": "30eb6dcd5ce82be3ee5cf302902f6d67344ceba10f89db86c775f91449a9030e",
   "0013_fact_evidence_level.sql": "11f723c82eccb7f6fab0c9d5a1b765152611d991eefcef71fa75224a605b8766",
+  "0014_decision_packet_suggestions.sql": "c5f5834f2d1329974bde929428efb918c7a36a15ae454b64a0fe3475a625a72c",
 });
 
 const LEGACY_SHAPE_FIXTURES = Object.freeze({
@@ -186,7 +187,7 @@ try {
     assert.equal(SCHEMA_FINGERPRINTS.v, FINGERPRINT_VERSION);
   });
 
-  await check("schema.sql fingerprint equals direct replay of the 13 migrations", () => {
+  await check("schema.sql fingerprint equals direct replay of the 14 migrations", () => {
     const schemaDb = loadSchemaSql();
     const schemaFingerprint = fingerprintOf(schemaDb);
     schemaDb.close();
@@ -235,21 +236,21 @@ try {
     assert.equal(GENERATED_FINGERPRINT_VERSION, 1);
     assert.deepEqual([...KNOWN_MIGRATIONS], migrationFiles);
     assert.equal(EXPECTED_MIGRATION_HEAD, migrationFiles.at(-1));
-    assert.equal(EXPECTED_MIGRATION_HEAD, "0013_fact_evidence_level.sql");
+    assert.equal(EXPECTED_MIGRATION_HEAD, "0014_decision_packet_suggestions.sql");
     assert.deepEqual([...GENERATED_BUSINESS_TABLES], [...BUSINESS_TABLES]);
     assert.equal(GENERATED_BUSINESS_TABLES.length, 19);
     assert.ok(Object.isFrozen(KNOWN_MIGRATIONS), "KNOWN_MIGRATIONS must be frozen");
     assert.ok(Object.isFrozen(GENERATED_BUSINESS_TABLES), "BUSINESS_TABLES must be frozen");
   });
 
-  await check("prefix fingerprints: 14 honest prefixes with terminal == prefixes[13]", () => {
+  await check("prefix fingerprints: 15 honest prefixes with terminal == prefixes[14]", () => {
     const prefixes = SCHEMA_FINGERPRINTS.prefixes;
     assert.ok(Array.isArray(prefixes));
     assert.equal(prefixes.length, migrationFiles.length + 1);
-    assert.equal(prefixes.length, 14);
+    assert.equal(prefixes.length, 15);
     assert.deepEqual(
       prefixes.map((prefix) => prefix.k),
-      Array.from({ length: 14 }, (_value, index) => index),
+      Array.from({ length: 15 }, (_value, index) => index),
     );
     const terminal = prefixes.at(-1);
     assert.equal(SCHEMA_FINGERPRINTS.terminal.hash, terminal.hash);
@@ -315,7 +316,7 @@ try {
     assert.equal(lock.generated_by, GENERATOR_REF);
     assert.ok(Array.isArray(lock.files));
     assert.equal(lock.files.length, migrationFiles.length);
-    assert.equal(lock.files.length, 13);
+    assert.equal(lock.files.length, 14);
     assert.deepEqual(
       lock.files.map((entry) => entry.name),
       migrationFiles,

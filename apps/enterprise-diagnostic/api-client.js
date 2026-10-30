@@ -169,10 +169,13 @@
         method: "POST", idempotencyKey, body: JSON.stringify({ authorizationRecordId }),
       });
     },
-    listConfirmedFacts(projectId) { return formalRequest(`/api/formal/projects/${projectId}/confirmed-facts`); },
-    getFormalDecisionPacket(projectId) { return formalRequest(`/api/formal/projects/${projectId}/decision-packet`); },
+    listConfirmedFacts(projectId, scope) { return formalRequest(`/api/formal/projects/${projectId}/confirmed-facts${scope ? `?scope=${encodeURIComponent(scope)}` : ""}`); },
+    getFormalDecisionPacket(projectId, scope) { return formalRequest(`/api/formal/projects/${projectId}/decision-packet${scope ? `?scope=${encodeURIComponent(scope)}` : ""}`); },
+    generateDiagnosisSuggestions(projectId, scope, idempotencyKey) { return formalRequest(`/api/formal/projects/${projectId}/diagnosis-suggestions`, { method: "POST", idempotencyKey, body: JSON.stringify({ scope }) }); },
+    reviewFormalSuggestionContent(projectId, packetId, baseVersion, contentKey) { return formalRequest(`/api/formal/projects/${projectId}/decision-packets/draft`, { method: "POST", body: JSON.stringify({ action: "content_review", packetId, baseVersion, contentKey }) }); },
+    updateFormalSuggestionDraft(projectId, packetId, baseVersion, payload) { return formalRequest(`/api/formal/projects/${projectId}/decision-packets/draft`, { method: "POST", body: JSON.stringify({ action: "update_suggestions", packetId, baseVersion, ...payload }) }); },
     createFormalDecisionPacket(projectId, payload, idempotencyKey) { return formalRequest(`/api/formal/projects/${projectId}/decision-packets/draft`, { method: "POST", idempotencyKey, body: JSON.stringify(payload) }); },
-    verifyFormalDecisionPacket(packetId, factRefs) { return formalRequest(`/api/formal/decision-packets/${packetId}/verify`, { method: "POST", body: JSON.stringify({ factRefs }) }); },
+    verifyFormalDecisionPacket(packetId, factRefs, contentKey) { return formalRequest(`/api/formal/decision-packets/${packetId}/verify`, { method: "POST", body: JSON.stringify({ factRefs, contentKey }) }); },
     publishFormalDecisionPacket(packetId) { return formalRequest(`/api/formal/decision-packets/${packetId}/publish`, { method: "POST" }); },
     createInvitation(projectId, { email, role, expiresInSeconds }) {
       return formalRequest("/api/projects/" + projectId + "/invitations", {

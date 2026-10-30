@@ -1,3 +1,5 @@
+import { inferenceReview } from "../../agent/_inference-review.js";
+import { deriveInterviewRecord, interviewUnresolved } from "../../agent/_interview-record.js";
 import { canonicalVerdict, resolveInferenceJudgment, VERDICT_UNJUDGED } from "../../agent/_adapter.js";
 import { submissionEvidenceSummary, validateSubmissionEvidence } from "../../agent/_evidence.js";
 import { assertSchemaReady, cors, demoActor, findIdempotent, formalActor, httpError, idempotencyKey, itemPayload, json, normalizeEmployeeDraft, receiptPayload, requireAuthorizedProject, requireItem, requireMembership, serializeEmployeeDraft } from "../../../_shared.js";
@@ -34,10 +36,12 @@ const normalizeAnswerText = (value) => String(value === undefined || value === n
 const normalizeMaterialStatus = (value) => (["provided", "none_available", "undecided"].includes(value) ? value : "undecided");
 
 /** 服务端规范卡：唯一输入 = 服务端持久化 answers + 服务端 materialStatus。 */
-function buildCanonicalWorkflowCard(answers, materialStatus) {
+function buildCanonicalWorkflowCard(answers, materialStatus, ledger = null) {
   const normalizedAnswers = {};
   for (const { key } of ANSWER_DIMENSIONS) normalizedAnswers[key] = normalizeAnswerText(answers && answers[key]);
-  const card = { ...normalizedAnswers, materialIndex: MATERIAL_INDEX_LABELS[normalizeMaterialStatus(materialStatus)] };
+  const record = deriveInterviewRecord(normalizedAnswers, ledger?.statementHistory);
+  const unresolved = interviewUnresolved(record, ledger?.unresolved);
+  const card = { ...record.currentDimensions, materialIndex: MATERIAL_INDEX_LABELS[normalizeMaterialStatus(materialStatus)], ...(unresolved.length ? { unresolved } : {}) };
   const missing = ANSWER_DIMENSIONS.filter(({ key }) => !normalizedAnswers[key]).map(({ key }) => key);
   return { card, answers: normalizedAnswers, missing };
 }
@@ -57,6 +61,7 @@ function compareWorkflowCard(clientCard, canonicalCard) {
     const actual = normalizeAnswerText(clientCard && clientCard[key]);
     if (actual !== expected) mismatchedFields.push(key);
   }
+  if (canonicalJson(clientCard?.unresolved || []) !== canonicalJson(canonicalCard?.unresolved || [])) mismatchedFields.push("unresolved");
   return mismatchedFields;
 }
 
@@ -208,7 +213,7 @@ export async function onRequestPost({ request, env, params }) {
       try { serverDraftRaw = item.employee_draft_json ? JSON.parse(item.employee_draft_json) : {}; } catch (_error) { serverDraftRaw = {}; }
       const serverDraft = normalizeEmployeeDraft(serverDraftRaw);
       const serverMaterialStatus = normalizeMaterialStatus(item.material_status);
-      const built = buildCanonicalWorkflowCard(serverDraft.answers, serverMaterialStatus);
+      const built = buildCanonicalWorkflowCard(serverDraft.answers, serverMaterialStatus, serverDraft.ledger);
       if (built.missing.length) {
         return json({
           code: "answers_incomplete",
@@ -234,7 +239,7 @@ export async function onRequestPost({ request, env, params }) {
           currentRevision: currentItemRevision,
         }, 422);
       }
-      const serverText = canonicalSubmissionText(built.answers);
+      const serverText = canonicalSubmissionText(built.card);
       if (normalizeAnswerText(text) !== serverText) {
         return json({
           code: "submission_text_mismatch",
@@ -332,7 +337,7 @@ export async function onRequestPost({ request, env, params }) {
       let blockedText = text;
       let blockedMaterialStatus = materialStatus;
       if (formal) {
-        const freshBuilt = buildCanonicalWorkflowCard(freshDraft.answers, fresh.material_status);
+        const freshBuilt = buildCanonicalWorkflowCard(freshDraft.answers, fresh.material_status, freshDraft.ledger);
         if (freshBuilt.missing.length) {
           return json({
             code: "answers_incomplete",
@@ -359,7 +364,7 @@ export async function onRequestPost({ request, env, params }) {
             currentRevision: currentDraftRevision,
           }, 422);
         }
-        const freshText = canonicalSubmissionText(freshBuilt.answers);
+        const freshText = canonicalSubmissionText(freshBuilt.card);
         if (normalizeAnswerText(text) !== freshText) {
           return json({
             code: "submission_text_mismatch",
@@ -469,7 +474,7 @@ export async function onRequestPost({ request, env, params }) {
     const trustedVerdicts = submissionNormalized.inferenceVerdicts && typeof submissionNormalized.inferenceVerdicts === "object"
       ? submissionNormalized.inferenceVerdicts : {};
     const submissionDraftRevision = Number.isInteger(submissionNormalized.revision) ? submissionNormalized.revision : 0;
-    const inferenceResult = buildPersistedInferences(body, current.accountId, baselineInferences, trustedVerdicts);
+    const inferenceResult = buildPersistedInferences(body, current.accountId, baselineInferences, trustedVerdicts, submissionNormalized);
     const persistedInferences = inferenceResult.rows;
     // ── PILOT-09C/IMPLEMENT-2：提交守卫（覆盖**完整记录集**，不只是可见的 12 条）──
     // ① 溢出但**仍需判定**的推断：员工在界面上看不到、无法处理 ⇒ 必须阻止提交并说明原因，
@@ -612,7 +617,7 @@ export async function onRequestPost({ request, env, params }) {
  * 事实的最终认定仍在 verification.js（核验人）。核验人看到的是一条带
  * verdict/correction 的推断，而不是一条事实。
  */
-function buildPersistedInferences(body, accountId, baseline = [], trustedVerdicts = {}) {
+function buildPersistedInferences(body, accountId, baseline = [], trustedVerdicts = {}, draft = {inferenceVerdicts:trustedVerdicts}) {
   // PILOT-08E/D1：**推断原文只取自服务端基线**（baseline）。
   // 客户端提交的 body.inferences[].text 一律不再采信 —— 员工只能通过
   // inferenceVerdicts（按服务端推断 ID）贡献"判定 + 更正原文"。
@@ -641,12 +646,14 @@ function buildPersistedInferences(body, accountId, baseline = [], trustedVerdict
     const verdict = canonicalVerdict(stamp.verdict);
     const correction = typeof stamp.correction === "string" ? stamp.correction.trim().slice(0, 500) : "";
     const judgmentState = resolveInferenceJudgment(entry, verdicts);
-    if (judgmentState !== "valid") {
+    const review = inferenceReview(entry, draft);
+    if (review.reviewStatus === "active" && judgmentState !== "valid") {
       missingJudgements.push(entry.id);
       if (entry.listed === false) overflowPending.push(entry.id);
     }
     rows.push({
       id: entry.id,
+      idSource: entry.idSource || null,
       text: String(entry.text).slice(0, 500),   // ★ 服务端原文，客户端无法替换
       quote: entry.quote ? String(entry.quote).slice(0, 300) : null,   // ★ 证据来源
       basis: entry.basis ? String(entry.basis).slice(0, 120) : null,
@@ -656,7 +663,9 @@ function buildPersistedInferences(body, accountId, baseline = [], trustedVerdict
       contentVersion: Number.isInteger(entry.contentVersion) ? entry.contentVersion : null,   // ★ 内容版本
       templateVersion: Number.isInteger(entry.templateVersion) ? entry.templateVersion : null,
       listed: entry.listed !== false,                  // ★ 是否进入过员工可见列表
-      judgmentState,                                   // ★ valid / stale / unjudged
+      ...review,
+      lastProposedRevision: entry.lastProposedRevision ?? null,
+      judgmentState: review.reviewStatus === "active" ? judgmentState : "historical", // historical never authorizes facts
       verdict,
       correction: correction || null,
       // ── G14：服务端依赖元数据/失效审计完整写入提交快照（不截断）─────────
@@ -676,7 +685,7 @@ function buildPersistedInferences(body, accountId, baseline = [], trustedVerdict
       // 新的判定变更写入），因此这里不截断、不静默删除；提交不追加历史，仅原样快照。
       history: Array.isArray(stamp.history) ? stamp.history : [],   // ★ 判定变更审计（完整保留）
 
-      judgedByAccountId: judgmentState === "valid" ? accountId : null,
+      judgedByAccountId: review.reviewStatus === "active" && judgmentState === "valid" ? accountId : null,
     });
     if (rows.length >= 40) break;   // 与 _adapter 的记录集上限一致（不再按可见列表的 12 截断）
   }

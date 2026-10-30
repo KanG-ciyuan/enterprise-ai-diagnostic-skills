@@ -17,7 +17,7 @@
  */
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { draftRevisionOf, normalizeEmployeeDraft, serializeEmployeeDraft } from "../functions/_shared.js";
+import { itemPayload, draftRevisionOf, normalizeEmployeeDraft, serializeEmployeeDraft } from "../functions/_shared.js";
 import { ANSWER_DIMENSIONS as EVIDENCE_DIMENSIONS, canonicalJson as evidenceCanonicalJson, normalizeAnswers as evidenceNormalizeAnswers } from "../functions/api/agent/_evidence.js";
 import { appendStatementHistory } from "../functions/api/agent/_adapter.js";
 import { onRequestPut as saveDraft } from "../functions/api/work-items/[itemId]/employee-draft.js";
@@ -410,17 +410,18 @@ console.log("\n── E. 等待态幂等：完整载荷相同不推进；卡片/
   const changedAnswers = { ...ANSWERS, steps: "相同文本对应的新步骤（E2 卡片步骤已更新）" };
   const changedMaterial = "none_available";
   const changedSave = await put(db, { answers: changedAnswers, materialStatus: changedMaterial, baseRevision: revisionAfterFirst });
-  const changed = await submit(db, { text: canonicalText(changedAnswers), workflowCard: canonicalCard(changedAnswers, changedMaterial), materialStatus: changedMaterial, inferences: [], inferenceVerdicts: {}, baseRevision: revisionOf(db) }, "K-E-changed");
+  const projectedCard = { ...itemPayload(itemOf(db)).draftWorkflowCard, materialIndex: MATERIAL_INDEX_LABELS[changedMaterial] };
+  const changed = await submit(db, { text: canonicalText(projectedCard), workflowCard: projectedCard, materialStatus: changedMaterial, inferences: [], inferenceVerdicts: {}, baseRevision: revisionOf(db) }, "K-E-changed");
   const changedBody = await jsonOf(changed);
   const item = itemOf(db);
   const storedCard = JSON.parse(item.workflow_card_json || "{}");
   check("E2", "相同文本但卡片/材料不同 → 不得判为重复：revision +1，且新卡片/材料落库",
     changedSave.status === 200 && changed.status === 409 && changedBody.code === "verifier_not_ready"
       && revisionOf(db) === revisionAfterFirst + 2
-      && storedCard.steps === changedAnswers.steps && item.material_status === changedMaterial,
+      && storedCard.steps === projectedCard.steps && storedCard.steps.includes(changedAnswers.steps) && storedCard.steps.includes(ANSWERS.steps) && item.material_status === changedMaterial,
     `rev=${revisionOf(db)} steps=${String(storedCard.steps).slice(0, 16)} material=${item.material_status}`);
   const afterChange = revisionOf(db);
-  const again = await submit(db, { text: canonicalText(changedAnswers), workflowCard: canonicalCard(changedAnswers, changedMaterial), materialStatus: changedMaterial, inferences: [], inferenceVerdicts: {}, baseRevision: afterChange }, "K-E-dup2");
+  const again = await submit(db, { text: canonicalText(projectedCard), workflowCard: projectedCard, materialStatus: changedMaterial, inferences: [], inferenceVerdicts: {}, baseRevision: afterChange }, "K-E-dup2");
   check("E3", "E2 之后再次完全重复（新完整载荷）→ 幂等，revision 不再推进",
     again.status === 409 && revisionOf(db) === afterChange, `status=${again.status} rev=${revisionOf(db)}`);
   db.close();

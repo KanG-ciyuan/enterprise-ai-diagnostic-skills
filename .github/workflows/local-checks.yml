@@ -90,4 +90,6 @@ jobs:
           node tests/v02_round2_counterexamples_runtime.mjs
           node tests/v02_round3_regressions_runtime.mjs
           node tests/v02_browser_blockers_runtime.mjs
+          node tests/r1_verification_version_runtime.mjs
+          node tests/r1_verification_frontend_runtime.mjs
           node tests/project_identity_runtime.mjs

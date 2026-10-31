@@ -1,3 +1,4 @@
+import { withFixtureViewedVersions } from "./verification_view_fixture.mjs";
 /**
  * V0.2 Codex 独立审查反例回归（R01–R13）。
  *
@@ -67,6 +68,7 @@ function fixture() {
 const results = [];
 function record(id, pass, note = "") { results.push({ id, pass }); console.log(`${pass ? "✔ PASS" : "✘ FAIL"} [${id}]${note ? " | " + note : ""}`); }
 async function call(db, handler, token, body, params = {}, key = "", query = "") {
+  if (handler===factVerify) body=withFixtureViewedVersions(db,body);
   const response = await handler({ request: bearerRequest(`http://127.0.0.1/x${query}`, token, body, key ? { "Idempotency-Key": key } : {}), env: env(db), params });
   const text = await response.text();
   let json = {}; try { json = JSON.parse(text); } catch (_error) { json = { raw: text }; }

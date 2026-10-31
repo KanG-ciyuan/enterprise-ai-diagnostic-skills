@@ -1,3 +1,4 @@
+import { withFixtureViewedVersions } from "./verification_view_fixture.mjs";
 /**
  * V0.2 第二轮复审（Codex N1–N8）修复后的独立断言。
  *
@@ -88,6 +89,7 @@ async function scenario(id, fn) {
   catch (error) { record(id, false, error.message); }
 }
 async function call(db, handler, token, body, params = {}, key = "", query = "") {
+  if (handler===factVerify) body=withFixtureViewedVersions(db,body);
   const response = await handler({ request: bearerRequest(`http://127.0.0.1/x${query}`, token, body, key ? { "Idempotency-Key": key } : {}), env: env(db), params });
   const text = await response.text();
   let parsed = {}; try { parsed = JSON.parse(text); } catch (_error) { parsed = { raw: text }; }

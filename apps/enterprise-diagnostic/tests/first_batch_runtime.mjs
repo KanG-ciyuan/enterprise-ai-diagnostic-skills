@@ -1,3 +1,4 @@
+import { withFixtureViewedVersions } from "./verification_view_fixture.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { onRequestPost as verifyFact } from "../functions/api/work-items/[itemId]/verification.js";
@@ -56,7 +57,7 @@ function addFact(db, f) {
 }
 
 const verify = (db, token, body) =>
-  verifyFact({ request: bearerRequest(`http://127.0.0.1/api/work-items/${ITEM}/verification`, token, body), env: { DB: db }, params: { itemId: ITEM } });
+  verifyFact({ request: bearerRequest(`http://127.0.0.1/api/work-items/${ITEM}/verification`, token, withFixtureViewedVersions(db,body)), env: { DB: db }, params: { itemId: ITEM } });
 const supplement = (db, token, body) =>
   submitEvidence({ request: bearerRequest(`http://127.0.0.1/api/work-items/${ITEM}/evidence-supplement`, token, body), env: { DB: db }, params: { itemId: ITEM } });
 let draftSeq = 0;

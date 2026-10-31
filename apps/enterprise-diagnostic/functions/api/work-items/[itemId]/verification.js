@@ -70,8 +70,27 @@ function advanceWorkItemStatement(db, itemId, factId, transitionKey, assignedVer
   return db.prepare("UPDATE work_items SET stage=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'decision' ELSE 'facts' END,status=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'awaiting_decision' ELSE 'awaiting_verification' END,assignee_role=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'owner' ELSE 'verifier' END,assignee_label=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN '企业负责人' ELSE '流程核验人员' END,assignee_account_id=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN NULL ELSE assigned_verifier_id END,judgment_status=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 'confirmed' ELSE 'open' END,evidence_completeness=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN 100 ELSE evidence_completeness END,blocking_reason=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN '等待负责人决定是否进入影子试点' ELSE '仍有必需事实待确认' END,next_action=CASE WHEN NOT EXISTS (SELECT 1 FROM candidate_facts WHERE work_item_id=work_items.id AND required=1 AND status!='confirmed') THEN '审阅核验结论' ELSE '继续逐条核验候选事实' END WHERE NOT EXISTS (SELECT 1 FROM evidence_supplements es JOIN candidate_facts cf ON cf.id=es.fact_id AND cf.work_item_id=es.work_item_id WHERE es.id=work_items.supplement_id AND es.work_item_id=work_items.id AND es.status='waiting' AND cf.status='insufficient_evidence') AND id=? AND EXISTS (SELECT 1 FROM candidate_facts WHERE id=? AND last_transition_key=?) AND (? IS NULL OR (assigned_verifier_id=? AND assignment_version=?))").bind(itemId, factId, transitionKey, assignedVerifierId, assignedVerifierId, assignmentVersion);
 }
 
-async function conflictResponse(db, itemId, factId) {
+function versionConflictResponse() {
+  return json({ code: "verification_version_conflict", detail: "所见证据版本缺失、无效或已变化，本次判断未保存。请重新加载最新证据，审阅后重新判断。" }, 409);
+}
+
+function viewedVersions(body, fact) {
+  const evidenceVersion = body.evidenceVersion;
+  const flowCardVersion = body.flowCardVersion;
+  if (!Number.isSafeInteger(evidenceVersion) || evidenceVersion < 1 ||
+      !Number.isSafeInteger(flowCardVersion) || flowCardVersion < 1 ||
+      evidenceVersion !== Number(fact.evidence_version) || flowCardVersion !== Number(fact.flow_card_version)) {
+    throw versionConflictResponse();
+  }
+  return { evidenceVersion, flowCardVersion };
+}
+
+async function conflictResponse(db, itemId, factId, viewed = null) {
   const currentItem = await requireItem(db, itemId);
+  if (viewed) {
+    const currentFact = await db.prepare("SELECT evidence_version,flow_card_version FROM candidate_facts WHERE id=? AND work_item_id=?").bind(factId, itemId).first();
+    if (!currentFact || Number(currentFact.evidence_version) !== viewed.evidenceVersion || Number(currentFact.flow_card_version) !== viewed.flowCardVersion) return versionConflictResponse();
+  }
   if (currentItem.project_id.startsWith("PRJ-")) return json({ code: "transition_conflict", detail: "事实状态或核验责任已变化，请刷新后重试。" }, 409);
   const currentFact = await db.prepare("SELECT * FROM candidate_facts WHERE id=? AND work_item_id=?").bind(factId, itemId).first();
   return json({ code: "transition_conflict", detail: "事实状态已变化，请刷新后重试。", item: itemPayload(currentItem), fact: currentFact }, 409);
@@ -199,6 +218,12 @@ export async function onRequestPost({ request, env, params }) {
       return json({ item: itemPayload(updated), impactUpgrade: JSON.parse(upgradePayload) });
     }
 
+    // R1: both human judgments and independent confirmation bind to what was read.
+    // No fallback to the current row for old clients. The same versions are also
+    // compared in the final conditional write, inside the existing atomic batch.
+    const viewed = viewedVersions(body, fact);
+    const versionBindings = [viewed.evidenceVersion, viewed.flowCardVersion, fact.last_transition_key ?? null];
+
     // ── V0.1-01: 核验人可同时给出/修正证据等级（含审计）──────────────────
     // A level supplied on this call is recorded with the grading actor and time.
     const bodyLevel = normalizeEvidenceLevel(body.evidenceLevel);
@@ -216,15 +241,15 @@ export async function onRequestPost({ request, env, params }) {
       if (!sourceRefs.length) return httpError("missing_source_refs", 409);
       await resolveEligibleMaterials(env.DB, item.project_id, current.role, sourceRefs);
       const confirmationId = `FSC-${crypto.randomUUID()}`;
-      const confirmationPayload = JSON.stringify({ factId, firstVerifierAccountId: fact.first_verified_by_account_id, confirmerAccountId: actorId, reason: secondConfirmationReason, sourceRefs });
+      const confirmationPayload = JSON.stringify({ factId, firstVerifierAccountId: fact.first_verified_by_account_id, confirmerAccountId: actorId, reason: secondConfirmationReason, sourceRefs, ...viewed });
       const results = await env.DB.batch([
-        env.DB.prepare("UPDATE candidate_facts SET status='confirmed',second_confirmation_status='confirmed',verified_by_account_id=?,verified_at=CURRENT_TIMESTAMP,last_transition_key=? WHERE id=? AND work_item_id=? AND status='awaiting_second_confirmation' AND first_verified_by_account_id!=? AND (? = 0 OR EXISTS (SELECT 1 FROM work_items wi_guard WHERE wi_guard.id=? AND wi_guard.project_id=? AND wi_guard.assigned_verifier_id=? AND wi_guard.assignment_version=?))").bind(actorId, transitionKey, factId, item.id, actorId, formal ? 1 : 0, item.id, item.project_id, item.assigned_verifier_id, assignmentVersion),
+        env.DB.prepare("UPDATE candidate_facts SET status='confirmed',second_confirmation_status='confirmed',verified_by_account_id=?,verified_at=CURRENT_TIMESTAMP,last_transition_key=? WHERE id=? AND work_item_id=? AND status='awaiting_second_confirmation' AND first_verified_by_account_id!=? AND evidence_version=? AND flow_card_version=? AND last_transition_key IS ? AND (? = 0 OR EXISTS (SELECT 1 FROM work_items wi_guard WHERE wi_guard.id=? AND wi_guard.project_id=? AND wi_guard.assigned_verifier_id=? AND wi_guard.assignment_version=?))").bind(actorId, transitionKey, factId, item.id, actorId, ...versionBindings, formal ? 1 : 0, item.id, item.project_id, item.assigned_verifier_id, assignmentVersion),
         env.DB.prepare("INSERT INTO fact_second_confirmations(id,fact_id,project_id,work_item_id,first_verifier_account_id,confirmer_type,confirmer_identity,reason) SELECT ?,id,project_id,work_item_id,first_verified_by_account_id,'verifier',?,? FROM candidate_facts WHERE id=? AND last_transition_key=?").bind(confirmationId, actorId, secondConfirmationReason, factId, transitionKey),
         advanceWorkItemStatement(env.DB, item.id, factId, transitionKey, formal ? item.assigned_verifier_id : null, formal ? assignmentVersion : null),
         env.DB.prepare("INSERT INTO events(event_id,project_id,work_item_id,type,actor_role,actor_id,payload) SELECT ?,project_id,work_item_id,'fact_second_confirmed','verifier',?,? FROM candidate_facts WHERE id=? AND last_transition_key=?").bind(`EVT-${crypto.randomUUID()}`, actorId, confirmationPayload, factId, transitionKey),
         env.DB.prepare("INSERT INTO events(event_id,project_id,work_item_id,type,actor_role,actor_id,payload) SELECT ?,project_id,work_item_id,'handoff','verifier',?,? FROM candidate_facts WHERE id=? AND last_transition_key=? AND NOT EXISTS (SELECT 1 FROM candidate_facts pending WHERE pending.work_item_id=candidate_facts.work_item_id AND pending.required=1 AND pending.status!='confirmed')").bind(`EVT-${crypto.randomUUID()}`, actorId, JSON.stringify({ fromRole: "verifier", toRole: "owner", targetStage: "decision", sourceRefs }), factId, transitionKey),
       ]);
-      if (!Number(results[0]?.meta?.changes || 0)) return conflictResponse(env.DB, item.id, factId);
+      if (!Number(results[0]?.meta?.changes || 0)) return conflictResponse(env.DB, item.id, factId, viewed);
       const updated = await requireItem(env.DB, item.id);
       return json({ item: itemPayload(updated), secondConfirmation: JSON.parse(confirmationPayload) });
     }
@@ -255,13 +280,13 @@ export async function onRequestPost({ request, env, params }) {
       const deadline = addBusinessDays(new Date(), 5); const recoveryEntry = `重新核验事实 ${factId}`;
       const payload = JSON.stringify({ factId, materialStatus: decision, reason, sourceRefs, requestedMaterial, responsiblePerson: responsible.name, responsibleAccountId, deadline, recoveryEntry, supplementId });
       const results = await env.DB.batch([
-        env.DB.prepare("UPDATE candidate_facts SET material_status='insufficient_evidence',status='insufficient_evidence',source_refs_json=?,first_verified_by_account_id=?,verified_by_account_id=?,verified_at=CURRENT_TIMESTAMP,last_transition_key=? WHERE id=? AND work_item_id=? AND status='open' AND (? = 0 OR EXISTS (SELECT 1 FROM work_items wi_guard WHERE wi_guard.id=? AND wi_guard.project_id=? AND wi_guard.assigned_verifier_id=? AND wi_guard.assignment_version=?))").bind(JSON.stringify(sourceRefs), actorId, actorId, transitionKey, factId, item.id, formal ? 1 : 0, item.id, item.project_id, current.accountId, assignmentVersion),
+        env.DB.prepare("UPDATE candidate_facts SET material_status='insufficient_evidence',status='insufficient_evidence',source_refs_json=?,first_verified_by_account_id=?,verified_by_account_id=?,verified_at=CURRENT_TIMESTAMP,last_transition_key=? WHERE id=? AND work_item_id=? AND status='open' AND evidence_version=? AND flow_card_version=? AND last_transition_key IS ? AND (? = 0 OR EXISTS (SELECT 1 FROM work_items wi_guard WHERE wi_guard.id=? AND wi_guard.project_id=? AND wi_guard.assigned_verifier_id=? AND wi_guard.assignment_version=?))").bind(JSON.stringify(sourceRefs), actorId, actorId, transitionKey, factId, item.id, ...versionBindings, formal ? 1 : 0, item.id, item.project_id, current.accountId, assignmentVersion),
         env.DB.prepare("INSERT INTO evidence_supplements(id,work_item_id,fact_id,requested_material,responsible_person,responsible_account_id,deadline,recovery_entry,authorization_scope,source_refs,old_evidence_version,new_evidence_version,status) SELECT ?,work_item_id,id,?,?,?,?,?,'project',?,?,?,'waiting' FROM candidate_facts WHERE id=? AND last_transition_key=?").bind(supplementId, requestedMaterial, responsible.name || responsible.account_id, responsible.account_id, deadline, recoveryEntry, JSON.stringify(sourceRefs), evidenceVersion, evidenceVersion + 1, factId, transitionKey),
         env.DB.prepare("UPDATE work_items SET status='blocked',judgment_status='blocked',supplement_id=?,blocking_reason='证据不足，等待补充材料',next_action=?,evidence_completeness=MIN(evidence_completeness,62) WHERE id=? AND EXISTS (SELECT 1 FROM candidate_facts WHERE id=? AND last_transition_key=?) AND (? = 0 OR (assigned_verifier_id=? AND assignment_version=?))").bind(supplementId, recoveryEntry, item.id, factId, transitionKey, formal ? 1 : 0, current.accountId, assignmentVersion),
         env.DB.prepare("INSERT INTO fact_judgments(id,work_item_id,fact_id,decision,reason,correction,source_refs,actor_id,flow_card_version,evidence_version) SELECT ?,work_item_id,id,?,?,NULL,?,?,flow_card_version,evidence_version FROM candidate_facts WHERE id=? AND last_transition_key=?").bind(judgmentId, decision, reason, JSON.stringify(sourceRefs), actorId, factId, transitionKey),
         env.DB.prepare("INSERT INTO events(event_id,project_id,work_item_id,type,actor_role,actor_id,payload) SELECT ?,project_id,work_item_id,'evidence_insufficient','verifier',?,? FROM candidate_facts WHERE id=? AND last_transition_key=?").bind(eventId, actorId, payload, factId, transitionKey),
       ]);
-      if (!Number(results[0]?.meta?.changes || 0)) return conflictResponse(env.DB, item.id, factId);
+      if (!Number(results[0]?.meta?.changes || 0)) return conflictResponse(env.DB, item.id, factId, viewed);
       const updated = await requireItem(env.DB, item.id);
       return json({ item: itemPayload(updated), judgment: JSON.parse(payload) });
     }
@@ -284,12 +309,12 @@ export async function onRequestPost({ request, env, params }) {
       evidenceLevel: levelToStore, evidenceLabeled: requiresLabel(levelToStore), evidenceLabelRequired: requiresLabel(levelToStore),
     });
     const confirmStatement = env.DB.prepare(
-      `UPDATE candidate_facts SET material_status=?,status=?,correction=?,source_refs_json=?,first_verified_by_account_id=?,verified_by_account_id=?,second_confirmation_status=?,${levelStatement}verified_at=CURRENT_TIMESTAMP,last_transition_key=? WHERE id=? AND work_item_id=? AND status IN ('open','insufficient_evidence') AND (? = 0 OR EXISTS (SELECT 1 FROM work_items wi_guard WHERE wi_guard.id=? AND wi_guard.project_id=? AND wi_guard.assigned_verifier_id=? AND wi_guard.assignment_version=?))`
+      `UPDATE candidate_facts SET material_status=?,status=?,correction=?,source_refs_json=?,first_verified_by_account_id=?,verified_by_account_id=?,second_confirmation_status=?,${levelStatement}verified_at=CURRENT_TIMESTAMP,last_transition_key=? WHERE id=? AND work_item_id=? AND status IN ('open','insufficient_evidence') AND evidence_version=? AND flow_card_version=? AND last_transition_key IS ? AND (? = 0 OR EXISTS (SELECT 1 FROM work_items wi_guard WHERE wi_guard.id=? AND wi_guard.project_id=? AND wi_guard.assigned_verifier_id=? AND wi_guard.assignment_version=?))`
     );
     const confirmBindings = [
       decision, factStatus, correction || null, JSON.stringify(sourceRefs), actorId, highImpact ? null : actorId, secondStatus,
       ...(levelChanged ? [levelToStore, body.evidenceLevel !== undefined ? "verifier" : "carried_forward", requiresLabel(levelToStore) ? 1 : 0, actorId] : []),
-      transitionKey, factId, item.id, formal ? 1 : 0, item.id, item.project_id, current.accountId, assignmentVersion,
+      transitionKey, factId, item.id, ...versionBindings, formal ? 1 : 0, item.id, item.project_id, current.accountId, assignmentVersion,
     ];
     // B-02: grading (or re-confirming) a fact that a published packet relies on does
     // not by itself invalidate that packet — the evidence grade is a property of the
@@ -302,7 +327,7 @@ export async function onRequestPost({ request, env, params }) {
       env.DB.prepare("INSERT INTO events(event_id,project_id,work_item_id,type,actor_role,actor_id,payload) SELECT ?,project_id,work_item_id,?,'verifier',?,? FROM candidate_facts WHERE id=? AND last_transition_key=?").bind(eventId, highImpact ? "fact_awaiting_second_confirmation" : "fact_confirmed", actorId, payload, factId, transitionKey),
       env.DB.prepare("INSERT INTO events(event_id,project_id,work_item_id,type,actor_role,actor_id,payload) SELECT ?,project_id,work_item_id,'handoff','verifier',?,? FROM candidate_facts WHERE id=? AND last_transition_key=? AND NOT EXISTS (SELECT 1 FROM candidate_facts pending WHERE pending.work_item_id=candidate_facts.work_item_id AND pending.required=1 AND pending.status!='confirmed')").bind(`EVT-${crypto.randomUUID()}`, actorId, JSON.stringify({ fromRole: "verifier", toRole: "owner", targetStage: "decision", sourceRefs }), factId, transitionKey),
     ]);
-    if (!Number(results[0]?.meta?.changes || 0)) return conflictResponse(env.DB, item.id, factId);
+    if (!Number(results[0]?.meta?.changes || 0)) return conflictResponse(env.DB, item.id, factId, viewed);
     const updated = await requireItem(env.DB, item.id);
     return json({ item: itemPayload(updated), judgment: JSON.parse(payload) });
   } catch (error) { return error instanceof Response ? error : httpError(error.message, 500); }

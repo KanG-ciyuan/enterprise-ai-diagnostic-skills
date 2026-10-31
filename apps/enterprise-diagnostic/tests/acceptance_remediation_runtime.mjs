@@ -1,3 +1,4 @@
+import { withFixtureViewedVersions } from "./verification_view_fixture.mjs";
 import assert from "node:assert/strict";
 import { onRequestPost as createProject } from "../functions/api/projects.js";
 import { onRequestPost as createInvitation } from "../functions/api/projects/[projectId]/invitations.js";
@@ -344,7 +345,7 @@ async function reassignment() {
   assert.equal(locked.body.code, "enterprise_authorization_required");
 
   const [raceVerify, raceReassign] = await Promise.all([
-    invoke(verifyFact, bearerRequest("http://127.0.0.1/api/work-items/WI-RACE-RA/verification", "TOK-A-RA", { factId: "FACT-RACE-RA", decision: "same", reason: "Concurrent verification", sourceRefs: ["MAT-RACE-RA"] }), { itemId: "WI-RACE-RA" }),
+    invoke(verifyFact, bearerRequest("http://127.0.0.1/api/work-items/WI-RACE-RA/verification", "TOK-A-RA", withFixtureViewedVersions(db, { factId: "FACT-RACE-RA", decision: "same", reason: "Concurrent verification", sourceRefs: ["MAT-RACE-RA"] })), { itemId: "WI-RACE-RA" }),
     post("TOK-BLD-RA", "WI-RACE-RA", { targetVerifierId: "VER-B", assignmentVersion: 1, reason: "Concurrent reassignment" }, "RA-VERIFY-RACE"),
   ]);
   assert.deepEqual([raceVerify.status, raceReassign.status].sort(), [200, 409], "verification and reassignment race must have one successful writer");

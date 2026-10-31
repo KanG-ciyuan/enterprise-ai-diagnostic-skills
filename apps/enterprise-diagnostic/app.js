@@ -97,6 +97,7 @@ const state = {
   verifierSourceRefs: [],
   verifierReviewingMaterial: "",
   verifierSubmitting: false,
+  verifierVersionConflict: false,
   verifierPacket: null,
   verifierDecision: "",
   verifierEvidenceLevel: "",
@@ -3413,6 +3414,7 @@ async function loadFormalVerifierWorkspace(projectId) {
   state.verifierDecision = "";
   state.verifierReason = "";
   state.verifierCorrection = "";
+  state.verifierVersionConflict = false;
   state.verifierState = "loading";
   document.documentElement.classList.add("verifier-active");
   showView("formal-verifier-view");
@@ -3709,6 +3711,11 @@ function renderFormalVerifierShell() {
 
   // 底部：唯一的操作区
   if (composerEl) {
+    if (state.verifierVersionConflict) {
+      composerEl.innerHTML = '<div class="composer__blocked" role="alert">核验依据已变化，本次判断未保存。请重新加载最新证据，审阅后重新选择判断并填写理由；旧判断不会自动提交。</div>' +
+        '<button class="primary-button" type="button" data-action="refresh-formal-verifier">重新加载最新证据</button>';
+      return;
+    }
     // 判断放在底栏与理由同处：中栏只留"要判什么"（事实 + 依据），
     // 否则三样东西争垂直空间，事实会被挤出屏幕 —— 而那正是要判的东西。
     const verdictBlock = secondConfirmation ? "" :
@@ -4572,7 +4579,22 @@ async function persistVerification(itemId, outcome) {
 async function submitVerifierJudgment() {
   const item = state.verifierFact || state.workItems.find((entry) => entry.assigneeRole === "verifier" && entry.stage === "facts");
   const secondConfirmation = item?.secondConfirmationAction === "second_confirmation";
-  if (!item || (!secondConfirmation && !state.verifierDecision) || state.verifierSubmitting) return;
+  if (!item || (!secondConfirmation && !state.verifierDecision) || state.verifierSubmitting || state.verifierVersionConflict) return;
+  const workItemId = item.workItemId || item.id;
+  const viewed = { evidenceVersion: item.evidenceVersion, flowCardVersion: item.flowCardVersion };
+  const submitViewed = (action, successMessage) => runBackendAction(workItemId, async () => {
+    try { return await action(); }
+    catch (error) {
+      if (error.status === 409) {
+        state.verifierVersionConflict = true;
+        state.verifierDecision = "";
+        state.verifierReason = "";
+        state.verifierCorrection = "";
+        state.verifierSourceRefs = [];
+      }
+      throw error;
+    }
+  }, successMessage);
   const reason = document.querySelector("#verifier-reason")?.value.trim() || state.verifierReason.trim();
   const correction = document.querySelector("#verifier-correction")?.value.trim() || state.verifierCorrection.trim();
   state.verifierReason = reason;
@@ -4581,8 +4603,7 @@ async function submitVerifierJudgment() {
   if (secondConfirmation) {
     state.verifierSubmitting = true;
     renderVerifierWorkbench();
-    const workItemId = item.workItemId || item.id;
-    const result = await runBackendAction(workItemId, () => window.diagnosticApi.verifyFormal(workItemId, { factId: item.factId, action: "second_confirmation", secondConfirmationReason: reason }), "二次确认已保存，状态已更新。");
+    const result = await submitViewed(() => window.diagnosticApi.verifyFormal(workItemId, { factId: item.factId, action: "second_confirmation", secondConfirmationReason: reason, ...viewed }), "二次确认已保存，状态已更新。");
     state.verifierSubmitting = false;
     if (result) await loadFormalVerifierWorkspace(state.formalProjectId);
     else renderVerifierWorkbench();
@@ -4612,9 +4633,9 @@ async function submitVerifierJudgment() {
     : window.diagnosticApi.verify.bind(window.diagnosticApi);
   state.verifierSubmitting = true;
   renderVerifierWorkbench();
-  const workItemId = item.workItemId || item.id;
-  const result = await runBackendAction(workItemId, () => verify(workItemId, {
+  const result = await submitViewed(() => verify(workItemId, {
     factId: item.factId || item.candidateFactId,
+    ...viewed,
     decision: state.verifierDecision,
     reason,
     evidenceLevel: evidenceLevel || undefined,

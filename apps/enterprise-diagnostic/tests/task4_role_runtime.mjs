@@ -1,3 +1,4 @@
+import { withFixtureViewedVersions } from "./verification_view_fixture.mjs";
 import assert from "node:assert/strict";
 import { D1Harness, bearerRequest } from "./d1_harness.mjs";
 import { onRequestGet as verifierFacts } from "../functions/api/formal/projects/[projectId]/verifier-facts.js";
@@ -16,6 +17,7 @@ import { onRequestPost as acceptInvitation } from "../functions/api/invitations/
 import { onRequest as projectDetail } from "../functions/api/projects/[projectId].js";
 
 async function call(handler, path, token, params, body, headers = {}) {
+  if (handler===verifyFact) body=withFixtureViewedVersions(db,body);
   const response = await handler({
     request: bearerRequest(`http://127.0.0.1${path}`, token, body, headers),
     env: { DB: db },

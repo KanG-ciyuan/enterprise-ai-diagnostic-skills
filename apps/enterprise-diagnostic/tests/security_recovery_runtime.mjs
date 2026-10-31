@@ -1,3 +1,4 @@
+import { withFixtureViewedVersions } from "./verification_view_fixture.mjs";
 import assert from "node:assert/strict";
 import { onRequestPost as authorize } from "../functions/api/auth/authorize.js";
 import { onRequestPost as createProject } from "../functions/api/projects.js";
@@ -8,6 +9,7 @@ import { onRequestPost as verifyFact } from "../functions/api/work-items/[itemId
 import { D1Harness, bearerRequest } from "./d1_harness.mjs";
 
 async function read(handler, request, params, env) {
+  if (handler===verifyFact) request=new Request(request,{body:JSON.stringify(withFixtureViewedVersions(env.DB,await request.clone().json()))});
   const response = await handler({ request, params, env });
   return { status: response.status, body: JSON.parse(await response.text()) };
 }

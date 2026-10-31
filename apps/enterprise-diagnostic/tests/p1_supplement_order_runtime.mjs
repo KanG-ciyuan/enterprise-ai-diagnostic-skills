@@ -1,3 +1,4 @@
+import { withFixtureViewedVersions } from "./verification_view_fixture.mjs";
 // F01 regression: real handlers and transactional SQLite; synthetic data, no network.
 import assert from 'node:assert/strict';
 import { onRequestPost as verify } from '../functions/api/work-items/[itemId]/verification.js';
@@ -35,6 +36,7 @@ function fixture() {
   return db;
 }
 async function call(db,handler,token,body,params={itemId:WI}) {
+  if (handler===verify) body=withFixtureViewedVersions(db,body);
   const r=await handler({request:bearerRequest('http://127.0.0.1/test',token,body),env:{DB:db},params});
   return {status:r.status,body:await r.json()};
 }
